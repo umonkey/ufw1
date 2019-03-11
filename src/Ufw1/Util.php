@@ -107,5 +107,11 @@ class Util
         $container["file"] = function ($c) {
             return new \Ufw1\FileFactory($c);
         };
+
+        $container["template"] = function ($c) {
+            $settings = $c->get("settings")["templates"];
+            $tpl = new \Ufw1\Template($c);
+            return $tpl;
+        };
     }
 }
