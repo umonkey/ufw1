@@ -11,16 +11,21 @@ class NodeFactory
         $this->container = $c;
     }
 
-    public function where($conditions, array $params = [])
+    public function where($conditions, array $params = [], $callback = null)
     {
         $db = $this->container->get("database");
 
         $query = "SELECT * FROM `nodes` WHERE " . $conditions;
 
-        return $db->fetch($query, $params, function (array $row) {
+        $res = $db->fetch($query, $params, function (array $row) {
             $row = $this->unpack($row);
             return $row;
         });
+
+		if ($callback)
+			$res = array_map($callback, $res);
+
+		return $res;
     }
 
     public function get($id)
@@ -89,7 +94,7 @@ class NodeFactory
         return $node;
     }
 
-    protected function unpack(array $row)
+    public function unpack(array $row)
     {
         if (array_key_exists("more", $row)) {
             $more = unserialize($row["more"]);

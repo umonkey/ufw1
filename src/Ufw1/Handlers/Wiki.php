@@ -198,8 +198,7 @@ class Wiki extends CommonHandler
         if (!($page = $this->pageGet($name)))
             return $this->notfound($request);
 
-        $names = $this->db->fetch("SELECT * FROM `nodes` WHERE `type` = 'wiki' AND `id` IN (SELECT `tid` FROM `nodes_rel` WHERE `nid` = ?)", [$page["id"]], function ($row) {
-            $node = $this->unpack($row);
+        $names = $this->node->where("`type` = 'wiki' AND `id` IN (SELECT `tid` FROM `nodes_rel` WHERE `nid` = ?)", [$page["id"]], function ($node) {
             return $node["name"];
         });
 
@@ -338,8 +337,7 @@ class Wiki extends CommonHandler
      **/
     public function onIndex(Request $request, Response $response, array $args)
     {
-        $pages = array_filter($this->db->fetch("SELECT * FROM `nodes` WHERE `type` = 'wiki'", [], function ($row) {
-            $node = $this->unpack($row);
+        $pages = array_filter($this->node->where("`type` = 'wiki'", [], function ($node) {
             $name = $node["name"];
             if (0 === strpos($name, "File:"))
                 return null;
@@ -387,9 +385,7 @@ class Wiki extends CommonHandler
     {
         $since = strftime("%Y-%m-%d %H:%M:%S", time() - 86400 * 30);
 
-        $pages = $this->db->fetch("SELECT * FROM `nodes` WHERE `type` = 'wiki' AND `updated` >= ? AND `published` = 1", [$since], function ($row) {
-            $node = $this->unpack($row);
-
+        $pages = $this->node->fetch("`type` = 'wiki' AND `updated` >= ? AND `published` = 1", [$since], function ($node) {
             if (preg_match('@^(File|wiki):@', $node["name"]))
                 return null;
 

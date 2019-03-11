@@ -26,7 +26,7 @@ class Sitemap extends CommonHandler
 
             $sel = $this->db->query("SELECT * FROM `nodes` WHERE `published` = 1 ORDER BY `created`");
             while ($row = $sel->fetch(\PDO::FETCH_ASSOC)) {
-                $node = $this->unpack($row);
+                $node = $this->node->unpack($row);
 
                 switch ($node["type"]) {
                     case "wiki":
