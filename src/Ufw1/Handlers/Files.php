@@ -16,7 +16,7 @@ class Files extends CommonHandler
      **/
     public function onList(Request $request, Response $response, array $args)
     {
-        $recent = $this->nodeFetch("SELECT * FROM `nodes` ORDER BY `created` DESC", [], function ($em) {
+        $recent = $this->node->where("1 ORDER BY `created` DESC", [], function ($em) {
             return [
                 "id" => (int)$em["id"],
                 "name" => $em["name"],
@@ -71,7 +71,7 @@ class Files extends CommonHandler
     {
         $bydate = [];
 
-        $rows = $this->nodeFetch("SELECT * FROM `nodes` WHERE `type` = 'file' ORDER BY `created` DESC", [], function ($em) {
+        $rows = $this->node->where("`type` = 'file' ORDER BY `created` DESC", [], function ($em) {
             return [
                 "link" => "/admin/files?file={$em["id"]}",
                 "label" => $em["name"],
@@ -93,7 +93,7 @@ class Files extends CommonHandler
     protected function onGetFile(Request $request, Response $response, array $args)
     {
         $id = $args["id"];
-        $file = $this->nodeGet($id);
+        $file = $this->node->get($id);
 
         return $this->render($response, "admin-file.twig", [
             "file" => $file,
@@ -173,7 +173,7 @@ class Files extends CommonHandler
     {
         $kind = @$_GET["kind"];
 
-        $nodes = $this->nodeFetch("SELECT * FROM `nodes` WHERE `type` = 'file' ORDER BY `created` DESC");
+        $nodes = $this->node->where("`type` = 'file' ORDER BY `created` DESC");
 
         if ($kind == "photo") {
             $nodes = array_filter($nodes, function ($node) {
@@ -207,7 +207,7 @@ class Files extends CommonHandler
     public function onShowFile(Request $request, Response $response, array $args)
     {
         $id = $args["id"];
-        $file = $this->nodeGet($id);
+        $file = $this->node->get($id);
 
         if (empty($file) or $file["type"] != "file")
             return $this->notfound($response);
@@ -220,12 +220,12 @@ class Files extends CommonHandler
     public function onDownload(Request $request, Response $response, array $args)
     {
         $id = $args["id"];
-        $file = $this->nodeGet($id);
+        $file = $this->node->get($id);
 
         if (empty($file) or $file["type"] != "file")
             return $this->notfound($response);
 
-        if (!($body = $this->fileGetBody($file)))
+        if (!($body = $this->file->getBody($file)))
             return $this->notfound($response);
 
         if (preg_match('@^image/@', $file["mime_type"])) {
@@ -248,12 +248,12 @@ class Files extends CommonHandler
     {
         return $this->sendFromCache($request, function () use ($request, $args) {
             $id = $args["id"];
-            $file = $this->nodeGet($id);
+            $file = $this->node->get($id);
 
             if (empty($file) or $file["type"] != "file")
                 return $this->notfound($response);
 
-            if (!($body = $this->fileGetBody($file)))
+            if (!($body = $this->file->getBody($file)))
                 return $this->notfound($response);
 
             $img = imagecreatefromstring($body);
@@ -270,12 +270,12 @@ class Files extends CommonHandler
     public function onPhoto(Request $request, Response $response, array $args)
     {
         $id = $args["id"];
-        $file = $this->fileGet($id);
+        $file = $this->file->get($id);
 
         if (empty($file))
             return $this->notfound($response);
 
-        if (!($body = $this->fileGetBody($file)))
+        if (!($body = $this->file->getBody($file)))
             return $this->notfound($response);
 
         $dst = $_SERVER["DOCUMENT_ROOT"] . $request->getUri()->getPath();
@@ -355,7 +355,7 @@ class Files extends CommonHandler
 
     protected function dbGetFile($id)
     {
-        $node = $this->nodeGet($id);
+        $node = $this->node->get($id);
         if ($node and $node["type"] == "file")
             return $node;
     }
@@ -414,7 +414,7 @@ class Files extends CommonHandler
 
     protected function checkFileExists($hash)
     {
-        return $this->fileGetByHash($hash) ? true : false;
+        return $this->file->getByHash($hash) ? true : false;
     }
 
     /**
@@ -463,7 +463,7 @@ class Files extends CommonHandler
                 $data = $file->getStream()->getContents();
                 $hash = md5($data);
 
-                $old = $this->nodeGetByKey($hash);
+                $old = $this->node->getByKey($hash);
                 if ($old)
                     $id = $old["id"];
                 else
@@ -484,7 +484,7 @@ class Files extends CommonHandler
                 $data = $f["data"];
                 $hash = md5($data);
 
-                $old = $this->fileGetByHash($hash);
+                $old = $this->file->getByHash($hash);
                 if ($old)
                     $id = $old["id"];
                 else
@@ -556,7 +556,7 @@ class Files extends CommonHandler
                 ]);
             }
 
-            if ($node = $this->nodeGetByKey($file["hash"])) {
+            if ($node = $this->node->getByKey($file["hash"])) {
                 $this->logger->debug("files: node with key={key} already exists.", [
                     "key" => $file["hash"],
                 ]);
@@ -578,7 +578,7 @@ class Files extends CommonHandler
                     "published" => 1,
                 ];
 
-                $node = $this->nodeSave($node);
+                $node = $this->node->save($node);
             }
         }
 

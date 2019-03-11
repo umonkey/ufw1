@@ -19,7 +19,7 @@ class FileFactory
         if (empty($node) or $node["type"] != "file")
             return null;
 
-        return $this->fileFix($node);
+        return $this->file->fix($node);
     }
 
     public function getByHash($hash)
@@ -30,7 +30,7 @@ class FileFactory
         if (empty($node) or $node["type"] != "file")
             return null;
 
-        return $this->fileFix($node);
+        return $this->file->fix($node);
     }
 
     public function getBody(array $node)

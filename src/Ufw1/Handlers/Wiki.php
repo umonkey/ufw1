@@ -128,7 +128,7 @@ class Wiki extends CommonHandler
                 $name = $files["file"]->getClientFilename();
                 $type = $files["file"]->getClientMediaType();
 
-                $tmpdir = $this->fileGetStoragePath();
+                $tmpdir = $this->file->getStoragePath();
                 $tmp = tempnam($tmpdir, "upload_");
                 $files["file"]->moveTo($tmp);
                 $body = file_get_contents($tmp);
@@ -140,7 +140,7 @@ class Wiki extends CommonHandler
             }
         }
 
-        $file = $this->fileAdd($name, $type, $body);
+        $file = $this->file->add($name, $type, $body);
         $fid = $file["id"];
 
         $pname = "File:" . $fid;
@@ -212,7 +212,7 @@ class Wiki extends CommonHandler
 
     public function onRecentRSS(Request $request, Response $response, array $args)
     {
-        $items = $this->nodeFetch("SELECT * FROM `nodes` WHERE `type` = 'wiki' AND `published` = 1 ORDER BY `created` DESC LIMIT 100", [], function ($node) {
+        $items = $this->node->where("`type` = 'wiki' AND `published` = 1 ORDER BY `created` DESC LIMIT 100", [], function ($node) {
             if (preg_match('@^(File|wiki):@', $node["name"]))
                 return null;
 
@@ -309,7 +309,7 @@ class Wiki extends CommonHandler
                         $name = basename(explode("?", $url)[0]);
                         $type = explode(";", $type)[0];
 
-                        $file = $this->fileAdd($name, $type, $doc["data"]);
+                        $file = $this->file->add($name, $type, $doc["data"]);
                         $id = $file["id"];
 
                         $res["id"] = $id;
@@ -436,7 +436,7 @@ class Wiki extends CommonHandler
 
         $id = (int)$args["id"];
 
-        if (!($node = $this->nodeGet($id))) {
+        if (!($node = $this->node->get($id))) {
             $this->logger->warning("wiki: cannot reindex node {id} -- not found.", [
                 "id" => $id,
             ]);
@@ -465,7 +465,7 @@ class Wiki extends CommonHandler
             while ($row = $sel->fetch(\PDO::FETCH_ASSOC)) {
                 $key = md5(mb_strtolower(trim($row["name"])));
 
-                if ($old = $this->nodeGetByKey($key)) {
+                if ($old = $this->node->getByKey($key)) {
                     $this->logger->warning("wiki: migrate: node with key {key} exists, id={id}, name={name}", [
                         "key" => $key,
                         "id" => $old["id"],
@@ -475,7 +475,7 @@ class Wiki extends CommonHandler
                     continue;
                 }
 
-                $node = $this->nodeSave([
+                $node = $this->node->save([
                     "type" => "wiki",
                     "key" => $key,
                     "name" => $row["name"],
@@ -701,7 +701,7 @@ class Wiki extends CommonHandler
             $parts = explode(":", $m[1]);
             $fileId = array_shift($parts);
 
-            $info = $this->nodeGet($fileId);
+            $info = $this->node->get($fileId);
             if (empty($info) or $info["type"] != "file")
                 return "<!-- file {$fileId} does not exist -->";
             elseif (0 !== strpos($info["mime_type"], "image/"))
@@ -791,7 +791,7 @@ class Wiki extends CommonHandler
 
     protected function getImageSize($fileId)
     {
-        $file = $this->fileGet($fileId);
+        $file = $this->file->get($fileId);
 
         if ($file) {
             $settings = $this->container->get("settings")["files"];
@@ -870,7 +870,7 @@ class Wiki extends CommonHandler
     protected function pageGet($name)
     {
         $key = md5(mb_strtolower(trim($name)));
-        $node = $this->nodeGetByKey($key);
+        $node = $this->node->getByKey($key);
         return $node;
     }
 
@@ -908,7 +908,7 @@ class Wiki extends CommonHandler
         }
 
         $node["source"] = $source;
-        $node = $this->nodeSave($node);
+        $node = $this->node->save($node);
 
         $key = "wiki:" . $node["name"];
         $this->db->query("DELETE FROM `cache` WHERE `key` = ?", [$key]);

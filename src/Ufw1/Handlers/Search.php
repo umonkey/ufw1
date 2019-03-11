@@ -108,7 +108,7 @@ class Search extends CommonHandler
     protected function findWikiPage($query)
     {
         $key = md5(mb_strtolower(trim($query)));
-        if ($node = $this->nodeGetByKey($key)) {
+        if ($node = $this->node->getByKey($key)) {
             return [
                 "name" => $node["name"],
                 "exists" => true,
