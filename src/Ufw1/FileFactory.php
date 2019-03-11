@@ -1,41 +1,48 @@
 <?php
-/**
- * File related functions.
- *
- * Moved to separate file for easier sharing across projects.
- **/
 
 namespace Ufw1;
 
-
-trait FileTrait
+class FileFactory
 {
-    protected function fileGet($id)
+    protected $container;
+
+    public function __construct($c)
     {
-        $node = $this->nodeGet($id);
+        $this->container = $c;
+    }
+
+    public function get($id)
+    {
+        $nodes = $this->container->get("node");
+
+        $node = $nodes->get($id);
         if (empty($node) or $node["type"] != "file")
             return null;
 
         return $this->fileFix($node);
     }
 
-    protected function fileGetByHash($hash)
+    public function getByHash($hash)
     {
-        $node = $this->nodeGetByHash($hash);
+        $nodes = $this->container->get("node");
+
+        $node = $nodes->getByKey($hash);
         if (empty($node) or $node["type"] != "file")
             return null;
 
         return $this->fileFix($node);
     }
 
-    protected function fileGetBody(array $node)
+    public function getBody(array $node)
     {
+        $logger = $this->container->get("logger");
+
         if ($node["type"] != "file")
             return false;
 
-        $fpath = $this->fileGetBodyPath($node);
+        $fpath = $this->getBodyPath($node);
         if (!file_exists($fpath)) {
-            $this->logger->warning("files: file {name} does not exist.", [
+            $logger->warning("files: file {name} does not exist.", [
                 "name" => $node["fname"],
             ]);
 
@@ -45,12 +52,15 @@ trait FileTrait
         return file_get_contents($fpath);
     }
 
-    protected function fileAdd($name, $type, $body)
+    public function add($name, $type, $body)
     {
+        $nodes = $this->container->get("node");
+        $logger = $this->container->get("logger");
+
         $hash = md5($body);
 
-        if ($old = $this->nodeGetByKey($hash)) {
-            $this->logger->info("files: file {id} reused from {name}", [
+        if ($old = $nodes->getByKey($hash)) {
+            $logger->info("files: file {id} reused from {name}", [
                 "id" => $old["id"],
                 "name" => $old["fname"],
             ]);
@@ -82,7 +92,7 @@ trait FileTrait
             "published" => 1,
         ];
 
-        $settings = $this->fileGetSettings();
+        $settings = $this->getSettings();
 
         $fpath = $settings["path"] . "/" . $node["fname"];
 
@@ -90,7 +100,7 @@ trait FileTrait
         if (!is_dir($fdir)) {
             $res = @mkdir($fdir, $settings["dmode"], true);
             if ($res === false) {
-                $this->logger->error("files: error creating folder {dir}", [
+                $logger->error("files: error creating folder {dir}", [
                     "dir" => $fdir,
                 ]);
                 throw new \RuntimeException("error saving file");
@@ -99,7 +109,7 @@ trait FileTrait
 
         $res = @file_put_contents($fpath, $body);
         if ($res === false) {
-            $this->logger->error("files: error creating file {name}", [
+            $logger->error("files: error creating file {name}", [
                 "name" => $fpath,
             ]);
             throw new \RuntimeException("error saving file");
@@ -107,9 +117,9 @@ trait FileTrait
 
         chmod($fpath, $settings["fmode"]);
 
-        $node = $this->nodeSave($node);
+        $node = $nodes->save($node);
 
-        $this->logger->info("files: file {id} saved as {name}", [
+        $logger->info("files: file {id} saved as {name}", [
             "id" => $node["id"],
             "name" => $node["fname"],
         ]);
@@ -131,16 +141,16 @@ trait FileTrait
         return $node;
     }
 
-    protected function fileGetBodyPath(array $node)
+    protected function getBodyPath(array $node)
     {
         $settings = $this->container->get("settings")["files"];
         $fpath = $settings["path"] . "/" . $node["fname"];
         return $fpath;
     }
 
-    protected function fileGetStoragePath()
+    protected function getStoragePath()
     {
-        $settings = $this->fileGetSettings();
+        $settings = $this->getSettings();
 
         if (empty($settings["path"]))
             throw new \RuntimeException("file storage path not set");
@@ -155,7 +165,7 @@ trait FileTrait
         return $path;
     }
 
-    protected function fileGetSettings()
+    protected function getSettings()
     {
         static $settings = null;
 

@@ -73,4 +73,39 @@ class Util
         $cases = array(2, 0, 1, 1, 1, 2);
         return $titles[($number % 100 > 4 && $number % 100 < 20) ? 2 : $cases[min($number % 10, 5)]];
     }
+
+    public static function containerSetup(&$container)
+    {
+        $container["logger"] = function ($c) {
+            $settings = (array)$c->get("settings")["logger"];
+            $logger = new \Ufw1\Logger($settings);
+            return $logger;
+        };
+
+        $container["database"] = function ($c) {
+            return new \Ufw1\Database($c->get("settings")["dsn"]);
+        };
+
+        $container["errorHandler"] = function ($c) {
+            return function ($request, $response, $e) use ($c) {
+                $h = new \Ufw1\Handlers\Error($c);
+                return $h($request, $response, ["exception" => $e]);
+            };
+        };
+
+        $container["notFoundHandler"] = function ($c) {
+            return function ($request, $response) use ($c) {
+                $h = new \Ufw1\Handlers\NotFound($c);
+                return $h($request, $response, []);
+            };
+        };
+
+        $container["node"] = function ($c) {
+            return new \Ufw1\NodeFactory($c);
+        };
+
+        $container["file"] = function ($c) {
+            return new \Ufw1\FileFactory($c);
+        };
+    }
 }

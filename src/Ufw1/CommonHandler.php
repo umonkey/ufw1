@@ -7,8 +7,6 @@ use Slim\Http\Response;
 
 class CommonHandler
 {
-    use \Ufw1\NodeTrait;
-
     protected $container;
 
     /**
@@ -24,12 +22,16 @@ class CommonHandler
         switch ($key) {
             case "db":
                 return $this->container->get("database");
-            case "logger":
-                return $this->container->get("logger");
-            case "template":
-                return $this->container->get("template");
+			case "file":
+				return $this->container->get("file");
             case "fts":
                 return new \Ufw1\Search($this->db, $this->logger);
+            case "logger":
+                return $this->container->get("logger");
+			case "node":
+				return $this->container->get("node");
+            case "template":
+                return $this->container->get("template");
         }
     }
 

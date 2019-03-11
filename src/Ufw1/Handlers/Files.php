@@ -7,12 +7,10 @@ namespace Ufw1\Handlers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
-use Ufw1@gCommonHandler;
+use Ufw1\CommonHandler;
 
 class Files extends CommonHandler
 {
-    use \Ufw1\FileTrait;
-
     /**
      * Lists all uploaded files.
      **/

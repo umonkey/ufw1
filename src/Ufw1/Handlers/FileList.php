@@ -4,7 +4,7 @@ namespace Ufw1\Handlers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
-use Ufw1@gHandlers;
+use Ufw1\Handlers;
 
 class FileList extends Handlers
 {

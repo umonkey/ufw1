@@ -12,7 +12,7 @@ namespace Ufw1\Handlers;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Slim\Http\UploadedFile;
-use Ufw1@gCommonHandler;
+use Ufw1\CommonHandler;
 
 class Upload extends CommonHandler
 {
