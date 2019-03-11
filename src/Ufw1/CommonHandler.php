@@ -234,7 +234,17 @@ class CommonHandler
 
     protected function notfound(Request $request)
     {
-        return $this->render($request, "notfound.twig")->withStatus(404);
+		throw new \Ufw1\Errors\NotFound();
+    }
+
+    protected function unauthorized(Request $request)
+    {
+		throw new \Ufw1\Errors\Unauthorized();
+    }
+
+    protected function forbidden(Request $request)
+    {
+		throw new \Ufw1\Errors\Forbidden();
     }
 
     protected function search($query)
