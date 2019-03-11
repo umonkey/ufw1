@@ -159,6 +159,19 @@ class CommonHandler
         ]);
     }
 
+	/**
+	 * Delete an existing session.
+	 *
+	 * Deletes session contents.  The cookie remains in place, so the session
+	 * could be reopened later.
+	 **/
+	protected function sessionDelete(Request $request)
+	{
+		if ($sid = $this->sessionGetId($request)) {
+			$this->db->query("DELETE FROM `sessions` WHERE `id` = ?", [$sid]);
+		}
+	}
+
     /**
      * Renders the page using a template.
      *
