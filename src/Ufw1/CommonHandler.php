@@ -116,6 +116,32 @@ class CommonHandler
         return $res;
     }
 
+	/**
+	 * Get session contents.
+	 *
+	 * Returns session data as array, if there is one.
+	 *
+	 * @param Request $request Request to extract the session id from.
+	 * @return array|null Session contents.
+	 **/
+    public function sessionGet(Request $request)
+    {
+		$id = $this->sessionGetId($request);
+		if ($id) {
+			$row = $this->db->fetchOne("SELECT `data` FROM `sessions` WHERE `id` = ?", [$id]);
+			if ($row)
+				return unserialize($row["data"]);
+		}
+    }
+
+	/**
+	 * Saves the current session.
+	 *
+	 * Session id must be set in the cookie session_id.
+	 *
+	 * @param Request $request Request to get the session id from.
+	 * @param array $data New session contents.
+	 **/
     protected function sessionSave(Request $request, array $data)
     {
         $sid = $this->sessionGetId($request);
@@ -131,12 +157,6 @@ class CommonHandler
         $this->logger->debug("session {sid} updated.", [
             "sid" => $sid,
         ]);
-    }
-
-    public function sessionGet($id)
-    {
-        $row = $this->db->fetchOne("SELECT `data` FROM `sessions` WHERE `id` = ?", [$id]);
-        return $row ? unserialize($row["data"]) : null;
     }
 
     /**
