@@ -148,7 +148,7 @@ class FileFactory
         return $fpath;
     }
 
-    protected function getStoragePath()
+    public function getStoragePath()
     {
         $settings = $this->getSettings();
 
