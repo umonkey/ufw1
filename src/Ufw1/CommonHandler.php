@@ -207,6 +207,9 @@ class CommonHandler
      **/
     protected function render(Request $request, $templateName, array $data = [])
     {
+        if (empty($data["breadcrumbs"]))
+            $data["breadcrumbs"] = $this->getBreadcrumbs($request, $data);
+
         $html = $this->renderHTML($request, $templateName, $data);
 
         $response = new Response(200);
@@ -439,5 +442,17 @@ class CommonHandler
         }, $html);
 
         return $html;
+    }
+
+    /**
+     * Returns the breadcrumbs array.
+     *
+     * @param Request $request Request info.
+     * @param array $data Template data.
+     * @return array Breadcrumbs info.
+     **/
+    public function getBreadcrumbs(Request $request, array $data)
+    {
+        return [];
     }
 }
