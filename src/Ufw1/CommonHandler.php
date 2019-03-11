@@ -83,7 +83,7 @@ class CommonHandler
         if ($user["type"] != "user")
             return null;
 
-        if (!empty($session["password"]) and $session["password"] != $user"password"])
+        if (!empty($session["password"]) and $session["password"] != $user["password"])
             return null;
 
         return $user;
