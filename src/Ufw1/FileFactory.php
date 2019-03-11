@@ -19,7 +19,7 @@ class FileFactory
         if (empty($node) or $node["type"] != "file")
             return null;
 
-        return $this->file->fix($node);
+        return $this->fix($node);
     }
 
     public function getByHash($hash)
@@ -30,7 +30,7 @@ class FileFactory
         if (empty($node) or $node["type"] != "file")
             return null;
 
-        return $this->file->fix($node);
+        return $this->fix($node);
     }
 
     public function getBody(array $node)
@@ -127,7 +127,7 @@ class FileFactory
         return $node;
     }
 
-    protected function fileFix(array $node)
+    protected function fix(array $node)
     {
         if (empty($node["kind"])) {
             if (0 === strpos($node["mime_type"], "image/"))
