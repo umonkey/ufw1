@@ -73,7 +73,7 @@ class Template
         $data = array_merge($this->defaults, $data);
 
         if (@$_GET["debug"] == "tpl")
-            debug($data);
+            debug($fileName, $data);
 
         $template = $this->twig->load($fileName);
         $html = $template->render($data);
