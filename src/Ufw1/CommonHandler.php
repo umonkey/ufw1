@@ -22,14 +22,14 @@ class CommonHandler
         switch ($key) {
             case "db":
                 return $this->container->get("database");
-			case "file":
-				return $this->container->get("file");
+            case "file":
+                return $this->container->get("file");
             case "fts":
                 return new \Ufw1\Search($this->db, $this->logger);
             case "logger":
                 return $this->container->get("logger");
-			case "node":
-				return $this->container->get("node");
+            case "node":
+                return $this->container->get("node");
             case "template":
                 return $this->container->get("template");
         }
@@ -59,53 +59,76 @@ class CommonHandler
         return true;
     }
 
-    protected function requireUser(Request $request)
+    /**
+     * Returns the user for the current session.
+     *
+     * Makes sure that the user exists and is enabled.
+     *
+     * @param Request $request Request to get the session from.
+     * @return array|null User info, if found and valid, or null.
+     **/
+    protected function getUser(Request $request)
     {
-        if (!($sid = $this->sessionGetId($request)))
-            throw new \Ufw1\Errors\Unauthorized;
-
-        if (!($session = $this->sessionGet($sid)))
-            throw new \Ufw1\Errors\Unauthorized;
+        $session = $this->sessionGet($request);
+        if (empty($session))
+            return null;
 
         if (empty($session["user_id"]))
-            throw new \Ufw1\Errors\Unauthorized;
+            return null;
 
-        if (!($account = $this->db->fetchOne("SELECT * FROM `accounts` WHERE `id` = ?", [$session["user_id"]])))
-            throw new \Ufw1\Errors\Unauthorized;
+        $user = $this->node->get($session["user_id"]);
+        if (empty($user))
+            return null;
 
-        // Reset sessions on password change.
-        if ($account["password"] != @$session["password"])
-            throw new \Ufw1\Errors\Unauthorized;
+        if ($user["type"] != "user")
+            return null;
 
-        if ($account["enabled"] != 1)
-            throw new \Ufw1\Errors\Forbidden;
+        if (!empty($session["password"]) and $session["password"] != $user"password"])
+            return null;
 
-        return $account;
+        return $user;
+    }
+
+    protected function requireUser(Request $request)
+    {
+        $user = $this->getUser($request);
+        if (empty($user))
+            $this->unauthorized();
+
+        if ($user["published"] == 0)
+            $this->forbidden();
+
+        return $user;
     }
 
     protected function requireAdmin(Request $request)
     {
-        if ($this->isAdmin($request))
-            return true;
-        throw new \Ufw1\Errors\Unauthorized();
+        $user = $this->requireUser($request);
+
+        if (empty($user["role"]))
+            $this->forbidden();
+
+        if ($user["role"] != "admin")
+            $this->forbidden();
+
+        return $user;
     }
 
     protected function isAdmin(Request $request)
     {
-        if (!($sid = $this->sessionGetId($request))) {
-            $this->logger->debug("isAdmin: session id not set.");
-            return false;
-        }
+        $user = $this->getUser($request);
 
-        if (!($session = $this->sessionGet($sid))) {
-            $this->logger->debug("isAdmin: empty session.");
+        if (empty($user))
             return false;
-        }
 
-        if (empty($session["user_id"])) {
-            $this->logger->debug("isAdmin: user_id not set.");
+        if ($user["published"] != 1)
             return false;
-        }
+
+        if (empty($user["role"]))
+            return false;
+
+        if ($user["role"] != "admin")
+            return false;
 
         return true;
     }
@@ -116,32 +139,32 @@ class CommonHandler
         return $res;
     }
 
-	/**
-	 * Get session contents.
-	 *
-	 * Returns session data as array, if there is one.
-	 *
-	 * @param Request $request Request to extract the session id from.
-	 * @return array|null Session contents.
-	 **/
+    /**
+     * Get session contents.
+     *
+     * Returns session data as array, if there is one.
+     *
+     * @param Request $request Request to extract the session id from.
+     * @return array|null Session contents.
+     **/
     public function sessionGet(Request $request)
     {
-		$id = $this->sessionGetId($request);
-		if ($id) {
-			$row = $this->db->fetchOne("SELECT `data` FROM `sessions` WHERE `id` = ?", [$id]);
-			if ($row)
-				return unserialize($row["data"]);
-		}
+        $id = $this->sessionGetId($request);
+        if ($id) {
+            $row = $this->db->fetchOne("SELECT `data` FROM `sessions` WHERE `id` = ?", [$id]);
+            if ($row)
+                return unserialize($row["data"]);
+        }
     }
 
-	/**
-	 * Saves the current session.
-	 *
-	 * Session id must be set in the cookie session_id.
-	 *
-	 * @param Request $request Request to get the session id from.
-	 * @param array $data New session contents.
-	 **/
+    /**
+     * Saves the current session.
+     *
+     * Session id must be set in the cookie session_id.
+     *
+     * @param Request $request Request to get the session id from.
+     * @param array $data New session contents.
+     **/
     protected function sessionSave(Request $request, array $data)
     {
         $sid = $this->sessionGetId($request);
@@ -159,18 +182,18 @@ class CommonHandler
         ]);
     }
 
-	/**
-	 * Delete an existing session.
-	 *
-	 * Deletes session contents.  The cookie remains in place, so the session
-	 * could be reopened later.
-	 **/
-	protected function sessionDelete(Request $request)
-	{
-		if ($sid = $this->sessionGetId($request)) {
-			$this->db->query("DELETE FROM `sessions` WHERE `id` = ?", [$sid]);
-		}
-	}
+    /**
+     * Delete an existing session.
+     *
+     * Deletes session contents.  The cookie remains in place, so the session
+     * could be reopened later.
+     **/
+    protected function sessionDelete(Request $request)
+    {
+        if ($sid = $this->sessionGetId($request)) {
+            $this->db->query("DELETE FROM `sessions` WHERE `id` = ?", [$sid]);
+        }
+    }
 
     /**
      * Renders the page using a template.
@@ -267,17 +290,17 @@ class CommonHandler
 
     protected function notfound(Request $request)
     {
-		throw new \Ufw1\Errors\NotFound();
+        throw new \Ufw1\Errors\NotFound();
     }
 
     protected function unauthorized(Request $request)
     {
-		throw new \Ufw1\Errors\Unauthorized();
+        throw new \Ufw1\Errors\Unauthorized();
     }
 
     protected function forbidden(Request $request)
     {
-		throw new \Ufw1\Errors\Forbidden();
+        throw new \Ufw1\Errors\Forbidden();
     }
 
     protected function search($query)
