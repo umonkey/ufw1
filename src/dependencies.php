@@ -13,34 +13,34 @@ $container['renderer'] = function ($c) {
 
 $container['template'] = function ($c) {
     $settings = $c->get('settings')['templates'];
-    $tpl = new \App\Template($c);
+    $tpl = new \Ufw1\Template($c);
     return $tpl;
 };
 
 $container['notFoundHandler'] = function ($c) {
     return function ($request, $response) use ($c) {
-        $h = new \App\Handlers\NotFound($c);
+        $h = new \Ufw1\Handlers\NotFound($c);
         return $h($request, $response, []);
     };
 };
 
 $container['errorHandler'] = function ($c) {
     return function ($request, $response, $e) use ($c) {
-        $h = new \App\Handlers\Error($c);
+        $h = new \Ufw1\Handlers\Error($c);
         return $h($request, $response, ["exception" => $e]);
     };
 };
 
 $container['logger'] = function ($c) {
     $settings = (array)$c->get('settings')['logger'];
-    $logger = new \App\Logger($settings);
+    $logger = new \Ufw1\Logger($settings);
     return $logger;
 };
 
 
 // database
 $container['database'] = function ($c) {
-    return new \App\Database($c->get("settings")["dsn"]);
+    return new \Ufw1\Database($c->get("settings")["dsn"]);
 };
 
 

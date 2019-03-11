@@ -9,7 +9,7 @@ namespace Ufw1\Handlers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
-use App\CommonHandler;
+use Ufw1@gCommonHandler;
 
 
 class Account extends CommonHandler

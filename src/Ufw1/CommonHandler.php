@@ -7,7 +7,7 @@ use Slim\Http\Response;
 
 class CommonHandler
 {
-    use \App\NodeTrait;
+    use \Ufw1\NodeTrait;
 
     protected $container;
 
@@ -29,7 +29,7 @@ class CommonHandler
             case "template":
                 return $this->container->get("template");
             case "fts":
-                return new \App\Search($this->db, $this->logger);
+                return new \Ufw1\Search($this->db, $this->logger);
         }
     }
 
@@ -52,7 +52,7 @@ class CommonHandler
 
         $account = $this->requireUser($request);
         if ($account["role"] != $role)
-            throw new \App\Errors\Forbidden;
+            throw new \Ufw1\Errors\Forbidden;
 
         return true;
     }
@@ -60,23 +60,23 @@ class CommonHandler
     protected function requireUser(Request $request)
     {
         if (!($sid = $this->sessionGetId($request)))
-            throw new \App\Errors\Unauthorized;
+            throw new \Ufw1\Errors\Unauthorized;
 
         if (!($session = $this->sessionGet($sid)))
-            throw new \App\Errors\Unauthorized;
+            throw new \Ufw1\Errors\Unauthorized;
 
         if (empty($session["user_id"]))
-            throw new \App\Errors\Unauthorized;
+            throw new \Ufw1\Errors\Unauthorized;
 
         if (!($account = $this->db->fetchOne("SELECT * FROM `accounts` WHERE `id` = ?", [$session["user_id"]])))
-            throw new \App\Errors\Unauthorized;
+            throw new \Ufw1\Errors\Unauthorized;
 
         // Reset sessions on password change.
         if ($account["password"] != @$session["password"])
-            throw new \App\Errors\Unauthorized;
+            throw new \Ufw1\Errors\Unauthorized;
 
         if ($account["enabled"] != 1)
-            throw new \App\Errors\Forbidden;
+            throw new \Ufw1\Errors\Forbidden;
 
         return $account;
     }
@@ -85,7 +85,7 @@ class CommonHandler
     {
         if ($this->isAdmin($request))
             return true;
-        throw new \App\Errors\Unauthorized();
+        throw new \Ufw1\Errors\Unauthorized();
     }
 
     protected function isAdmin(Request $request)

@@ -4,7 +4,7 @@
  *
  * No active records, cursors or other stuff.  Just a PDO wrapper.
  *
- * This class should be accessed by handlers (based on \App\Handler)
+ * This class should be accessed by handlers (based on \Ufw1\Handler)
  * using $this->db.
  **/
 

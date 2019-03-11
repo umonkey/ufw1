@@ -7,7 +7,7 @@ namespace Ufw1\Handlers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
-use App\CommonHandler;
+use Ufw1@gCommonHandler;
 
 
 class Error extends CommonHandler
@@ -31,12 +31,12 @@ class Error extends CommonHandler
             "stack" => $stack,
         ];
 
-        if ($e instanceof \App\Errors\Unauthorized) {
+        if ($e instanceof \Ufw1\Errors\Unauthorized) {
             $tpl = "unauthorized.twig";
             $status = 401;
         }
 
-        elseif ($e instanceof \App\Errors\Forbidden) {
+        elseif ($e instanceof \Ufw1\Errors\Forbidden) {
             $tpl = "forbidden.twig";
             $status = 403;
         }

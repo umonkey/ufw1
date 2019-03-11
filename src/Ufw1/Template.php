@@ -26,7 +26,7 @@ class Template
         $this->twig = new \Twig\Environment($loader);
 
         $this->twig->addFilter(new \Twig\TwigFilter("markdown", function ($src) {
-            $html = \App\Common::renderMarkdown($src);
+            $html = \Ufw1\Common::renderMarkdown($src);
             return $html;
         }, array("is_safe" => array("html"))));
 
@@ -57,7 +57,7 @@ class Template
         }));
 
         $this->twig->addFilter(new \Twig\TwigFilter("sklo", function ($number, $one, $two, $many) {
-            return \App\Util::plural($number, $one, $two, $many);
+            return \Ufw1\Util::plural($number, $one, $two, $many);
         }));
     }
 
@@ -119,7 +119,7 @@ class Template
 
     protected function fixHTML($html)
     {
-        $html = \App\Util::cleanHtml($html);
+        $html = \Ufw1\Util::cleanHtml($html);
         return $html;
     }
 

@@ -208,7 +208,7 @@ class Search
             if (strspn($word, "abcdefghijklmnopqrstuvwxyz") == strlen($word)) {
                 // TODO: use english porter.
             } else {
-                $base = \App\Stemmer::getWordBase($word);
+                $base = \Ufw1\Stemmer::getWordBase($word);
                 $words[$k] = $base;
             }
         }

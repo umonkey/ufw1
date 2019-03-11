@@ -7,11 +7,11 @@ namespace Ufw1\Handlers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
-use App\CommonHandler;
+use Ufw1@gCommonHandler;
 
 class Files extends CommonHandler
 {
-    use \App\FileTrait;
+    use \Ufw1\FileTrait;
 
     /**
      * Lists all uploaded files.
@@ -479,7 +479,7 @@ class Files extends CommonHandler
         }
 
         if ($link = $request->getParam("link")) {
-            $f = \App\Util::fetchFile($link);
+            $f = \Ufw1\Util::fetchFile($link);
             if (preg_match('@^image/@', $f["type"])) {
                 $name = "unnamed.jpg";
                 $type = $f["type"];

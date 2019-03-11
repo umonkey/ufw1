@@ -7,12 +7,12 @@ namespace Ufw1\Handlers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
-use App\CommonHandler;
+use Ufw1@gCommonHandler;
 
 
 class Wiki extends CommonHandler
 {
-    use \App\FileTrait;
+    use \Ufw1\FileTrait;
 
     /**
      * Display a single page.
@@ -111,7 +111,7 @@ class Wiki extends CommonHandler
         $comment = null;
 
         if ($link = $request->getParam("link")) {
-            $file = \App\Common::fetch($link);
+            $file = \Ufw1\Common::fetch($link);
             if ($file["status"] == 200) {
                 $name = basename(explode("?", $link)[0]);
                 $type = $file["headers"]["content-type"];
@@ -293,7 +293,7 @@ class Wiki extends CommonHandler
         elseif ($text = $request->getParam("text")) {
             if (preg_match('@^https?://[^\s]+$@', $text, $m)) {
                 $url = $m[0];
-                $doc = \App\Common::fetch($url);
+                $doc = \Ufw1\Common::fetch($url);
 
                 if (!empty($doc["error"])) {
                     $this->logger->error("wiki: error embedding {url}, error={error}", [
@@ -695,8 +695,8 @@ class Wiki extends CommonHandler
             return $html;
         }, $source);
 
-        $html = \App\Common::renderMarkdown($source);
-        $html = \App\Common::renderTOC($html);
+        $html = \Ufw1\Common::renderMarkdown($source);
+        $html = \Ufw1\Common::renderTOC($html);
 
         // Embed images.
         $html = preg_replace_callback('@\[\[image:([^]]+)\]\]@', function ($m) use ($node, &$res) {
@@ -781,11 +781,11 @@ class Wiki extends CommonHandler
 
         if (preg_match_all('@<img[^>]+>@', $html, $m)) {
             foreach ($m[0] as $_img) {
-                $attrs = \App\Util::parseHtmlAttrs($_img);
+                $attrs = \Ufw1\Util::parseHtmlAttrs($_img);
             }
         }
 
-        $html = \App\Util::cleanHtml($html);
+        $html = \Ufw1\Util::cleanHtml($html);
         $res["html"] = $html;
 
         return $res;
@@ -969,7 +969,7 @@ class Wiki extends CommonHandler
 
         if (preg_match_all('@<a(.+?)>@', $html, $m)) {
             foreach ($m[0] as $tag) {
-                $attrs = \App\Util::parseHtmlAttrs($tag);
+                $attrs = \Ufw1\Util::parseHtmlAttrs($tag);
                 if (!empty($attrs["href"]))
                     $links[] = $attrs;
             }

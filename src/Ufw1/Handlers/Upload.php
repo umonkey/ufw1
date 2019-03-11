@@ -12,7 +12,7 @@ namespace Ufw1\Handlers;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Slim\Http\UploadedFile;
-use App\CommonHandler;
+use Ufw1@gCommonHandler;
 
 class Upload extends CommonHandler
 {
@@ -47,7 +47,7 @@ class Upload extends CommonHandler
     {
         $link = $request->getParam("link");
         if (!empty($link)) {
-            $file = \App\Common::fetch($link);
+            $file = \Ufw1\Common::fetch($link);
             if ($file["status"] == 200) {
                 $real_name = $this->getFileName($link, $file);
 
