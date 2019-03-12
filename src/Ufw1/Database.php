@@ -75,6 +75,7 @@ class Database {
             $this->conn = new \PDO($this->dsn["name"], $this->dsn["user"], $this->dsn["password"]);
             $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
+			$this->conn->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
         }
 
         return $this->conn;
