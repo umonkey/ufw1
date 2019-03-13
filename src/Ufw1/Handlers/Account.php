@@ -31,14 +31,16 @@ class Account extends CommonHandler
             $password = $request->getParam("password");
             $next = $request->getParam("back");
 
-            $acc = $this->db->fetchOne("SELECT * FROM `accounts` WHERE `login` = ?", [$login]);
-            if (empty($acc)) {
+            $tmp = $this->node->where("`type` = 'user' AND `key` = ?", [$login]);
+            if (empty($tmp)) {
                 return $response->withJSON([
                     "message" => "Нет такого пользователя.",
                 ]);
+            } else {
+                $user = $tmp[0];
             }
 
-            if (!password_verify($password, $acc["password"])) {
+            if (!password_verify($password, $user["password"])) {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
 
                 $this->logger->debug("login: correct hash for password {password} would be {hash}.", [
@@ -51,22 +53,19 @@ class Account extends CommonHandler
                 ]);
             }
 
-            if ($acc["enabled"] == 0) {
+            if ($user["published"] == 0) {
                 return $response->withJSON([
                     "message" => "Учётная запись отключена.",
                 ]);
             }
 
             $this->sessionSave($request, [
-                "user_id" => $acc["id"],
-                "password" => $acc["password"],
+                "user_id" => $user["id"],
+                "password" => $user["password"],
             ]);
 
-            $this->db->update("accounts", [
-                "last_login" => strftime("%Y-%m-%d %H:%M:%S"),
-            ], [
-                "id" => $acc["id"],
-            ]);
+            $user["last_login"] = strftime("%Y-%m-%d %H:%M:%S");
+            $this->node->save($user);
 
             return $response->withJSON([
                 "redirect" => $next,
