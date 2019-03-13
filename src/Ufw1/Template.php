@@ -59,6 +59,20 @@ class Template
         $this->twig->addFilter(new \Twig\TwigFilter("sklo", function ($number, $one, $two, $many) {
             return \Ufw1\Util::plural($number, $one, $two, $many);
         }));
+
+        $this->twig->addFilter(new \Twig\TwigFilter("human_date", function ($dt) {
+            if (preg_match('@^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2}) (?<hour>\d{2}):(?<min>\d{2}):(?<sec>\d{2})$@', $dt, $m)) {
+                $months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+                $now = strftime("%Y");
+                if ($m["year"] == $now)
+                    $date = sprintf("%u %s", $m["day"], $months[$m["month"] - 1]);
+                else
+                    $date = sprintf("%u %s %u", $m["day"], $months[$m["month"] - 1], $m["year"]);
+                return $date;
+            }
+
+            return $dt;
+        }));
     }
 
     public function render($fileName, array $data = array())

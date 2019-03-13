@@ -39,8 +39,8 @@ class Search
                 ];
                 break;
             case "sqlite":
-                $sql = "SELECT `key`, `meta` FROM `search` WHERE `search` MATCH ? ORDER BY bm25(`search`, 0, 0, 50) LIMIT {$limit}";
-                $params = [$query];
+                $sql = "SELECT `key`, `meta` FROM `search` WHERE `search` MATCH :query ORDER BY bm25(`search`, 0, 0, 50) * CASE WHEN `title` = :query THEN 100 ELSE 1 END LIMIT {$limit}";
+                $params = [":query" => $query];
             break;
         }
 
