@@ -291,17 +291,17 @@ class CommonHandler
         ]);
     }
 
-    protected function notfound(Request $request)
+    protected function notfound()
     {
         throw new \Ufw1\Errors\NotFound();
     }
 
-    protected function unauthorized(Request $request)
+    protected function unauthorized()
     {
         throw new \Ufw1\Errors\Unauthorized();
     }
 
-    protected function forbidden(Request $request)
+    protected function forbidden()
     {
         throw new \Ufw1\Errors\Forbidden();
     }
