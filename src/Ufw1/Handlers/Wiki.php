@@ -879,7 +879,13 @@ class Wiki extends CommonHandler
                 if (count($parts) == 2) {
                     if (preg_match("@{$parts[0]}@u", $name, $m)) {
                         if ($src = $this->pageGet($parts[1])) {
-                            // TODO: handle placeholders.
+                            $reps = [];
+                            $reps["{{name}}"] = $name;
+                            foreach ($m as $k => $v)
+                                $reps['{{' . $k . '}}'] = $v;
+
+                            $src = str_replace(array_keys($reps), array_values($reps), $src);
+
                             return $src["source"];
                         }
                     }
