@@ -168,9 +168,14 @@ class CommonHandler
     protected function sessionSave(Request $request, array $data)
     {
         $sid = $this->sessionGetId($request);
+
         if (empty($sid)) {
-            $this->logger->debug("session is not set.");
-            return;
+            $sid = md5(microtime(true) . $_SERVER["REMOTE_ADDR"] . $_SERVER["REMOTE_PORT"]);
+            setcookie("session_id", $sid, time() + 86400 * 30, "/");
+
+            $this->logger->info("session {id} created.", [
+                "id" => $sid,
+            ]);
         }
 
         $now = strftime("%Y-%m-%d %H:%M:%S");
