@@ -52,7 +52,7 @@ class FileFactory
         return file_get_contents($fpath);
     }
 
-    public function add($name, $type, $body)
+    public function add($name, $type, $body, $parent = null)
     {
         $nodes = $this->container->get("node");
         $logger = $this->container->get("logger");
@@ -80,6 +80,7 @@ class FileFactory
 
         $node = [
             "type" => "file",
+			"parent" => $parent,
             "key" => $hash,
             "name" => $name,
             "fname" => $fname,
