@@ -41,6 +41,11 @@ class Error extends CommonHandler
             $status = 403;
         }
 
+        elseif ($e instanceof \Ufw1\Errors\NotFound) {
+            $tpl = "notfound.twig";
+            $status = 404;
+        }
+
         $response = $this->render($request, $tpl, $data);
         return $response->withStatus($status);
     }
