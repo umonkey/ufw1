@@ -89,12 +89,19 @@ class Wiki extends CommonHandler
                 $contents = $tmp["wanted"];
         }
 
+        $size = $this->file->getStorageSize();
+        if ($size >= 1073741824)
+            $size = sprintf("%.2f Гб", $size / 1073741824);
+        else
+            $size = sprintf("%.2f Мб", $size / 1048576);
+
         return $this->render($request, "wiki-edit.twig", [
             "page_name" => $pageName,
             "page_section" => $sectionName,
             "page_source" => $contents,
             "is_editable" => $canEdit,
             "body_class" => "wiki_edit",
+            "storage_size" => $size,
         ]);
     }
 
@@ -116,6 +123,14 @@ class Wiki extends CommonHandler
                 $body = $file["data"];
 
                 $comment = "Файл загружен [по ссылке]({$link}).\n\n";
+
+                $code = $this->addFile($name, $type, $body, $comment);
+                if ($code) {
+                    return $response->withJSON([
+                        "callback" => "editor_insert",
+                        "callback_args" => $code,
+                    ]);
+                }
             } else {
                 return $response->withJSON([
                     "message" => "Не удалось загрузить файл.",
@@ -124,20 +139,49 @@ class Wiki extends CommonHandler
         }
 
         elseif ($files = $request->getUploadedFiles()) {
-            if (!empty($files["file"])) {
-                $name = $files["file"]->getClientFilename();
-                $type = $files["file"]->getClientMediaType();
+            $items = [];
+
+            if (!empty($files["files"]) and is_array($files["files"]))
+                $items = $files["files"];
+
+            elseif (!empty($files["file"]))
+                $items[] = $files["file"];
+
+            $errors = 0;
+            $code = [];
+
+            foreach ($items as $item) {
+                if ($item->getError()) {
+                    $errors++;
+                    continue;
+                }
+
+                $name = $item->getClientFilename();
+                $type = $item->getClientMediaType();
 
                 $tmpdir = $this->file->getStoragePath();
                 $tmp = tempnam($tmpdir, "upload_");
-                $files["file"]->moveTo($tmp);
+                $item->moveTo($tmp);
                 $body = file_get_contents($tmp);
                 unlink($tmp);
-            } else {
-                return $response->withJSON([
-                    "message" => "Не удалось принять файл.",
-                ]);
+
+                if ($tmp = $this->addFile($name, $type, $body))
+                    $code[] = $tmp;
             }
+
+            $res = [];
+
+            if (empty($code)) {
+                $res["message"] = "Не удалось загурзить ни один файл.";
+            } else {
+                $res["callback"] = "editor_insert";
+                $res["callback_args"] = implode("\n", $code);
+
+                if ($errors)
+                    $res["message"] = "Не удалось принять некоторые файлы.";
+            }
+
+            return $response->withJSON($res);
         }
 
         $file = $this->file->add($name, $type, $body);
@@ -152,11 +196,34 @@ class Wiki extends CommonHandler
 
             $this->pageSave($pname, $text);
         }
+    }
 
-        return $response->withJSON([
-            "callback" => "editor_insert",
-            "callback_args" => "[[image:{$fid}]]",
-        ]);
+    /**
+     * Добавление файла в базу.
+     *
+     * Сохраняет файл, создаёт для него страницу, возвращает код для встраивания файла.
+     *
+     * @param string $name Имя файла.
+     * @param string $type Тип файла.
+     * @param string $body Содержимое файла.
+     * @return string Код для встраивания, например: [[image:123]]
+     **/
+    protected function addFile($name, $type, $body, $comment = null)
+    {
+        $file = $this->file->add($name, $type, $body);
+        $fid = $file["id"];
+
+        $pname = "File:" . $fid;
+        if (!($page = $this->pageGet($pname))) {
+            $text = "# {$name}\n\n";
+            $text .= "[[image:{$fid}]]\n\n";
+            if ($comment)
+                $text .= $comment;
+
+            $this->pageSave($pname, $text);
+        }
+
+        return "[[image:{$fid}]]";
     }
 
     /**
