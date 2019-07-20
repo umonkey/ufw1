@@ -166,6 +166,11 @@ class FileFactory
         return $path;
     }
 
+    public function getStorageSize()
+    {
+        return disk_free_space($this->getStoragePath());
+    }
+
     protected function getSettings()
     {
         static $settings = null;
