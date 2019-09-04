@@ -254,7 +254,9 @@ class Wiki extends CommonHandler
 
         // TODO: flush related cache.
 
-        return $response->withRedirect("/wiki?name=" . urlencode($name), 303);
+		return $response->withJSON([
+			"redirect" => "/wiki?name=" . urlencode($name),
+		]);
     }
 
     public function onBacklinks(Request $request, Response $response, array $args)
