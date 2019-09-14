@@ -29,7 +29,7 @@ class Account extends CommonHandler
         try {
             $login = $request->getParam("login");
             $password = $request->getParam("password");
-            $next = $request->getParam("back");
+            $next = $request->getParam("next");
 
             $tmp = $this->node->where("`type` = 'user' AND `key` = ?", [$login]);
             if (empty($tmp)) {

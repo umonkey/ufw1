@@ -93,10 +93,10 @@ class CommonHandler
     {
         $user = $this->getUser($request);
         if (empty($user))
-            $this->unauthorized();
+            throw new \Ufw1\Errors\Unauthorized;
 
         if ($user["published"] == 0)
-            $this->forbidden();
+            throw new \Ufw1\Errors\Forbidden;
 
         return $user;
     }
@@ -106,10 +106,10 @@ class CommonHandler
         $user = $this->requireUser($request);
 
         if (empty($user["role"]))
-            $this->forbidden();
+            throw new \Ufw1\Errors\Forbidden;
 
         if ($user["role"] != "admin")
-            $this->forbidden();
+            throw new \Ufw1\Errors\Forbidden;
 
         return $user;
     }
@@ -168,9 +168,14 @@ class CommonHandler
     protected function sessionSave(Request $request, array $data)
     {
         $sid = $this->sessionGetId($request);
+
         if (empty($sid)) {
-            $this->logger->debug("session is not set.");
-            return;
+            $sid = md5(microtime(true) . $_SERVER["REMOTE_ADDR"] . $_SERVER["REMOTE_PORT"]);
+            setcookie("session_id", $sid, time() + 86400 * 30, "/");
+
+            $this->logger->info("session {id} created.", [
+                "id" => $sid,
+            ]);
         }
 
         $now = strftime("%Y-%m-%d %H:%M:%S");
@@ -180,6 +185,51 @@ class CommonHandler
         $this->logger->debug("session {sid} updated.", [
             "sid" => $sid,
         ]);
+
+        return $sid;
+    }
+
+    /**
+     * Edit current session.
+     *
+     * Calls the callback function with current session data (if any).
+     * Creates the session if necessary,
+     * deletes it if callback returns empty data.
+     *
+     * @param Request $request Current request, to get the cookie from.
+     * @param mixed $callback Data editor.
+     * @return void
+     **/
+    protected function sessionEdit(Request $request, $callback)
+    {
+        if ($sid = $this->sessionGetId($request)) {
+            $cell = $this->db->fetchcell("SELECT `data` FROM `sessions` WHERE `id` = ?", [$sid]);
+            $data = $cell ? unserialize($cell) : [];
+        } else {
+            $sid = md5(microtime(true) . $_SERVER["REMOTE_ADDR"] . $_SERVER["REMOTE_PORT"]);
+            $data = [];
+        }
+
+        $data = $callback($data);
+
+        if ($data) {
+            $now = strftime("%Y-%m-%d %H:%M:%S");
+            $this->db->query("REPLACE INTO `sessions` (`id`, `updated`, `data`) VALUES (?, ?, ?)", [$sid, $now, serialize($data)]);
+
+            setcookie("session_id", $sid, time() + 86400 * 30, "/");
+
+            $this->logger->debug("session {id} updated.", [
+                "id" => $sid,
+            ]);
+        } else {
+            $this->db->query("DELETE FROM `sessions` WHERE `id` = ?", [$sid]);
+
+            $this->logger->debug("session {id} closed.", [
+                "id" => $sid,
+            ]);
+
+            setcookie("session_id", "", time() - 3600, "/");
+        }
     }
 
     /**
@@ -236,16 +286,17 @@ class CommonHandler
         $data["request"] = [
             "host" => $request->getUri()->getHost(),
             "path" => $request->getUri()->getPath(),
+            "uri" => strval($request->getUri()),
             "get" => $request->getQueryParams(),
         ];
 
-        $data["is_admin"] = $this->isAdmin($request);
-
-        if ($data["is_admin"]) {
-            $since = time() - 300;
-            $tasks = $this->db->fetchcell("SELECT COUNT(1) FROM `tasks` WHERE `created` < ?", [$since]);
-            if ((int)$tasks > 0)
-                $data["have_warnings"] = true;
+        if ($user = $this->getUser($request)) {
+            $data["user"] = $user;
+            $data["is_admin"] = $user["role"] == "admin";
+            unset($data["user"]["password"]);
+        } else {
+            $data["user"] = null;
+            $data["is_admin"] = false;
         }
 
         $lang = $data["language"];
@@ -289,21 +340,6 @@ class CommonHandler
             "channel" => $channel,
             "items" => $items,
         ]);
-    }
-
-    protected function notfound()
-    {
-        throw new \Ufw1\Errors\NotFound();
-    }
-
-    protected function unauthorized()
-    {
-        throw new \Ufw1\Errors\Unauthorized();
-    }
-
-    protected function forbidden()
-    {
-        throw new \Ufw1\Errors\Forbidden();
     }
 
     protected function search($query)
@@ -365,13 +401,15 @@ class CommonHandler
         if ($key === null)
             $key = $request->getUri()->getPath();
 
+        $ckey = md5($key);
+
         $cc = $request->getServerParam("HTTP_CACHE_CONTROL");
         $refresh = $cc == "no-cache";
 
         if ($request->getQueryParam("debug") == "tpl")
             $refresh = true;
 
-        $row = $refresh ? null : $this->db->fetchOne("SELECT * FROM `cache` WHERE `key` = ?", [$key]);
+        $row = $refresh ? null : $this->db->fetchOne("SELECT * FROM `cache` WHERE `key` = ?", [$ckey]);
         if (empty($row)) {
             $_tmp = $callback($request);
             if (!is_array($_tmp))
@@ -381,10 +419,10 @@ class CommonHandler
 
             $added = time();
 
-            $this->db->query("DELETE FROM `cache` WHERE `key` = ?", [$key]);
+            $this->db->query("DELETE FROM `cache` WHERE `key` = ?", [$ckey]);
 
             $this->db->insert("cache", [
-                "key" => $key,
+                "key" => $ckey,
                 "added" => $added,
                 "value" => $type . "|" . $body,
             ]);
@@ -454,5 +492,20 @@ class CommonHandler
     public function getBreadcrumbs(Request $request, array $data)
     {
         return [];
+    }
+
+    protected function forbidden()
+    {
+        throw new \Ufw1\Errors\Forbidden;
+    }
+
+    protected function unauthorized()
+    {
+        throw new \Ufw1\Errors\Unauthorized;
+    }
+
+    protected function notfound()
+    {
+        throw new \Ufw1\Errors\NotFound;
     }
 }

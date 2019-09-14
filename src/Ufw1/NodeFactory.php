@@ -22,10 +22,10 @@ class NodeFactory
             return $row;
         });
 
-		if ($callback)
-			$res = array_map($callback, $res);
+        if ($callback)
+            $res = array_map($callback, $res);
 
-		return $res;
+        return $res;
     }
 
     public function get($id)

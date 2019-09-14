@@ -80,7 +80,7 @@ class FileFactory
 
         $node = [
             "type" => "file",
-			"parent" => $parent,
+            "parent" => $parent,
             "key" => $hash,
             "name" => $name,
             "fname" => $fname,
@@ -95,7 +95,8 @@ class FileFactory
 
         $settings = $this->getSettings();
 
-        $fpath = $settings["path"] . "/" . $node["fname"];
+        $storage = $this->getStoragePath();
+        $fpath = $storage . "/" . $node["fname"];
 
         $fdir = dirname($fpath);
         if (!is_dir($fdir)) {
@@ -144,8 +145,8 @@ class FileFactory
 
     protected function getBodyPath(array $node)
     {
-        $settings = $this->container->get("settings")["files"];
-        $fpath = $settings["path"] . "/" . $node["fname"];
+        $storage = $this->getStoragePath();
+        $fpath = $storage . "/" . $node["fname"];
         return $fpath;
     }
 
@@ -158,10 +159,13 @@ class FileFactory
 
         $path = $settings["path"];
 
-        if (!is_dir($path))
-            throw new \RuntimeException("file storage does not exist");
-        elseif (!is_writable($path))
-            throw new \RuntimeException("file storage is not writable");
+        if (!is_dir($path)) {
+            $res = mkdir($path, 0775, true);
+            if ($res === false)
+                throw new \RuntimeException("file storage does not exist and could not be created: {$path}");
+        } elseif (!is_writable($path)) {
+            throw new \RuntimeException("file storage is not writable: {$path}");
+        }
 
         return $path;
     }
@@ -178,8 +182,10 @@ class FileFactory
         if ($settings === null) {
             $settings = $this->container->get("settings")["files"] ?? [];
 
+            $host = $_SERVER["SERVER_NAME"];
+
             $settings = array_merge([
-                "path" => $_SERVER["DOCUMENT_ROOT"] . "/../data",
+                "path" => dirname($_SERVER["DOCUMENT_ROOT"]) . "/data/files/" . $host,
                 "dmode" => 0775,
                 "fmode" => 0664,
             ], $settings);

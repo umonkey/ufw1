@@ -14,8 +14,54 @@ class Wiki extends CommonHandler
 {
     /**
      * Display a single page.
+     *
+     * TODO: не кэшировать если вики закрытая.
      **/
     public function onRead(Request $request, Response $response, array $args)
+    {
+        $name = $request->getQueryParam("name");
+
+        if (empty($name))
+            return $response->withRedirect("/wiki?name=Welcome", 301);
+
+        if (!$this->canReadPage($request))
+            return $this->forbidden();
+
+        $page = $this->pageGet($name);
+
+        if ($page and $name != $page["name"]) {
+            return $response->withRedirect("/wiki?name=" . urlencode($page["name"]), 301);
+        }
+
+        if (empty($page)) {
+            return $this->render($request, "wiki-nopage.twig", [
+                "title" => "Page not found",
+                "page_name" => $name,
+                "edit_link" => "/wiki/edit?name=" . urlencode($name),
+            ]);
+        }
+
+        $page = $this->pageProcess($page);
+
+        if (!empty($page["redirect"])) {
+            return $response->withRedirect("/wiki?name=" . urlencode($page["redirect"]));
+        }
+
+        $html = $this->renderHTML($request, "wiki-page.twig", [
+            "language" => $page["language"],
+            "page" => $page,
+            "canonical_link" => "/wiki?name=" . urlencode($name),
+            "edit_link" => "/wiki/edit?name=" . urlencode($name),
+        ]);
+
+        $response = $response->withHeader("Content-Type", "text/html; charset=utf-8")
+            ->withHeader("Content-Length", strlen($html));
+        $response->getBody()->write($html);
+
+        return $response;
+    }
+
+    public function onReadCached(Request $request, Response $response, array $args)
     {
         $name = $request->getQueryParam("name");
 
@@ -254,9 +300,9 @@ class Wiki extends CommonHandler
 
         // TODO: flush related cache.
 
-		return $response->withJSON([
-			"redirect" => "/wiki?name=" . urlencode($name),
-		]);
+        return $response->withJSON([
+            "redirect" => "/wiki?name=" . urlencode($name),
+        ]);
     }
 
     public function onBacklinks(Request $request, Response $response, array $args)
@@ -777,6 +823,10 @@ class Wiki extends CommonHandler
             $ih = "auto";
 
             list($w, $h) = $this->getImageSize($fileId);
+
+            if (!$w or !$h)
+                return "<!-- file {$fileId} does not exist -->";
+
             $rate = $w / $h;
 
             foreach ($parts as $part) {
@@ -859,15 +909,25 @@ class Wiki extends CommonHandler
         $file = $this->file->get($fileId);
 
         if ($file) {
-            $settings = $this->container->get("settings")["files"];
-            $fpath = $settings["path"] . "/" . $file["fname"];
-            $body = file_get_contents($fpath);
+            $storage = $this->file->getStoragePath();
+            $fpath = $storage . "/" . $file["fname"];
 
-            $img = imagecreatefromstring($body);
-            $w = imagesx($img);
-            $h = imagesy($img);
+            if (file_exists($fpath)) {
+                $body = file_get_contents($fpath);
 
-            return [$w, $h];
+                $img = imagecreatefromstring($body);
+                $w = imagesx($img);
+                $h = imagesy($img);
+
+                return [$w, $h];
+            }
+
+            $this->logger->warning("file {id} not found in the file system, path: {path}", [
+                "id" => $fileId,
+                "path" => $fpath,
+            ]);
+
+            return [null, null];
         }
 
         throw new \RuntimeException("file not found");
@@ -1021,8 +1081,23 @@ class Wiki extends CommonHandler
     protected function canReadPage(Request $request)
     {
         $settings = $this->container->get("settings");
-        $role = $settings["wiki"]["read_role"] ?? null;
-        return $role ? $this->requireRole($request, $role) : true;
+        $roles = $settings["wiki"]["require_role"] ?? [];
+
+        if (empty($roles))
+            return true;
+
+        $user = $this->getUser($request);
+
+        if (empty($user))
+            $this->unauthorized();
+
+        if ($user["published"] == 0)
+            $this->forbidden();
+
+        if (!in_array($user["role"], $roles))
+            $this->forbidden();
+
+        return true;
     }
 
     protected function canEditPage(Request $request)
