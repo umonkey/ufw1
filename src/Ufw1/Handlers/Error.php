@@ -22,7 +22,7 @@ class Error extends CommonHandler
         $data["path"] = $request->getUri()->getPath();
 
         $stack = $e->getTraceAsString();
-        $root = dirname(dirname(dirname(__DIR__)));
+        $root = dirname($_SERVER["DOCUMENT_ROOT"]);
         $stack = str_replace($root . "/", "", $stack);
 
         $data["e"] = [
@@ -30,6 +30,16 @@ class Error extends CommonHandler
             "message" => $e->getMessage(),
             "stack" => $stack,
         ];
+
+        if (@$_SERVER["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest") {
+            $message = "Ошибка {$data["e"]["class"]}: {$data["e"]["message"]}";
+            $message .= "\n\n" . $data["e"]["stack"];
+
+            return $response->withJSON([
+                "error" => $data["e"]["class"],
+                "message" => $message,
+            ]);
+        }
 
         if ($e instanceof \Ufw1\Errors\Unauthorized) {
             $tpl = "unauthorized.twig";
