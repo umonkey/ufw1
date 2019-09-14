@@ -150,11 +150,15 @@ class Logger implements LoggerInterface
         foreach (explode("\n", rtrim($message)) as $line)
             $text .= $prefix . rtrim($line) . PHP_EOL;
 
+        error_log($text);
+
+        /*
         $fp = fopen("php://stderr", "a");
         if ($fp === false)
             throw new \RuntimeException("could not open stderr for writing");
 
         fwrite($fp, $text);
         fflush($fp);
+        */
     }
 };
