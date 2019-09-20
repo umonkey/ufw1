@@ -52,6 +52,9 @@ class Wiki extends CommonHandler
             "page" => $page,
             "canonical_link" => "/wiki?name=" . urlencode($name),
             "edit_link" => "/wiki/edit?name=" . urlencode($name),
+            "jsdata" => json_encode([
+                "wiki_page" => $name,
+            ]),
         ]);
 
         $response = $response->withHeader("Content-Type", "text/html; charset=utf-8")
