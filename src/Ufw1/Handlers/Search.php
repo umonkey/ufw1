@@ -14,26 +14,26 @@ class Search extends CommonHandler
 {
     public function onGet(Request $request, Response $response, array $args)
     {
-        $query = $request->getParam("query");
-        if (!trim($query))
-            return $response->withRedirect("/wiki?name=%D0%92%D0%B2%D0%B5%D0%B4%D0%B5%D0%BD%D0%B8%D0%B5");
+        $query = trim($request->getParam("query"));
 
-        $results = $this->search($query);
+        if ($query) {
+            $results = $this->search($query);
 
-        /*
-        $this->db->insert("search_log", [
-            "date" => strftime("%Y-%m-%d %H:%M:%S"),
-            "query" => $query,
-            "results" => count($results),
-        ]);
-        */
+            $this->db->insert("search_log", [
+                "date" => strftime("%Y-%m-%d %H:%M:%S"),
+                "query" => $query,
+                "results" => count($results),
+            ]);
 
-        return $this->render($request, "search.twig", [
-            "query" => $query,
-            "wiki" => $this->findWikiPage($query),
-            "results" => $results,
-            "edit_link" => "/wiki/edit?name=" . urlencode($query),
-        ]);
+            return $this->render($request, "search.twig", [
+                "query" => $query,
+                "wiki" => $this->findWikiPage($query),
+                "results" => $results,
+                "edit_link" => "/wiki/edit?name=" . urlencode($query),
+            ]);
+        } else {
+            return $this->render($request, "search.twig", []);
+        }
     }
 
     /**
