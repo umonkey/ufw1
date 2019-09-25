@@ -41,6 +41,7 @@ class Wiki extends CommonHandler
             ]);
         }
 
+        $age = round((time() - strtotime($page["updated"])) / 86400);
         $page = $this->pageProcess($page);
 
         if (!empty($page["redirect"])) {
@@ -50,6 +51,7 @@ class Wiki extends CommonHandler
         $html = $this->renderHTML($request, "wiki-page.twig", [
             "language" => $page["language"],
             "page" => $page,
+            "page_age" => $age,
             "canonical_link" => "/wiki?name=" . urlencode($name),
             "edit_link" => "/wiki/edit?name=" . urlencode($name),
             "jsdata" => json_encode([
