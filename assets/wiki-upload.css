@@ -1,0 +1,26 @@
+/**
+ * Оформление формы загрузки файла.
+ **/
+form#dlg-upload .recent {
+    height: 85px;
+    margin: 5px 0 0;
+    white-space: nowrap;
+    overflow-x: scroll;
+    overflow-y: hidden;
+}
+form#dlg-upload .recent a {
+    display: inline-block;
+    vertical-align: top;
+    line-height: 0;
+    margin-right: 5px;
+    width: 75px;
+    height: 75px;
+    background-color: #fff;
+}
+form#dlg-upload .recent img {
+    width: 75px;
+    height: 75px;
+    margin: 0;
+    padding: 0;
+    object-fit: cover;
+}

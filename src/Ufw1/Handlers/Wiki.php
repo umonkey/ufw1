@@ -1189,4 +1189,41 @@ class Wiki extends CommonHandler
         $source = implode(PHP_EOL, $out);
         return $source;
     }
+
+    /**
+     * Вывод списка последних загруженных картинок.
+     **/
+    public function onRecentFilesJson(Request $request, Response $response, array $args)
+    {
+        $files = $this->node->where("`type` = 'file' AND `published` = 1 AND `id` IN (SELECT `id` FROM `nodes_file_idx` WHERE `kind` = 'photo') ORDER BY `created` DESC LIMIT 50");
+
+        $files = $this->fillNodes($files);
+
+        return $response->withJSON([
+            "files" => $files,
+        ]);
+    }
+
+    protected function fillNodes(array $nodes)
+    {
+        $nodes = array_map(function ($node) {
+            $res = [
+                "id" => (int)$node["id"],
+                "name" => $node["name"],
+            ];
+
+            $key = md5(mb_strtolower("File:" . $node["id"]));
+            if ($desc = $this->node->getByKey($key)) {
+                if (preg_match('@^# (.+)$@m', $desc["source"], $m)) {
+                    $res["name"] = trim($m[1]);
+                }
+            }
+
+            $res["name_html"] = htmlspecialchars($res["name"]);
+
+            return $res;
+        }, $nodes);
+
+        return $nodes;
+    }
 }
