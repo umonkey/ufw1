@@ -84,7 +84,7 @@ class S3
     public function putObject($dst, $src, $props = array())
     {
         if (!is_readable($src))
-            throw new RuntimeException("source file not readable: {$src}");
+            throw new \RuntimeException("source file not readable: {$src}");
 
         return $this->putObjectBody($dst, file_get_contents($src), $props);
     }
@@ -92,7 +92,7 @@ class S3
     public function putObjectBody($dst, $data, $props = [])
     {
         if ($dst[0] != "/")
-            throw new RuntimeException("remote path must be absolute");
+            throw new \RuntimeException("remote path must be absolute");
 
         $dst = $this->fixUnicodeTarget($dst);
 
@@ -206,7 +206,7 @@ class S3
 
                 $dur = $now - $reqts;
                 $rate = $ul / $dur;
-                $percent = $ul * 100 / $ult;
+                $percent = $ult ? $ul * 100 / $ult : 0;
 
                 $total = $ult;
 
