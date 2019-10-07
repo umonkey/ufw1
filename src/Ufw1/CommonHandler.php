@@ -368,11 +368,18 @@ class CommonHandler
     {
         static $ping = false;
 
+        $logger = $this->container->get("logger");
+
         $data["__action"] = $action;
 
         $id = $this->db->insert("taskq", [
             "priority" => $priority,
             "payload" => serialize($data),
+        ]);
+
+        $logger->debug("taskq: task {id} added with action {action}.", [
+            "id" => $id,
+            "action" => $action,
         ]);
 
         // Ping the server once per request.
@@ -384,6 +391,12 @@ class CommonHandler
             if (!empty($settings["taskq"][$domain]["ping_url"])) {
                 $url = $settings["taskq"][$domain]["ping_url"];
                 @file_get_contents($url);
+
+                $logger->info("taskq: ping sent to {url}", [
+                    "url" => $url,
+                ]);
+            } else {
+                $logger->info("taskq: ping_url not set.");
             }
         }
 
