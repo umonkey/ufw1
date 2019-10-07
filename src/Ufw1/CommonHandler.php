@@ -32,6 +32,8 @@ class CommonHandler
                 return $this->container->get("node");
             case "template":
                 return $this->container->get("template");
+            case "taskq":
+                return $this->container->get("taskq");
         }
     }
 
@@ -359,41 +361,33 @@ class CommonHandler
         }, $this->fts->search($query));
     }
 
-    protected function taskAdd($url, $args = [], $priority = 0)
+    /**
+     * Schedule task for background execution.
+     **/
+    protected function taskq($action, array $data = [], $priority = 0)
     {
-        try {
-            if ($args) {
-                $qs = [];
-                foreach ($args as $k => $v)
-                    $qs[] = urlencode($k) . '=' . urlencode($v);
-                $url .= "?" . implode("&", $qs);
+        static $ping = false;
+
+        $data["__action"] = $action;
+
+        $id = $this->db->insert("taskq", [
+            "priority" => $priority,
+            "payload" => serialize($data),
+        ]);
+
+        // Ping the server once per request.
+        if ($ping === false) {
+            $ping = true;
+
+            $domain = $_SERVER["HTTP_HOST"];
+            $settings = $this->container->get("settings");
+            if (!empty($settings["taskq"][$domain]["ping_url"])) {
+                $url = $settings["taskq"][$domain]["ping_url"];
+                @file_get_contents($url);
             }
-
-            $now = time();
-
-            $this->db->insert("tasks", [
-                "url" => $url,
-                "priority" => $priority,
-                "created" => $now,
-                "attempts" => 0,
-                "run_after" => $now,
-            ]);
-
-            $this->logger->debug("tasks: scheduled {url}", [
-                "url" => $url,
-            ]);
-        } catch (\Exception $e) {
-            $this->logger->debug("tasks: error scheduling {url}: {e}", [
-                "url" => $url,
-                "e" => [
-                    "message" => $e->getMessage(),
-                    "code" => $e->getCode(),
-                    "class" => get_class($e),
-                    "file" => $e->getFile(),
-                    "line" => $e->getLine(),
-                ],
-            ]);
         }
+
+        return $id;
     }
 
     protected function sendFromCache(Request $request, $callback, $key = null)
@@ -507,5 +501,10 @@ class CommonHandler
     protected function notfound()
     {
         throw new \Ufw1\Errors\NotFound;
+    }
+
+    protected function fail($message)
+    {
+        throw new \Ufw1\Errors\UserFailure($message);
     }
 }
