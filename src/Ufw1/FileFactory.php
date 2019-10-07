@@ -80,7 +80,6 @@ class FileFactory
 
         $node = array_merge($props, [
             "type" => "file",
-            "parent" => $parent,
             "key" => $hash,
             "name" => $name,
             "fname" => $fname,
@@ -91,7 +90,15 @@ class FileFactory
             "uploaded" => $now,
             "hash" => $hash,
             "published" => 1,
+            "files" => [],
         ]);
+
+        $node["files"]["original"] = [
+            "type" => $type,
+            "length" => strlen($body),
+            "storage" => "local",
+            "path" => $fname,
+        ];
 
         $settings = $this->getSettings();
 
