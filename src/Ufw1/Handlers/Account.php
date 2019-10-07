@@ -24,21 +24,25 @@ class Account extends CommonHandler
         ]);
     }
 
+    /**
+     * Handle the login form.
+     *
+     * Displayed from the Unauthorized error handler, in App\Handlers\Unauthorized,
+     * see src/App/Handlers/Unauthorized.php
+     **/
     public function onLogin(Request $request, Response $response, array $args)
     {
         try {
-            $login = $request->getParam("login");
+            $email = $request->getParam("email");
             $password = $request->getParam("password");
             $next = $request->getParam("next");
 
-            $tmp = $this->node->where("`type` = 'user' AND `key` = ?", [$login]);
-            if (empty($tmp)) {
-                return $response->withJSON([
-                    "message" => "Нет такого пользователя.",
-                ]);
-            } else {
-                $user = $tmp[0];
-            }
+            $nodes = $this->node->where("`type` = 'user' AND `id` IN (SELECT `id` FROM `nodes_user_idx` WHERE `email` = ?) ORDER BY `id`", [$email]);
+
+            if (empty($nodes))
+                $this->fail("Нет пользователя с таким адресом.");
+
+            $user = $nodes[0];
 
             if (!password_verify($password, $user["password"])) {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
@@ -48,15 +52,7 @@ class Account extends CommonHandler
                     "hash" => $hash,
                 ]);
 
-                return $response->withJSON([
-                    "message" => "Пароль не подходит.",
-                ]);
-            }
-
-            if ($user["published"] == 0) {
-                return $response->withJSON([
-                    "message" => "Учётная запись отключена.",
-                ]);
+                $this->fail("Пароль не подходит.");
             }
 
             $this->sessionSave($request, [
@@ -68,12 +64,76 @@ class Account extends CommonHandler
             $this->node->save($user);
 
             return $response->withJSON([
-                "redirect" => $next,
+                "redirect" => $next ? $next : "/",
             ]);
         } catch (\Exception $e) {
             return $response->withJSON([
                 "message" => $e->getMessage(),
             ]);
         }
+    }
+
+    public function onRegister(Request $request, Response $response, array $args)
+    {
+        $user = $this->getUser($request);
+
+        if ($request->getMethod() == "POST") {
+            $form = array_merge([
+                "name" => null,
+                "email" => null,
+                "password" => null,
+                "next" => null,
+            ], $request->getParsedBody());
+
+            $this->checkRegisterForm($form);
+
+            $nodes = $this->node->where("`type` = 'user' AND `key` = ?", [$form["email"]]);
+            if (count($nodes))
+                $this->fail("Пользователь с таким адресом уже есть.");
+
+            $node = array_merge($form, [
+                "type" => "user",
+                "published" => 0,
+                "role" => "nobody",
+                "password" => password_hash($form["password"], PASSWORD_DEFAULT),
+            ]);
+
+            // Первый регистрируемый пользователь всегда администратор.
+            $userCount = (int)$this->db->fetchcell("SELECT COUNT(*) FROM `nodes` WHERE `type` = 'user'");
+            if ($userCount == 0) {
+                $node["published"] = 1;
+                $node["role"] = "admin";
+            }
+
+            $node = $this->node->save($node);
+
+            $this->sessionSave($request, [
+                "user_id" => $node["id"],
+            ]);
+
+            return $response->withJSON([
+                "redirect" => $form["next"] ? $form["next"] : "/",
+            ]);
+        }
+
+        if ($user) {
+            $back = $_GET["back"] ?? "/";
+            return $response->withRedirect($back);
+        }
+
+        return $this->render($request, "register.twig");
+    }
+
+    protected function checkRegisterForm(array &$form)
+    {
+        $require = [
+            "name" => "Не указано имя.",
+            "email" => "Не указан почтовый адрес.",
+            "password" => "Не задан пароль.",
+        ];
+
+        foreach ($require as $k => $msg)
+            if (empty($form[$k]))
+                $this->fail($msg);
     }
 }
