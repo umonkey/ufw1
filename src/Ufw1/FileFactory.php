@@ -52,7 +52,7 @@ class FileFactory
         return file_get_contents($fpath);
     }
 
-    public function add($name, $type, $body, $parent = null)
+    public function add($name, $type, $body, array $props = [])
     {
         $nodes = $this->container->get("node");
         $logger = $this->container->get("logger");
@@ -78,7 +78,7 @@ class FileFactory
 
         $fname = substr($hash, 0, 1) . "/" . substr($hash, 1, 2) . "/" . $hash;
 
-        $node = [
+        $node = array_merge($props, [
             "type" => "file",
             "parent" => $parent,
             "key" => $hash,
@@ -91,7 +91,7 @@ class FileFactory
             "uploaded" => $now,
             "hash" => $hash,
             "published" => 1,
-        ];
+        ]);
 
         $settings = $this->getSettings();
 
