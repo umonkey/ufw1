@@ -73,6 +73,36 @@ class Template
 
             return $dt;
         }));
+
+        $this->twig->addFunction(new \Twig\TwigFunction("file_link", function ($node, $version = "original") {
+            if ($node["type"] != "file")
+                return "";
+
+            if (empty($node["files"][$version]))
+                return "";
+
+            $ver = array_merge([
+                "storage" => "local",
+                "path" => null,
+            ], $node["files"][$version]);
+
+            if (empty($ver["path"]))
+                return "";
+
+            if ($ver["storage"] == "s3") {
+                $settings = $this->container->get("settings");
+                if (!empty($settings["S3"]["bucket"])) {
+                    $link = "https://{$settings["S3"]["bucket"]}.s3.amazonaws.com/{$ver["path"]}";
+                    return $link;
+                }
+            }
+
+            elseif ($ver["storage"] == "local") {
+                return "/node/{$node["id"]}/download/{$version}";
+            }
+
+            return "";
+        }));
     }
 
     public function render($fileName, array $data = array())
