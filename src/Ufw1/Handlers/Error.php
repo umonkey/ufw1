@@ -32,6 +32,12 @@ class Error extends CommonHandler
         ];
 
         if (@$_SERVER["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest") {
+            if ($data["e"]["class"] == "Ufw1\Errors\UserFailure") {
+                return $response->withJSON([
+                    "message" => $e->getMessage(),
+                ]);
+            }
+
             $message = "Ошибка {$data["e"]["class"]}: {$data["e"]["message"]}";
             $message .= "\n\n" . $data["e"]["stack"];
 
