@@ -69,6 +69,10 @@ class TaskQ extends CommonHandler
             return sprintf($settings["exec_pattern"], $row["id"]);
         }, $rows);
 
+        $this->logger->debug("taskq: report {count} tasks to the master.", [
+            "count" => count($urls),
+        ]);
+
         return $response->withJSON([
             "urls" => $urls,
         ]);
@@ -81,10 +85,11 @@ class TaskQ extends CommonHandler
     {
         $method = $request->getMethod();
 
-        if ($method != "POST")
+        if ($method != "POST") {
             return $response->withJSON([
                 "message" => "Tasks must be started using POST.",
             ]);
+        }
 
         try {
             $this->db->beginTransaction();
@@ -100,6 +105,14 @@ class TaskQ extends CommonHandler
                 $this->handleTask($action, $payload);
 
                 $this->db->query("DELETE FROM `taskq` WHERE `id` = ?", [$id]);
+            } else {
+                $this->logger->debug("taskq: task {id} not found, probably finished already.", [
+                    "id" => $args["id"],
+                ]);
+
+                return $response->withJSON([
+                    "message" => "Finished already.",
+                ]);
             }
 
             $this->db->commit();
