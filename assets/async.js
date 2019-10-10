@@ -48,6 +48,11 @@ jQuery(function ($) {
         var msgbox = form.find(".msgbox");
         var pgbar = form.find(".progressbar");
 
+        if (pgbar.length == 0) {
+            form.append("<div class='progressbar'><div class='label'></div><div class='done'></div></div>");
+            pgbar = form.find(".progressbar");
+        }
+
         buttons.prop("disabled", true);
 
         msgbox.hide();
@@ -58,7 +63,7 @@ jQuery(function ($) {
             if ("console" in window) console.log("upload progress: " + percent + "%");
 
             if (true || total >= 102400) {
-                var mbs = function (bytes) { return Math.round(bytes / 1048576 * 100) / 100; };
+                var mbs = function (bytes) { return (Math.round(bytes / 1048576 * 100) / 100).toFixed(2); };
 
                 var label = mbs(loaded) + " MB / " + mbs(total) + " MB";
                 pgbar.find(".label").html(label);
