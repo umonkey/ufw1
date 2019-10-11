@@ -135,8 +135,6 @@ class TaskQ extends CommonHandler
     protected function getSettings(Request $request)
     {
         $settings = $this->container->get("settings")["taskq"];
-        $domain = $request->getUri()->getHost();
-        $settings = $settings[$domain] ?? [];
         return $settings;
     }
 }

@@ -347,8 +347,10 @@ class CommonHandler
     protected function search($query)
     {
         return array_map(function ($em) {
-            $name = $em["meta"]["title"] ?? substr($em["key"], 5);
-            $link = $em["meta"]["link"] ?? "/wiki?name=" . urlencode($name);
+            if (!($name = $em["meta"]["title"]))
+                $name = substr($em["key"], 5);
+            if (!($link = $em["meta"]["link"]))
+                $link = "/wiki?name=" . urlencode($name);
 
             return [
                 "link" => $link,
@@ -386,10 +388,9 @@ class CommonHandler
         if ($ping === false) {
             $ping = true;
 
-            $domain = $_SERVER["HTTP_HOST"];
             $settings = $this->container->get("settings");
-            if (!empty($settings["taskq"][$domain]["ping_url"])) {
-                $url = $settings["taskq"][$domain]["ping_url"];
+            if (!empty($settings["taskq"]["ping_url"])) {
+                $url = $settings["taskq"]["ping_url"];
                 @file_get_contents($url);
 
                 $logger->info("taskq: ping sent to {url}", [
