@@ -49,7 +49,7 @@ jQuery(function ($) {
         var pgbar = form.find(".progressbar");
 
         if (pgbar.length == 0) {
-            form.append("<div class='progressbar'><div class='label'></div><div class='done'></div></div>");
+            form.append("<div class='progressbar' style='display: none'><div class='label'></div><div class='done'></div></div>");
             pgbar = form.find(".progressbar");
         }
 
@@ -62,7 +62,7 @@ jQuery(function ($) {
         var show_progress = function (percent, loaded, total) {
             if ("console" in window) console.log("upload progress: " + percent + "%");
 
-            if (true || total >= 102400) {
+            if (total >= 100000) {
                 var mbs = function (bytes) { return (Math.round(bytes / 1048576 * 100) / 100).toFixed(2); };
 
                 var label = mbs(loaded) + " MB / " + mbs(total) + " MB";
