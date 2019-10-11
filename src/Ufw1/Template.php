@@ -84,18 +84,11 @@ class Template
             $ver = array_merge([
                 "storage" => "local",
                 "path" => null,
+                "url" => null,
             ], $node["files"][$version]);
 
-            if (empty($ver["path"]))
-                return "";
-
-            if ($ver["storage"] == "s3") {
-                $settings = $this->container->get("settings");
-                if (!empty($settings["S3"]["bucket"])) {
-                    $link = "https://{$settings["S3"]["bucket"]}.s3.amazonaws.com/{$ver["path"]}";
-                    return $link;
-                }
-            }
+            if (!empty($ver["url"]))
+                return $ver["url"];
 
             elseif ($ver["storage"] == "local") {
                 return "/node/{$node["id"]}/download/{$version}";
