@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a3a323f37cdb867aac25482d7a77fd23",
+    "content-hash": "128b09a2b2d9e44015236c1024ac5cdc",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -39,16 +39,16 @@
         },
         {
             "name": "league/commonmark",
-            "version": "0.19.3",
+            "version": "1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/commonmark.git",
-                "reference": "c6ecea928b432ae417fa9942840bbfd8c332448c"
+                "reference": "7a40f2b0931602c504c2a9692d9f1e33635fd5ef"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/commonmark/zipball/c6ecea928b432ae417fa9942840bbfd8c332448c",
-                "reference": "c6ecea928b432ae417fa9942840bbfd8c332448c",
+                "url": "https://api.github.com/repos/thephpleague/commonmark/zipball/7a40f2b0931602c504c2a9692d9f1e33635fd5ef",
+                "reference": "7a40f2b0931602c504c2a9692d9f1e33635fd5ef",
                 "shasum": ""
             },
             "require": {
@@ -78,7 +78,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "0.20-dev"
+                    "dev-master": "1.1-dev"
                 }
             },
             "autoload": {
@@ -105,7 +105,7 @@
                 "markdown",
                 "parser"
             ],
-            "time": "2019-06-18T18:29:15+00:00"
+            "time": "2019-06-29T11:19:01+00:00"
         },
         {
             "name": "league/commonmark-ext-table",
@@ -802,7 +802,7 @@
     ],
     "packages-dev": [],
     "aliases": [],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,

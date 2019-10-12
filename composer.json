@@ -15,7 +15,7 @@
         "slim/php-view": "^2.0",
         "monolog/monolog": "^1.17",
         "twig/twig": "^2.4",
-        "league/commonmark": "0.19.3",
+        "league/commonmark": "1.0.0",
         "league/commonmark-ext-table": "^2.1"
 	},
     "autoload": {
