@@ -2,6 +2,7 @@
     "name": "umonkey/ufw1",
     "type": "library",
     "description": "slim based website framework for pet projects",
+	"minimum-stability": "stable",
     "authors": [
         {
             "name": "Justin Forest",
