@@ -114,4 +114,14 @@ class Util
             return $tpl;
         };
     }
+
+	public static function runCompressor()
+	{
+		require __DIR__ . '/compress.php';
+
+		$map = include 'src/assets.php';
+		$compiler = new \Compiler($map);
+		$compiler->compile();
+		$compiler->compile_min();
+	}
 }
