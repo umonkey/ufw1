@@ -55,10 +55,14 @@ class CommonHandler
             return true;
 
         $account = $this->requireUser($request);
-        if ($account["role"] != $role)
-            throw new \Ufw1\Errors\Forbidden;
 
-        return true;
+		if (is_array($role) and in_array($account["role"], $role))
+			return true;
+
+		elseif (!is_array($role) and $account["role"] == $role)
+			return true;
+
+		throw new \Ufw1\Errors\Forbidden;
     }
 
     /**
