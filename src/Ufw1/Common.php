@@ -106,7 +106,7 @@ class Common
     public static function renderMarkdown($source)
     {
         $environment = \League\CommonMark\Environment::createCommonMarkEnvironment();
-        $environment->addExtension(new \Webuni\CommonMark\TableExtension\TableExtension());
+        $environment->addExtension(new \League\CommonMark\Ext\Table\TableExtension);
 
         $dp = new \League\CommonMark\DocParser($environment);
         $re = new \League\CommonMark\HtmlRenderer($environment);
