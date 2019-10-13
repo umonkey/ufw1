@@ -65,73 +65,84 @@ class FileFactory
                 "name" => $old["fname"],
             ]);
 
-            return $old;
-        }
+			$node = $old;
+        } else {
+			$kind = "other";
+			if (0 === strpos($type, "image/"))
+				$kind = "photo";
+			elseif (0 === strpos($type, "video/"))
+				$kind = "video";
 
-        $kind = "other";
-        if (0 === strpos($type, "image/"))
-            $kind = "photo";
-        elseif (0 === strpos($type, "video/"))
-            $kind = "video";
+			$now = strftime("%Y-%m-%d %H:%M:%S");
 
-        $now = strftime("%Y-%m-%d %H:%M:%S");
+			$fname = substr($hash, 0, 1) . "/" . substr($hash, 1, 2) . "/" . $hash;
 
-        $fname = substr($hash, 0, 1) . "/" . substr($hash, 1, 2) . "/" . $hash;
+			$node = array_merge($props, [
+				"type" => "file",
+				"key" => $hash,
+				"name" => $name,
+				"fname" => $fname,
+				"kind" => $kind,
+				"mime_type" => $type,
+				"length" => strlen($body),
+				"created" => $now,
+				"uploaded" => $now,
+				"hash" => $hash,
+				"published" => 1,
+				"files" => [],
+			]);
 
-        $node = array_merge($props, [
-            "type" => "file",
-            "key" => $hash,
-            "name" => $name,
-            "fname" => $fname,
-            "kind" => $kind,
-            "mime_type" => $type,
-            "length" => strlen($body),
-            "created" => $now,
-            "uploaded" => $now,
-            "hash" => $hash,
-            "published" => 1,
-            "files" => [],
-        ]);
+			$node["files"]["original"] = [
+				"type" => $type,
+				"length" => strlen($body),
+				"storage" => "local",
+				"path" => $fname,
+			];
 
-        $node["files"]["original"] = [
-            "type" => $type,
-            "length" => strlen($body),
-            "storage" => "local",
-            "path" => $fname,
-        ];
+			if (substr($type, 0, 6) == 'image/') {
+				if ($img = @imagecreatefromstring($body)) {
+					$node['files']['original']['width'] = imagesx($img);
+					$node['files']['original']['height'] = imagesy($img);
+				} else {
+					$logger->warning('FileFactory: could not read image of type {type}', [
+						'type' => $type,
+					]);
+				}
+			}
 
-        $settings = $this->getSettings();
+			$settings = $this->getSettings();
 
-        $storage = $this->getStoragePath();
-        $fpath = $storage . "/" . $node["fname"];
+			$storage = $this->getStoragePath();
+			$fpath = $storage . "/" . $node["fname"];
 
-        $fdir = dirname($fpath);
-        if (!is_dir($fdir)) {
-            $res = @mkdir($fdir, $settings["dmode"], true);
-            if ($res === false) {
-                $logger->error("files: error creating folder {dir}", [
-                    "dir" => $fdir,
-                ]);
-                throw new \RuntimeException("error saving file");
-            }
-        }
+			$fdir = dirname($fpath);
+			if (!is_dir($fdir)) {
+				$res = @mkdir($fdir, $settings["dmode"], true);
+				if ($res === false) {
+					$logger->error("files: error creating folder {dir}", [
+						"dir" => $fdir,
+					]);
+					throw new \RuntimeException("error saving file");
+				}
+			}
 
-        $res = @file_put_contents($fpath, $body);
-        if ($res === false) {
-            $logger->error("files: error creating file {name}", [
-                "name" => $fpath,
-            ]);
-            throw new \RuntimeException("error saving file");
-        }
+			$res = @file_put_contents($fpath, $body);
+			if ($res === false) {
+				$logger->error("files: error creating file {name}", [
+					"name" => $fpath,
+				]);
+				throw new \RuntimeException("error saving file");
+			}
 
-        chmod($fpath, $settings["fmode"]);
+			chmod($fpath, $settings["fmode"]);
 
-        $node = $nodes->save($node);
+			$node = $nodes->save($node);
 
-        $logger->info("files: file {id} saved as {name}", [
-            "id" => $node["id"],
-            "name" => $node["fname"],
-        ]);
+			$logger->info("files: file {id} saved as {name}", [
+				"id" => $node["id"],
+				"name" => $node["fname"],
+			]);
+		}
 
         return $node;
     }
