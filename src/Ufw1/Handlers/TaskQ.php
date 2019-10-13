@@ -129,12 +129,63 @@ class TaskQ extends CommonHandler
 
     protected function handleTask($action, array $payload)
     {
-        throw new \RuntimeException(sprintf("method %s::%s does not exist", get_class($this), __FUNCTION__));
+        if ($action == "node-s3-upload")
+            return $this->onUploadNodeS3($payload["id"]);
+
+        $this->logger->warning("taskq: unhandled task with action={action}.", [
+            "action" => $action,
+        ]);
     }
 
     protected function getSettings(Request $request)
     {
         $settings = $this->container->get("settings")["taskq"];
         return $settings;
+    }
+
+	/**
+	 * Upload node files to S3, if configured.
+	 *
+	 * @param int $id Node id.
+	 **/
+    protected function onUploadNodeS3($id)
+    {
+		try {
+			$node = $this->node->get($id);
+
+			if (empty($node)) {
+				$this->logger->error("upload-s3: node {id} does not exist.", [
+					"id" => $id,
+				]);
+
+				return;
+			}
+
+			if ($node["type"] != "file") {
+				$this->logger->error("upload-s3: node {id} is {type}, not a file.", [
+					"id" => $id,
+					"type" => $node["type"],
+				]);
+			}
+
+			if ($this->container->has('thumbnailer')) {
+				$tn = $this->container->get('thumbnailer');
+				$node = $tn->updateNode($node);
+			}
+
+			$s3 = $this->container->get("S3");
+
+			$node = $s3->uploadNodeFiles($node);
+			$this->node->save($node);
+
+			$this->logger->info("upload-s3: node {id} sent to S3.", [
+				"id" => $id,
+			]);
+		} catch (\Exception $e) {
+			$this->logger->error('s3: error uploading node {id}: {message}', [
+				'id' => $id,
+				'message' => $e->getMessage(),
+			]);
+		}
     }
 }
