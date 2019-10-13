@@ -17,7 +17,7 @@ jQuery(function ($) {
 
             html += '<div class="form-group">';
             html += '<label>Или загрузи новый</label>';
-            html += '<input class="form-control autosubmit" type="file" name="file" accept="image/*"/>';
+            html += '<input class="form-control autosubmit" type="file" name="files[]" multiple accept="image/*"/>';
             html += '</div>';
 
             html += '<div class="form-group">';
