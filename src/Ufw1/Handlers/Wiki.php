@@ -264,6 +264,10 @@ class Wiki extends CommonHandler
         $file = $this->file->add($name, $type, $body);
         $fid = $file["id"];
 
+		$this->taskq('node-s3-upload', [
+			'id' => (int)$fid,
+		]);
+
         $pname = "File:" . $fid;
         if (!($page = $this->pageGet($pname))) {
             $text = "# {$name}\n\n";
@@ -817,6 +821,8 @@ class Wiki extends CommonHandler
             $parts = explode(":", $m[1]);
             $fileId = array_shift($parts);
 
+			// TODO: use S3 links
+
             $info = $this->node->get($fileId);
             if (empty($info) or $info["type"] != "file")
                 return "<!-- file {$fileId} does not exist -->";
@@ -855,8 +861,16 @@ class Wiki extends CommonHandler
                 $iw = round(150 * $rate) . "px";
             }
 
-            $small = "/i/thumbnails/{$fileId}.jpg";
-            $large = "/i/photos/{$fileId}.jpg";
+			if (isset($info['files']['medium']['url']))
+				$small = $info['files']['medium']['url'];
+			else
+				$small = "/i/thumbnails/{$fileId}.jpg";
+
+			if (isset($info['files']['original']['url']))
+				$large = $info['files']['original']['url'];
+			else
+				$large = "/i/photos/{$fileId}.jpg";
+
             $page = "/wiki?name=File:{$fileId}";
             $title = "untitled";
 
@@ -914,18 +928,23 @@ class Wiki extends CommonHandler
         $file = $this->file->get($fileId);
 
         if ($file) {
-            $storage = $this->file->getStoragePath();
-            $fpath = $storage . "/" . $file["fname"];
+			if (isset($file['files']['original']['width']) and isset($file['files']['original']['height']))
+				return [$file['files']['original']['width'], $file['files']['original']['height']];
 
-            if (file_exists($fpath)) {
-                $body = file_get_contents($fpath);
+			if ($file['files']['original']['storage'] == 'local') {
+				$storage = $this->file->getStoragePath();
+				$fpath = $storage . "/" . $file["fname"];
 
-                $img = imagecreatefromstring($body);
-                $w = imagesx($img);
-                $h = imagesy($img);
+				if (file_exists($fpath)) {
+					$body = file_get_contents($fpath);
 
-                return [$w, $h];
-            }
+					$img = imagecreatefromstring($body);
+					$w = imagesx($img);
+					$h = imagesy($img);
+
+					return [$w, $h];
+				}
+			}
 
             $this->logger->warning("file {id} not found in the file system, path: {path}", [
                 "id" => $fileId,
