@@ -113,6 +113,16 @@ class Util
             $tpl = new \Ufw1\Template($c);
             return $tpl;
         };
+
+        $container["thumbnailer"] = function ($c) {
+            $t = new \Ufw1\Thumbnailer($c);
+            return $t;
+        };
+
+		$container['taskq'] = function ($c) {
+			$tq = new \Ufw1\TaskQ($c);
+			return $tq;
+		};
     }
 
 	public static function runCompressor()

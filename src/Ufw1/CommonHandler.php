@@ -372,40 +372,8 @@ class CommonHandler
      **/
     protected function taskq($action, array $data = [], $priority = 0)
     {
-        static $ping = false;
-
-        $logger = $this->container->get("logger");
-
-        $data["__action"] = $action;
-
-        $id = $this->db->insert("taskq", [
-            "priority" => $priority,
-            "payload" => serialize($data),
-        ]);
-
-        $logger->debug("taskq: task {id} added with action {action}.", [
-            "id" => $id,
-            "action" => $action,
-        ]);
-
-        // Ping the server once per request.
-        if ($ping === false) {
-            $ping = true;
-
-            $settings = $this->container->get("settings");
-            if (!empty($settings["taskq"]["ping_url"])) {
-                $url = $settings["taskq"]["ping_url"];
-                @file_get_contents($url);
-
-                $logger->info("taskq: ping sent to {url}", [
-                    "url" => $url,
-                ]);
-            } else {
-                $logger->info("taskq: ping_url not set.");
-            }
-        }
-
-        return $id;
+		$tq = $this->container->get('taskq');
+		return $tq->add($action, $data, $priority);
     }
 
     protected function sendFromCache(Request $request, $callback, $key = null)
@@ -525,4 +493,49 @@ class CommonHandler
     {
         throw new \Ufw1\Errors\UserFailure($message);
     }
+
+	/**
+	 * Reads the file from the file storage.
+	 *
+	 * @param string $name File name, eg: "1/12/12345".
+	 **/
+	protected function fsget($name)
+	{
+		$st = $this->container->get("settings");
+		if (empty($st['files']['path']))
+			throw new \RuntimeException('file storage not configured');
+
+		$path = $st['files']['path'] . '/' . $name;
+		if (!file_exists($path))
+			throw new \RuntimeException("file {$name} is not readable");
+
+		return file_get_contents($path);
+	}
+
+	protected function fsput($body)
+	{
+		$hash = md5($body);
+
+		$name = substr($hash, 0, 1) . '/' . substr($hash, 1, 2) . '/' . $hash;
+
+		$st = $this->container->get("settings");
+		if (empty($st['files']['path']))
+			throw new \RuntimeException('file storage not configured');
+
+		$path = $st['files']['path'] . '/' . $name;
+
+		$dir = dirname($path);
+		if (!is_dir($dir)) {
+			$res = mkdir($dir, 0775, true);
+			if ($res === false)
+				throw new \RuntimeException("could not create folder {$dir}");
+		}
+
+		if (!file_put_contents($path))
+			throw new \RuntimeException("file {$name} is not readable");
+
+		chmod($path, 0664);
+
+		return $name;
+	}
 }
