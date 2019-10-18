@@ -314,12 +314,16 @@ class Wiki extends CommonHandler
             }
         }
 
-        $this->pageSave($name, $text);
+        $node = $this->pageSave($name, $text);
 
         // TODO: flush related cache.
 
+		$next = isset($node['url'])
+			? $node['url']
+			: "/wiki?name=" . urlencode($name);
+
         return $response->withJSON([
-            "redirect" => "/wiki?name=" . urlencode($name),
+            "redirect" => $next,
         ]);
     }
 
