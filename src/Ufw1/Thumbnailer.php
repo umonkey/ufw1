@@ -33,30 +33,35 @@ class Thumbnailer
         if (!($config = @$this->container->get("settings")["thumbnails"]))
             return $node;
 
-        $original = null;
+        if (empty($node['files']['original']['storage'])) {
+            $this->container->get('logger')->debug('thumbnailer: node {0} has no original section.', [$node['id']]);
+            return $node;
+        }
+
+        $original = $this->getSource($node['files']['original']);
 
         foreach ($config as $key => $options) {
-            if ($force or empty($node["files"][$key])) {
-                if ($original === null)
-                    $original = $this->getSource($node["files"]["original"]);
+            if ($key == 'original')
+                continue;
 
+            if ($force or empty($node["files"][$key])) {
                 $img = @imageCreateFromString($original);
                 if (false === $img)
                     throw new \RuntimeException("error parsing image");
 
                 $img = $this->scaleImage($img, $options);
 
-				$type = $node['files']['original']['type'];
-				if ($type == 'image/png') {
-					ob_start();
-					imagepng($img, null, 9);
-					$res = ob_get_clean();
-				} else {
-					ob_start();
-					imagejpeg($img, null, 85);
-					$res = ob_get_clean();
-					$type = 'image/jpeg';
-				}
+                $type = $node['files']['original']['type'];
+                if ($type == 'image/png') {
+                    ob_start();
+                    imagepng($img, null, 9);
+                    $res = ob_get_clean();
+                } else {
+                    ob_start();
+                    imagejpeg($img, null, 85);
+                    $res = ob_get_clean();
+                    $type = 'image/jpeg';
+                }
 
                 $path = $this->filePut($res);
 
@@ -67,6 +72,7 @@ class Thumbnailer
                     "path" => $path,
                     "width" => imagesx($img),
                     "height" => imagesy($img),
+                    "url" => "/node/{$node['id']}/download/{$key}",
                 ];
             }
         }
@@ -92,48 +98,48 @@ class Thumbnailer
         return $res;
     }
 
-	/**
-	 * Downscale the image.
-	 *
-	 * Scales the image according to the specified size limits.  Never enlarges.
-	 *
-	 * @param resource $img Source image.
-	 * @param array $options Scale options: width, height, sharpen.
-	 * @return resource New image.
-	 **/
+    /**
+     * Downscale the image.
+     *
+     * Scales the image according to the specified size limits.  Never enlarges.
+     *
+     * @param resource $img Source image.
+     * @param array $options Scale options: width, height, sharpen.
+     * @return resource New image.
+     **/
     protected function scaleImage($img, array $options)
     {
         $options = array_merge([
             "width" => null,
             "height" => null,
-			"sharpen" => false,
+            "sharpen" => false,
         ], $options);
 
         $iw = imagesx($img);
         $ih = imagesy($img);
 
-		$scale = 1;
+        $scale = 1;
 
-		if ($options['width'] and $options['width'] < $iw)
-			$scale = $options['width'] / $iw;
+        if ($options['width'] and $options['width'] < $iw)
+            $scale = $options['width'] / $iw;
 
-		if ($options['height'] and $options['height'] < $ih)
-			$scale = min($scale, $options['height'] / $ih);
+        if ($options['height'] and $options['height'] < $ih)
+            $scale = min($scale, $options['height'] / $ih);
 
-		$nw = round($iw * $scale);
-		$nh = round($ih * $scale);
+        $nw = round($iw * $scale);
+        $nh = round($ih * $scale);
 
-		$dst = imagecreatetruecolor($nw, $nh);
+        $dst = imagecreatetruecolor($nw, $nh);
 
-		$res = imagecopyresampled($dst, $img, 0, 0, 0, 0, $nw, $nh, $iw, $ih);
-		if (false === $res)
-			throw new \RuntimeException("could not resize the image");
+        $res = imagecopyresampled($dst, $img, 0, 0, 0, 0, $nw, $nh, $iw, $ih);
+        if (false === $res)
+            throw new \RuntimeException("could not resize the image");
 
-		imagedestroy($img);
-		$img = $dst;
+        imagedestroy($img);
+        $img = $dst;
 
-		if ($options['sharpen'])
-			$img = $this->sharpenImage($img);
+        if ($options['sharpen'])
+            $img = $this->sharpenImage($img);
 
         return $img;
     }
@@ -168,8 +174,8 @@ class Thumbnailer
         if ($file["storage"] == "local") {
             $st = $this->container->get("settings")["files"]["path"];
             $src = $st . "/" . $file["path"];
-			if (!is_readable($src))
-				throw new \RuntimeException("source file {$file['path']} does not exist");
+            if (!is_readable($src))
+                throw new \RuntimeException("source file {$file['path']} does not exist");
             return file_get_contents($src);
         }
 
@@ -177,7 +183,8 @@ class Thumbnailer
             $st = $this->container->get("settings")["S3"];
             $bucket = $st["bucket"];
             $endpoint = $st["endpoint"];
-            $url = "https://{$bucket}.{$endpoint}/{$file["path"]}";
+            // $url = "https://{$bucket}.{$endpoint}/{$file["path"]}";
+            $url = $file['url'];
             $data = @file_get_contents($url);
             return $data;
         }
