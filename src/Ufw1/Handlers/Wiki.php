@@ -20,7 +20,16 @@ class Wiki extends CommonHandler
     public function onRead(Request $request, Response $response, array $args)
     {
         $name = $request->getQueryParam("name");
+		return $this->showPageByName($request, $response, $name);
+    }
 
+	/**
+	 * Show a page by its name.
+	 *
+	 * Makes it possible to access pages with unusual routing.
+	 **/
+	protected function showPageByName(Request $request, Response $response, $name)
+	{
         if (empty($name))
             return $response->withRedirect("/wiki?name=Welcome", 301);
 
@@ -64,7 +73,7 @@ class Wiki extends CommonHandler
         $response->getBody()->write($html);
 
         return $response;
-    }
+	}
 
     public function onReadCached(Request $request, Response $response, array $args)
     {
@@ -1063,6 +1072,11 @@ class Wiki extends CommonHandler
         }
 
         $node["source"] = $source;
+
+		// Add YAML style properties, make them available for indexing.
+		$props = $this->getPageProperties($source);
+		$node = array_merge($props, $node);
+
         $node = $this->node->save($node);
 
         $key = "wiki:" . $node["name"];
@@ -1245,4 +1259,30 @@ class Wiki extends CommonHandler
 
         return $nodes;
     }
+
+	/**
+	 * Get extra page properties from the source.
+	 *
+	 * Properties are the YAML formatted stuff before the page body.
+	 *
+	 * @param string $source Page source code.
+	 * @return array Properties, if any.
+	 **/
+	protected function getPageProperties($source)
+	{
+		$props = [];
+
+		$lines = explode("\n", $source);
+		foreach ($lines as $line) {
+			$line = trim($line);
+
+			if (0 === strpos($line, '---'))
+				return $props;
+
+			if (preg_match('@^([a-z0-9_-]+):\s+(.+)$@i', $line, $m))
+				$props[$m[1]] = $m[2];
+		}
+
+		return [];
+	}
 }
