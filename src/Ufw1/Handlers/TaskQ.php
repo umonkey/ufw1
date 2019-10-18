@@ -143,49 +143,49 @@ class TaskQ extends CommonHandler
         return $settings;
     }
 
-	/**
-	 * Upload node files to S3, if configured.
-	 *
-	 * @param int $id Node id.
-	 **/
+    /**
+     * Upload node files to S3, if configured.
+     *
+     * @param int $id Node id.
+     **/
     protected function onUploadNodeS3($id)
     {
-		try {
-			$node = $this->node->get($id);
+        try {
+            $node = $this->node->get($id);
 
-			if (empty($node)) {
-				$this->logger->error("upload-s3: node {id} does not exist.", [
-					"id" => $id,
-				]);
+            if (empty($node)) {
+                $this->logger->error("upload-s3: node {id} does not exist.", [
+                    "id" => $id,
+                ]);
 
-				return;
-			}
+                return;
+            }
 
-			if ($node["type"] != "file") {
-				$this->logger->error("upload-s3: node {id} is {type}, not a file.", [
-					"id" => $id,
-					"type" => $node["type"],
-				]);
-			}
+            if ($node["type"] != "file") {
+                $this->logger->error("upload-s3: node {id} is {type}, not a file.", [
+                    "id" => $id,
+                    "type" => $node["type"],
+                ]);
+            }
 
-			if ($this->container->has('thumbnailer')) {
-				$tn = $this->container->get('thumbnailer');
-				$node = $tn->updateNode($node);
-			}
+            if ($this->container->has('thumbnailer')) {
+                $tn = $this->container->get('thumbnailer');
+                $node = $tn->updateNode($node);
+            }
 
-			$s3 = $this->container->get("S3");
+            $s3 = $this->container->get("S3");
 
-			$node = $s3->uploadNodeFiles($node);
-			$this->node->save($node);
+            $node = $s3->uploadNodeFiles($node);
+            $this->node->save($node);
 
-			$this->logger->info("upload-s3: node {id} sent to S3.", [
-				"id" => $id,
-			]);
-		} catch (\Exception $e) {
-			$this->logger->error('s3: error uploading node {id}: {message}', [
-				'id' => $id,
-				'message' => $e->getMessage(),
-			]);
-		}
+            $this->logger->info("upload-s3: node {id} sent to S3.", [
+                "id" => $id,
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('s3: error uploading node {id}: {message}', [
+                'id' => $id,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 }

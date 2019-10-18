@@ -80,10 +80,15 @@ class Account extends CommonHandler
         if ($request->getMethod() == "POST") {
             $form = array_merge([
                 "name" => null,
+                "first_name" => null,
+                "last_name" => null,
                 "email" => null,
                 "password" => null,
                 "next" => null,
             ], $request->getParsedBody());
+
+            if (empty($form['name']) and !empty($form['first_name']))
+                $form['name'] = $form['last_name'] . ' ' . $form['first_name'];
 
             $this->checkRegisterForm($form);
 

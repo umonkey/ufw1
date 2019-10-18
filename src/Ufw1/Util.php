@@ -119,19 +119,19 @@ class Util
             return $t;
         };
 
-		$container['taskq'] = function ($c) {
-			$tq = new \Ufw1\TaskQ($c);
-			return $tq;
-		};
+        $container['taskq'] = function ($c) {
+            $tq = new \Ufw1\TaskQ($c);
+            return $tq;
+        };
     }
 
-	public static function runCompressor()
-	{
-		require __DIR__ . '/compress.php';
+    public static function runCompressor()
+    {
+        require __DIR__ . '/compress.php';
 
-		$map = include 'src/assets.php';
-		$compiler = new \Compiler($map);
-		$compiler->compile();
-		$compiler->compile_min();
-	}
+        $map = include 'src/assets.php';
+        $compiler = new \Compiler($map);
+        $compiler->compile();
+        $compiler->compile_min();
+    }
 }
