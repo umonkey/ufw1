@@ -17,6 +17,14 @@ class NotFound extends CommonHandler
      **/
     public function __invoke(Request $request, Response $response, array $args)
     {
+        $tmp = $request->getServerParam('HTTP_X_REQUESTED_WITH');
+        if ($tmp == 'XMLHttpRequest') {
+            return $response->withJSON([
+                'status' => 'error',
+                'message' => 'Страница не найдена.',
+            ]);
+        }
+
         $response = $this->render($request, "notfound.twig");
         return $response->withStatus(404);
     }
