@@ -31,6 +31,8 @@ class Error extends CommonHandler
             "stack" => $stack,
         ];
 
+        $this->logger->error('exception: {class}: {message}, stack: {stack}', $data['e']);
+
         if (@$_SERVER["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest") {
             if ($data["e"]["class"] == "Ufw1\Errors\UserFailure") {
                 return $response->withJSON([
