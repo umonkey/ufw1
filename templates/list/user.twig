@@ -4,7 +4,8 @@
             <th>#</th>
             <th>Имя</th>
             <th>Email</th>
-            <th>Заегистрирован</th>
+            <th>Роль</th>
+            <th title='Дата регистрации'>Д/рег</th>
             <th><i title='Пользователь допущен' class="fas fa-eye"></i></th>
             <th/>
         </tr>
@@ -12,10 +13,11 @@
     <tbody>
         {% for n in nodes %}
             <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
-                <td class="number"><a href="/admin/nodes/{{ n.id }}/edit">{{ n.id }}</a></td>
-                <td>{{ n.name }}</td>
-                <td>{{ n.email }}</td>
-                <td>{{ n.created }}</td>
+                <td class="rowid">{{ n.id }}</td>
+                <td><a href="/admin/nodes/{{ n.id }}/edit">{% if n.name %}{{ n.name }}{% else %}без имени{% endif %}</a></td>
+                <td>{% if n.email %}<a href='mailto:{{ n.email }}'>{{ n.email }}</a>{% endif %}</td>
+                <td>{{ n.role }}</td>
+                <td>{{ n.created|date('%d.%m.%Y') }}</td>
                 <td style='text-align: center'>{% if n.published %}1{% else %}0{% endif %}</td>
                 <td><a href='/admin/nodes/{{ n.id }}/dump'><i class="far fa-question-circle"></i></a></td>
             </tr>
