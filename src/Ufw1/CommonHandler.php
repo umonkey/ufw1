@@ -56,13 +56,13 @@ class CommonHandler
 
         $account = $this->requireUser($request);
 
-		if (is_array($role) and in_array($account["role"], $role))
-			return true;
+        if (is_array($role) and in_array($account["role"], $role))
+            return true;
 
-		elseif (!is_array($role) and $account["role"] == $role)
-			return true;
+        elseif (!is_array($role) and $account["role"] == $role)
+            return true;
 
-		throw new \Ufw1\Errors\Forbidden;
+        throw new \Ufw1\Errors\Forbidden;
     }
 
     /**
@@ -372,8 +372,8 @@ class CommonHandler
      **/
     protected function taskq($action, array $data = [], $priority = 0)
     {
-		$tq = $this->container->get('taskq');
-		return $tq->add($action, $data, $priority);
+        $tq = $this->container->get('taskq');
+        return $tq->add($action, $data, $priority);
     }
 
     protected function sendFromCache(Request $request, $callback, $key = null)
@@ -489,53 +489,58 @@ class CommonHandler
         throw new \Ufw1\Errors\NotFound;
     }
 
+    protected function unavailable($message = null)
+    {
+        throw new \Ufw1\Errors\Unavailable($message);
+    }
+
     protected function fail($message)
     {
         throw new \Ufw1\Errors\UserFailure($message);
     }
 
-	/**
-	 * Reads the file from the file storage.
-	 *
-	 * @param string $name File name, eg: "1/12/12345".
-	 **/
-	protected function fsget($name)
-	{
-		$st = $this->container->get("settings");
-		if (empty($st['files']['path']))
-			throw new \RuntimeException('file storage not configured');
+    /**
+     * Reads the file from the file storage.
+     *
+     * @param string $name File name, eg: "1/12/12345".
+     **/
+    protected function fsget($name)
+    {
+        $st = $this->container->get("settings");
+        if (empty($st['files']['path']))
+            throw new \RuntimeException('file storage not configured');
 
-		$path = $st['files']['path'] . '/' . $name;
-		if (!file_exists($path))
-			throw new \RuntimeException("file {$name} is not readable");
+        $path = $st['files']['path'] . '/' . $name;
+        if (!file_exists($path))
+            throw new \RuntimeException("file {$name} is not readable");
 
-		return file_get_contents($path);
-	}
+        return file_get_contents($path);
+    }
 
-	protected function fsput($body)
-	{
-		$hash = md5($body);
+    protected function fsput($body)
+    {
+        $hash = md5($body);
 
-		$name = substr($hash, 0, 1) . '/' . substr($hash, 1, 2) . '/' . $hash;
+        $name = substr($hash, 0, 1) . '/' . substr($hash, 1, 2) . '/' . $hash;
 
-		$st = $this->container->get("settings");
-		if (empty($st['files']['path']))
-			throw new \RuntimeException('file storage not configured');
+        $st = $this->container->get("settings");
+        if (empty($st['files']['path']))
+            throw new \RuntimeException('file storage not configured');
 
-		$path = $st['files']['path'] . '/' . $name;
+        $path = $st['files']['path'] . '/' . $name;
 
-		$dir = dirname($path);
-		if (!is_dir($dir)) {
-			$res = mkdir($dir, 0775, true);
-			if ($res === false)
-				throw new \RuntimeException("could not create folder {$dir}");
-		}
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            $res = mkdir($dir, 0775, true);
+            if ($res === false)
+                throw new \RuntimeException("could not create folder {$dir}");
+        }
 
-		if (!file_put_contents($path))
-			throw new \RuntimeException("file {$name} is not readable");
+        if (!file_put_contents($path))
+            throw new \RuntimeException("file {$name} is not readable");
 
-		chmod($path, 0664);
+        chmod($path, 0664);
 
-		return $name;
-	}
+        return $name;
+    }
 }
