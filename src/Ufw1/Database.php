@@ -236,4 +236,43 @@ class Database {
     {
         return $this->fetchCell("SELECT `value` FROM `cache` WHERE `key` = ?", [$key]);
     }
+
+    /**
+     * Returns basic statistics on database tables.
+     *
+     * @return array Table info.
+     **/
+    public function getStats()
+    {
+        switch ($this->getConnectionType()) {
+            case "sqlite":
+                $tables = [];
+
+                $rows = $this->fetch("select name FROM sqlite_master WHERE `type` = 'table' ORDER BY name");
+                foreach ($rows as $row) {
+                    $tmp = $this->fetchOne("SELECT COUNT(1) AS `count` FROM `{$row["name"]}`");
+                    $tables[] = [
+                        "name" => $row["name"],
+                        "row_count" => (int)$tmp["count"],
+                    ];
+                }
+
+                break;
+
+            case "mysql":
+                $name = $this->fetchcell("SELECT DATABASE()");
+
+                $tables = $this->fetch("SELECT * FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? ORDER BY `table_name`", [$name], function ($row) {
+                    return [
+                        "name" => $row["TABLE_NAME"],
+                        "row_count" => (int)$row["TABLE_ROWS"],
+                        "length" => (int)$row["DATA_LENGTH"] + (int)$row["INDEX_LENGTH"],
+                    ];
+                });
+
+                break;
+        }
+
+        return $tables;
+    }
 }
