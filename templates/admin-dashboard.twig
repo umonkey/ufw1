@@ -1,0 +1,23 @@
+{% extends "base.twig" %}
+
+{% block page_title %}Список нод{% endblock %}
+
+{% block page_contents %}
+    <div class="page-header">
+        <h1>Управление сайтом</h1>
+    </div>
+
+    <p>Выбери интересующий раздел:</p>
+
+    <ul>
+        <li><a href='/admin/nodes'>Управление документами</a></li>
+        <li><a href='/admin/nodes/users'>Управление пользователями</a></li>
+    </ul>
+
+    <p>Справки:</p>
+
+    <ul>
+        <li><a href='/admin/database'>Состояние базы данных</a></li>
+        <li><a href='/admin/taskq'>Очередь задач</a></li>
+    </ul>
+{% endblock %}

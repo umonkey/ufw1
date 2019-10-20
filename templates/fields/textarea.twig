@@ -1,0 +1,7 @@
+<div class='form-group'>
+    <label>{{ field.label }}</label>
+    <textarea class='form-control' name='node[{{ key }}]'{% if field.required %} required{% endif %}>{{ node[key] }}</textarea>
+    {% if field.help %}
+        <p class='help-block'>{{ field.help }}</p>
+    {% endif %}
+</div>

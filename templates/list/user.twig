@@ -1,0 +1,28 @@
+<table class="table grid nodes">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Имя</th>
+            <th>Email</th>
+            <th>Заегистрирован</th>
+            <th><i title='Пользователь допущен' class="fas fa-eye"></i></th>
+            <th/>
+        </tr>
+    </thead>
+    <tbody>
+        {% for n in nodes %}
+            <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
+                <td class="number"><a href="/admin/nodes/{{ n.id }}/edit">{{ n.id }}</a></td>
+                <td>{{ n.name }}</td>
+                <td>{{ n.email }}</td>
+                <td>{{ n.created }}</td>
+                <td style='text-align: center'>{% if n.published %}1{% else %}0{% endif %}</td>
+                <td><a href='/admin/nodes/{{ n.id }}/dump'><i class="far fa-question-circle"></i></a></td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class='form-actions'>
+    <a class='btn btn-default' href='/admin/submit/user'>Добавить пользователя</a> или <a href='/admin'>вернуться назад</a>
+</div>

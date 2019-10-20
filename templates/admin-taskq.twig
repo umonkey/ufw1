@@ -1,0 +1,61 @@
+{% extends "base.twig" %}
+
+{% block page_title %}taskq{% endblock %}
+
+{% block page_contents %}
+    <div class="page-header">
+        <h1>Очередь фоновых задач</h1>
+        {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+            'label': 'Очередь задач',
+            'link': '/admin/taskq',
+        }]} %}
+        <p class='lead'>Фоновые задачи выполняются после выдачи ответа пользователю, чтобы не заставлять его ждать.&nbsp; Это отправка почты, изменение размеров картинок и прочие длительные операции.</p>
+    </div>
+
+    <h2>Настройки</h2>
+
+    <table class='grid'>
+        <tbody>
+            <tr>
+                <td>Пинг:</td>
+                <td><code><a href='{{ settings.ping_url }}' target='_blank'>{{ settings.ping_url }}</a></code></td>
+            </tr>
+            <tr>
+                <td>Обработчик:</td>
+                <td><code>{{ settings.exec_pattern }}</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Состояние очереди</h2>
+    {% if tasks %}
+        <p>Есть невыполненные фоновые задачи.</p>
+
+        <table class="table grid users">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>age</th>
+                    <th>action</th>
+                    <th class="number">attempts</th>
+                    <th class="number">pri</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tasks %}
+                    <tr>
+                        <td class="number">{{ t.id }}</td>
+                        <td class="number">{{ t.age }}</td>
+                        <td>{{ t.action }}</td>
+                        <td class="number">{{ t.attempts  }}</td>
+                        <td class="number">{{ t.priority }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Нет невыполненных задач, таблица <code>taskq</code> пуста, всё хорошо.</p>
+    {% endif %}
+
+    <p><a href='/admin'>Вернуться назад</a></p>
+{% endblock %}

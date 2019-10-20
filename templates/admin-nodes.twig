@@ -1,0 +1,36 @@
+{% extends "base.twig" %}
+
+{% block page_title %}Управление документами{% endblock %}
+
+{% block page_contents %}
+    <div class="page-header">
+        <h1>Последние документы</h1>
+        {% if selected_type %}
+            {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+                'label': 'Список документов',
+                'link': '/admin/nodes',
+            }, {
+                'label': selected_type,
+                'link': request.get.path,
+            }]} %}
+        {% else %}
+            {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+                'label': 'Список документов',
+                'link': request.get.path,
+            }]} %}
+        {% endif %}
+    </div>
+
+    {% if selected_type %}
+        {% set template %}list/{{ selected_type }}.twig{% endset %}
+        {% include [template, 'list/default.twig'] with {
+            'nodes': nodes,
+            'selected_type': selected_type,
+        } %}
+    {% else %}
+        {% include 'list/all.twig' with {
+            'nodes': nodes,
+            'selected_type': selected_type,
+        } %}
+    {% endif %}
+{% endblock %}

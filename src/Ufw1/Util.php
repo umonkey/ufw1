@@ -6,13 +6,22 @@ class Util
 {
     public static function cleanHtml($html)
     {
+        // See also the |type markdown filter.
+
         // Some typography.
-        $html = preg_replace('@\s+--\s+@', '&nbsp;— ', $html);
-        $html = preg_replace('@\.  @', '.&nbsp; ', $html);
+        //$html = preg_replace('@\s+--\s+@', '&nbsp;— ', $html);
+        //$html = preg_replace('@\.  @', '.&nbsp; ', $html);
+
+        // Closing tags should never have leading space.
+        $html = preg_replace('@\s+</([a-z0-9]+)>@', '</\1>', $html);
 
         // Clean up.
-        $html = preg_replace('@\s*<((html|head|body|div|ul|li|p|header|footer|meta|title|aside|form|input|main|h1|h2|h3|h4|h5|table|thead|tbody|tr|td|link|script|!--)(\s+[^>]+)?)>\s*@', '<\\1>', $html);
-        $html = preg_replace('@\s*</(html|head|body|div|ul|ol|li|form|input|aside|main|header|footer|table|thead|tbody|tr|td)>\s*@', '</\\1>', $html);
+        $all = "html|head|body|header|section|main|footer|aside|nav|div|p|ul|ol|li|input|select|option|label|textarea|button|meta|title|h1|h2|h3|h4|h5|script|style|link|table|thead|tfoot|tbody|tr|th|td|img|form";
+        $html = preg_replace($re = '@\s*<(' . $all . '|!--)([^>]*>)\s*@', '<\1\2', $html);
+        $html = preg_replace('@\s*</(' . $all . ')>\s*@ms', '</\1>', $html);
+
+        $html = preg_replace('@</a>\s+@', '</a> ', $html);
+        $html = preg_replace('@\s+</a>@', ' </a>', $html);
 
         return $html;
     }
@@ -133,5 +142,20 @@ class Util
         $compiler = new \Compiler($map);
         $compiler->compile();
         $compiler->compile_min();
+    }
+
+    /**
+     * Adds admin UI to the touring table.
+     **/
+    public static function addAdminRoutes(&$app)
+    {
+        $app->get ('/admin', '\App\Handlers\Admin:onDashboard');
+        $app->get ('/admin/database', '\App\Handlers\Admin:onDatabaseStatus');
+        $app->get ('/admin/nodes', '\App\Handlers\Admin:onNodeList');
+        $app->get ('/admin/nodes/{type}', '\App\Handlers\Admin:onNodeList');
+        $app->post('/admin/nodes/save', '\App\Handlers\Admin:onSaveNode');
+        $app->get ('/admin/nodes/{id:[0-9]+}/edit', '\App\Handlers\Admin:onEditNode');
+        $app->get ('/admin/nodes/{id:[0-9]+}/dump', '\App\Handlers\Admin:onDumpNode');
+        $app->get ('/admin/taskq', '\App\Handlers\Admin:onTaskQ');
     }
 }

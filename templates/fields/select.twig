@@ -1,0 +1,11 @@
+<div class='form-group'>
+    <label>{{ field.label }}</label>
+    <select class='form-control' name='node[{{ key }}]'>
+        {% for k, v in field.options %}
+            <option value='{{ k }}'{% if k == node[key] %} selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+    </select>
+    {% if field.help %}
+        <p class='help-block'>{{ field.help }}</p>
+    {% endif %}
+</div>

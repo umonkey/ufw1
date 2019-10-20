@@ -1,0 +1,24 @@
+<p>Показан список документов типа {{ selected_type }}; <a href='/admin/nodes'>показать все документы</a>?</p>
+
+<table class="table grid nodes">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Название</th>
+            <th>Создан</th>
+            <th><i title='Документ виден на сайте' class="fas fa-eye"></i></th>
+            <th/>
+        </tr>
+    </thead>
+    <tbody>
+        {% for n in nodes %}
+            <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
+                <td class="number"><a href="/admin/nodes/{{ n.id }}/edit">{{ n.id }}</a></td>
+                <td>{{ n.name }}</td>
+                <td>{{ n.created }}</td>
+                <td style='text-align: center'>{% if n.published %}1{% else %}0{% endif %}</td>
+                <td><a href='/admin/nodes/{{ n.id }}/dump'><i class="far fa-question-circle"></i></a></td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

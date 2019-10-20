@@ -1,0 +1,43 @@
+{% extends "base.twig" %}
+
+{% block page_title %}{{ form.edit_title }}{% endblock %}
+
+{% block page_contents %}
+    <div class="page-header">
+        <h1>{{ form.edit_title }}</h1>
+        {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+            'label': 'Список документов',
+            'link': '/admin/nodes',
+        }, {
+            'label': 'Редактирование',
+            'link': request.get.path,
+        }]} %}
+    </div>
+
+    <form class='async' action='/admin/nodes/save' method='post'>
+        <input type='hidden' name='node[id]' value='{{ node.id }}'/>
+
+        {% for key, field in form.fields %}
+            {% set template %}fields/{{ field.type }}.twig{% endset %}
+            {% include [template, 'fields/default.twig'] with {'node': node, 'field': field, 'key': key} %}
+        {% endfor %}
+
+        {% if not form.fields.published %}
+            <div class='form-group'>
+                <label class='checkbox'><input type='checkbox' name='node[published]' value='1'{% if node.published %} checked{% endif %} autocomplete='off'/> опубликовать документ</label>
+            </div>
+        {% endif %}
+
+        <div class='form-group'>
+            <label class='checkbox'><input type='checkbox' name='node[deleted]' value='1'{% if node.deleted %} checked{% endif %} autocomplete='off'/> удалить документ</label>
+        </div>
+
+        <div class='form-actions'>
+            <a class='btn btn-default' href='/admin/nodes/{{ node.id }}/dump'><i class="fas fa-bug"></i></a>
+            <button class='btn btn-primary'>Сохранить изменения</button> или <a href='/admin/nodes'>вернуться ко списку документов</a>
+        </div>
+
+        <div class='msgbox'></div>
+    </form>
+{% endblock %}
+

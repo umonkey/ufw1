@@ -1,0 +1,7 @@
+<div class='form-group'>
+    <label>{{ field.label }}</label>
+    <input class='form-control' type='text' name='node[{{ key }}]' value='{{ node[key] }}'{% if field.required %} required{% endif %}/>
+    {% if field.help %}
+        <p class='help-block'>{{ field.help }}</p>
+    {% endif %}
+</div>

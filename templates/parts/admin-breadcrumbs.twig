@@ -1,0 +1,7 @@
+<ol class='breadcrumbs'>
+    <li><a href='/'>Главная</a></li>
+    <li><a href='/admin'>Админка</a></li>
+    {% for item in path %}
+        <li><a href='{{ item.link }}'>{{ item.label }}</a></li>
+    {% endfor %}
+</ol>
