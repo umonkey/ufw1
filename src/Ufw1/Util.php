@@ -156,6 +156,7 @@ class Util
         $app->post('/admin/nodes/save', '\App\Handlers\Admin:onSaveNode');
         $app->get ('/admin/nodes/{id:[0-9]+}/edit', '\App\Handlers\Admin:onEditNode');
         $app->get ('/admin/nodes/{id:[0-9]+}/dump', '\App\Handlers\Admin:onDumpNode');
+        $app->get ('/admin/submit/{type}', '\App\Handlers\Admin:onSubmit');
         $app->get ('/admin/taskq', '\App\Handlers\Admin:onTaskQ');
     }
 }

@@ -26,5 +26,5 @@
 </table>
 
 <div class='form-actions'>
-    <a class='btn btn-default' href='/admin/submit/user'>Добавить пользователя</a> или <a href='/admin'>вернуться назад</a>
+    <a class='btn btn-default' href='/admin/submit/user?back={{ request.uri|url_encode }}'>Добавить пользователя</a> или <a href='{% if request.get.back %}{{ request.get.back }}{% else %}/admin{% endif %}'>вернуться назад</a>
 </div>
