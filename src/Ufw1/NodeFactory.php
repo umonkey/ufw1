@@ -53,7 +53,7 @@ class NodeFactory
 
         $now = strftime("%Y-%m-%d %H:%M:%S");
 
-        if (empty($node["create"]))
+        if (empty($node["created"]))
             $node["created"] = $now;
         $node["updated"] = $now;
 
@@ -117,6 +117,7 @@ class NodeFactory
             "created",
             "updated",
             "key",
+            "deleted",
             "published",
         ]);
     }
