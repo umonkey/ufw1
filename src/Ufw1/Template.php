@@ -22,7 +22,8 @@ class Template
             : [];
 
         $root = $settings["template_path"];
-        $loader = new \Twig\Loader\FilesystemLoader($root);
+        $fallback = __DIR__ . '/../../templates';
+        $loader = new \Twig\Loader\FilesystemLoader([$root, $fallback]);
         $this->twig = new \Twig\Environment($loader);
 
         $this->twig->addFilter(new \Twig\TwigFilter("markdown", function ($src) {
