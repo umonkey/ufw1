@@ -121,11 +121,19 @@ jQuery(function ($) {
     $(document).on("click", "a.async", function (e) {
         e.preventDefault();
 
-        $.ajax({
-            url: $(this).attr("href"),
-            dataType: "json",
-            type: $(this).hasClass("post") ? "POST" : "GET"
-        }).done(handle_ajax);
+        var props = {
+            'url': $(this).attr('href'),
+            'type': $(this).hasClass('post') ? 'POST' : 'GET',
+            'data': {
+                'next': $(this).data('next'),
+            }
+        };
+
+        var cnf = $(this).data('confirm');
+        if (cnf != undefined && !confirm(cnf))
+            return;
+
+        $.ajax(props).done(handle_ajax);
     });
 
     $(document).on("change", ".autosubmit", function (e) {
