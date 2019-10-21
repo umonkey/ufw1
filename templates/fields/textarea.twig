@@ -1,7 +1,7 @@
 <div class='form-group'>
     <label>{{ field.label }}</label>
-    <textarea class='form-control' name='node[{{ key }}]'{% if field.required %} required{% endif %}>{{ node[key] }}</textarea>
+    <textarea class='form-control{% if field.class %} {{ field.class }}{% endif %}' name='node[{{ key }}]'{% if field.required %} required{% endif %}{% if field.rows %} rows='{{ field.rows }}'{% endif %}>{{ node[key] }}</textarea>
     {% if field.help %}
-        <p class='help-block'>{{ field.help }}</p>
+        <p class='help-block'>{{ field.help|raw }}</p>
     {% endif %}
 </div>

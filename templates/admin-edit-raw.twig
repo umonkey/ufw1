@@ -4,7 +4,7 @@
 
 {% block page_contents %}
     <div class="page-header">
-        <h1>{{ form.edit_title }}</h1>
+        <h1>Редактирование исходника документа</h1>
         {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
             'label': 'Список документов',
             'link': '/admin/nodes',
@@ -12,6 +12,7 @@
             'label': 'Редактирование',
             'link': request.uri,
         }]} %}
+        <p class='lead'>Здесь можно изменить внутренние свойства документа, если это вдруг очень нужно, а форма редактирование не позволяет.</p>
     </div>
 
     <form class='async' action='/admin/nodes/save' method='post'>
@@ -24,7 +25,7 @@
 
         <div class='form-actions'>
             <button class='btn btn-primary'>Сохранить изменения</button>
-            <a class='btn btn-default' href='/admin/nodes/{{ node.id }}/edit{% if request.get.back %}?back={{ request.get.back }}{% endif %}' title='Редактировать сырец'><i class="fas fa-pen"></i></a>
+            <a class='btn btn-default btn-icon' href='/admin/nodes/{{ node.id }}/edit{% if request.get.back %}?back={{ request.get.back }}{% endif %}' title='Редактировать сырец'><i class="fas fa-pen"></i></a>
             или <a href='/admin/nodes'>вернуться ко списку документов</a>
         </div>
 

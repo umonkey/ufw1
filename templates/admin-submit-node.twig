@@ -31,7 +31,6 @@
         {% endif %}
 
         <div class='form-actions'>
-            <a class='btn btn-default' href='/admin/nodes/{{ node.id }}/dump'><i class="fas fa-bug"></i></a>
             <button class='btn btn-primary'>Сохранить изменения</button> или <a href='{% if request.get.back %}{{ request.get.back }}{% else %}/admin/nodes{% endif %}'>вернуться ко списку документов</a>
         </div>
 

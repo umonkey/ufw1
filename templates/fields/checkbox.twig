@@ -1,6 +1,6 @@
 <div class='form-group'>
     <label class='checkbox'><input type='checkbox' name='node[{{ key }}]' value='1'{% if node[key] %} checked{% endif %} autocomplete='off'/> {{ field.label }}</label>
     {% if field.help %}
-        <p class='help-block'>{{ field.help }}</p>
+        <p class='help-block'>{{ field.help|raw }}</p>
     {% endif %}
 </div>

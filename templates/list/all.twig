@@ -1,24 +1,32 @@
+<div class='node-actions'>
+    <form class='search'>
+        <input type='search' name='query' placeholder='Поиск по документам...' autocomplete='off' required/>
+        <button class='btn btn-primary' disabled><i class="fas fa-search"></i></button>
+        <a class='btn btn-primary' href='/admin/submit' title='Добавить документ'><i class="fas fa-plus"></i></a>
+    </form>
+</div>
+
 <table class="table grid nodes">
     <thead>
         <tr>
-            <th>#</th>
-            <th>Тип</th>
-            <th>Название</th>
-            <th>Создан</th>
             <th><i title='Документ виден на сайте' class="fas fa-eye"></i></th>
+            <th>Тип</th>
+            <th class='wide'>Название</th>
+            <th>Создан</th>
             <th/>
         </tr>
     </thead>
     <tbody>
         {% for n in nodes %}
             <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
-                <td class="rowid">{{ n.id }}</td>
+                <td><input class='published' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.published %} checked{% endif %}/></td>
                 <td><a href='/admin/nodes/{{ n.type }}'>{{ n.type }}</a></td>
                 <td><a href="/admin/nodes/{{ n.id }}/edit">{% if n.name %}{{ n.name }}{% else %}(без названия){% endif %}</a></td>
-                <td>{{ n.created|date_simple }}</td>
-                <td style='text-align: center'>{% if n.published %}1{% else %}0{% endif %}</td>
-                <td><a href='/admin/nodes/{{ n.id }}/dump'><i class="far fa-question-circle"></i></a></td>
+                <td class='nowrap'>{{ n.created|date_simple }}</td>
+                <td class='extlink'><a href='/node/{{ n.id }}' target='_blank'><i class="fas fa-sign-out-alt"></i></a></td>
             </tr>
         {% endfor %}
     </tbody>
 </table>
+
+<div class='msgbox'></div>
