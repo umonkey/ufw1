@@ -1,0 +1,24 @@
+<div class='form-group'>
+    <label>{{ field.label }}</label>
+    <table class='filevars table grid'>
+        <thead>
+            <tr>
+                <th>Ключ</th>
+                <th>Тип</th>
+                <th>Длина</th>
+                <th>Размер</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for k, v in node[key] %}
+                <tr>
+                    <td>{{ k }}</td>
+                    <td>{{ v.type }}</td>
+                    <td class='number'>{{ v.length|filesize }}</td>
+                    <td class='number'>{% if v.width %}{{ v.width }}×{{ v.height }}{% endif %}</td>
+                    <td>{% if v.url %}<a href='{{ v.url }}'>скачать</a>{% endif %}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
