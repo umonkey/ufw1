@@ -34,6 +34,9 @@
 
         <div class='form-actions'>
             <button class='btn btn-primary'>Сохранить изменения</button>
+            {% if false %}
+                <a class='btn btn-efault' href='/admin/nodes/{{ node.id }}/delete{% if request.get.back %}?back={{ request.get.back }}{% endif %}' title='Удалить объект'><i class="fas fa-ban"></i></a>
+            {% endif %}
             <a class='btn btn-default' href='/admin/nodes/{{ node.id }}/edit-raw{% if request.get.back %}?back={{ request.get.back }}{% endif %}' title='Редактировать сырец'><i class="fas fa-bug"></i></a>
             или <a href='/admin/nodes'>вернуться ко списку документов</a>
         </div>
