@@ -27,6 +27,7 @@ class S3
 
         $this->config = array_merge([
             "service" => "s3",
+            "debug" => true,
         ], $config["S3"]);
 
         $this->container = $container;
@@ -118,8 +119,12 @@ class S3
             "x-amz-storage-class" => $props["storage_class"],
             );
 
-        $res = $this->doRequest("PUT", "https://{$this->config["bucket"]}.{$this->config["endpoint"]}{$dst}", $headers, $data);
-        return $res;
+        $res = $this->doRequest("PUT", $_url = "https://{$this->config["bucket"]}.{$this->config["endpoint"]}{$dst}", $headers, $data);
+
+        if ($res[0]['status'] != 200)
+            $_url = null;
+
+        return [$res[0], $res[1], $_url];
     }
 
     protected function doRequest($method, $url, array $headers = [], $payload = "")
@@ -159,11 +164,13 @@ class S3
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
 
-        $this->logger->debug("S3: performing {method} request to {url}, headers: {headers}", [
-            "method" => $method,
-            "url" => $url,
-            "headers" => $headers,
-        ]);
+        if ($this->config['debug']) {
+            $this->logger->debug("S3: performing {method} request to {url}, headers: {headers}", [
+                "method" => $method,
+                "url" => $url,
+                "headers" => $headers,
+            ]);
+        }
 
         // Track incoming headers.
         $resHeaders = array();
@@ -171,23 +178,28 @@ class S3
             if (preg_match('@^HTTP/[0-9.]+ (\d+) .+@', $header, $m)) {
                 $resHeaders["status"] = $m[1];
 
-                $this->logger->debug("S3: response status: {status}", [
-                    "status" => $m[1],
-                ]);
-
+                if ($this->config['debug']) {
+                    $this->logger->debug("S3: response status: {status}", [
+                        "status" => $m[1],
+                    ]);
+                }
             } elseif (2 == count($parts = explode(":", $header, 2))) {
                 $k = strtolower($parts[0]);
                 $v = trim($parts[1]);
                 $resHeaders[$k] = $v;
 
-                $this->logger->debug("S3: response header: {k} = {v}", [
-                    "k" => $k,
-                    "v" => $v,
-                ]);
+                if ($this->config['debug']) {
+                    $this->logger->debug("S3: response header: {k} = {v}", [
+                        "k" => $k,
+                        "v" => $v,
+                    ]);
+                }
             } elseif (false) {
-                $this->logger->debug("S3: unrecognized header: {header}", [
-                    "header" => trim($header),
-                ]);
+                if ($this->config['debug']) {
+                    $this->logger->debug("S3: unrecognized header: {header}", [
+                        "header" => trim($header),
+                    ]);
+                }
             }
 
             return strlen($header);
@@ -210,12 +222,14 @@ class S3
 
                 $total = $ult;
 
-                $this->logger->debug("S3: sent {sent} of {total} KB ({percent}%), rate: {rate} KB/sec.", [
-                    "sent" => round($ul / 1024),
-                    "total" => round($ult / 1024),
-                    "percent" => round($percent),
-                    "rate" => sprintf("%.2f", $rate / 1024),
-                ]);
+                if ($this->config['debug']) {
+                    $this->logger->debug("S3: sent {sent} of {total} KB ({percent}%), rate: {rate} KB/sec.", [
+                        "sent" => round($ul / 1024),
+                        "total" => round($ult / 1024),
+                        "percent" => round($percent),
+                        "rate" => sprintf("%.2f", $rate / 1024),
+                    ]);
+                }
             }
         });
 
@@ -227,11 +241,13 @@ class S3
         $dur = $now - $reqts;
         $rate = $total / $dur;
 
-        $this->logger->debug("S3: file {name} sent ({size} KB), overall rate: {rate} KB/sec.", [
-            "name" => basename($url),
-            "size" => round($total / 1024),
-            "rate" => sprintf("%.2f", $rate / 1024),
-        ]);
+        if ($this->config['debug']) {
+            $this->logger->debug("S3: file {name} sent ({size} KB), overall rate: {rate} KB/sec.", [
+                "name" => basename($url),
+                "size" => round($total / 1024),
+                "rate" => sprintf("%.2f", $rate / 1024),
+            ]);
+        }
         */
 
         return array($resHeaders, $res);
