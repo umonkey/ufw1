@@ -33,8 +33,9 @@
         </div>
 
         <div class='form-actions'>
-            <a class='btn btn-default' href='/admin/nodes/{{ node.id }}/dump'><i class="fas fa-bug"></i></a>
-            <button class='btn btn-primary'>Сохранить изменения</button> или <a href='/admin/nodes'>вернуться ко списку документов</a>
+            <button class='btn btn-primary'>Сохранить изменения</button>
+            <a class='btn btn-default' href='/admin/nodes/{{ node.id }}/edit-raw{% if request.get.back %}?back={{ request.get.back }}{% endif %}' title='Редактировать сырец'><i class="fas fa-bug"></i></a>
+            или <a href='/admin/nodes'>вернуться ко списку документов</a>
         </div>
 
         <div class='msgbox'></div>
