@@ -1,0 +1,70 @@
+div.node-dump {
+    white-space: pre;
+    font-family: 'Fira Code', monospace;
+    background-color: #eee;
+    padding: 5px 10px;
+    overflow-x: auto;
+    font-size: 14px;
+}
+
+table.nodes tr.edited {
+    background-color: #e8e8e8;
+}
+
+table.nodes tr.unpublished {
+    color: #888;
+}
+table.nodes tr.unpublished a {
+    color: inherit;
+}
+table.nodes td.extlink a {
+    color: inherit;
+}
+table.nodes tr.unpublished td.extlink a {
+    display: none;
+}
+table.nodes .wide {
+    width: 100%;
+}
+table.nodes input[type=checkbox] {
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+code {
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+}
+
+.node-actions {
+    margin: -10px 0 20px 0;
+}
+
+form.search input {
+    box-sizing: border-box;
+    font-size: 14px;
+    line-height: 30px;
+    height: 30px;
+    border: solid 1px #ccc;
+    border-radius: 3px;
+    margin: 0;
+    display: inline-block;
+    width: calc(100% - 70px);
+    max-width: 100%;
+    padding: 0 10px;
+}
+form.search .btn {
+    width: 30px;
+    padding: 0;
+    text-align: center;
+    margin: 0 0 0 5px;
+}
+
+td.nowrap {
+    white-space: nowrap;
+}
+td.check {
+    text-align: center;
+}

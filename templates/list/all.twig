@@ -19,7 +19,7 @@
     <tbody>
         {% for n in nodes %}
             <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
-                <td><input class='published' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.published %} checked{% endif %}/></td>
+                <td class='check'><input class='published' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.published %} checked{% endif %}/></td>
                 <td><a href='/admin/nodes/{{ n.type }}'>{{ n.type }}</a></td>
                 <td><a href="/admin/nodes/{{ n.id }}/edit">{% if n.name %}{{ n.name }}{% else %}(без названия){% endif %}</a></td>
                 <td class='nowrap'>{{ n.created|date_simple }}</td>

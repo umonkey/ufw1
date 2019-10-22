@@ -1,0 +1,88 @@
+.form-group {
+    margin: 10px 0 20px;
+}
+.form-control {
+    display: block;
+}
+.form-actions {
+    margin-top: 10px;
+    line-height: 40px;
+}
+
+form .msgbox {
+    margin: 20px 0;
+    background-color: rgba(255, 0, 0, 0.25);
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: solid 1px rgba(255, 0, 0, 0.5);
+    display: none;
+}
+
+input[type=text].form-control,
+input[type=password].form-control,
+input[type=number].form-control,
+textarea.form-control {
+    border: 1px solid #ccc;
+    border-radius: 0px;
+    line-height: 30px;
+    padding: 0 10px;
+    width: 100%;
+    max-width: calc(100% - 22px);
+    background-color: #f8f8f8;
+}
+input[type=number].form-control {
+    width: 100px;
+}
+input[type=text].form-control.wide {
+    width: 100%;
+}
+textarea.form-control {
+    min-width: calc(100% - 22px);
+    max-width: calc(100% - 22px);
+    min-height: 50px;
+}
+textarea.code {
+    font-family: 'Fira Code', monospace;
+    line-height: 1.25em;
+    padding: 5px 10px;
+    white-space: pre;
+}
+textarea.markdown {
+    line-height: 1.5em;
+    padding: 10px 10px 10px 20px;
+}
+
+select.form-control {
+    display: block;
+    border: 1px solid #ccc;
+    border-radius: 0px;
+    line-height: 30px;
+    height: 30px;
+}
+
+label.checkbox {
+    cursor: pointer;
+    margin-bottom: -10px;
+}
+label.checkbox input[type=checkbox] {
+    margin: 0 5px 0 0;
+    vertical-align: middle;
+}
+
+p.help-block {
+    margin: .25em 0 .5em;
+    font-size: 14px;
+    color: #888;
+}
+p.help-block a {
+    color: inherit;
+}
+
+.form-control.radio {
+    cursor: pointer;
+    line-height: 30px;
+}
+.form-control.radio input {
+    vertical-align: middle;
+    margin: 0 5px 0 0;
+}

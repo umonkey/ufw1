@@ -1,0 +1,26 @@
+ol.breadcrumbs {
+    list-style-type: none;
+    margin: 10px 0;
+    padding: 0;
+    color: #aaa;
+}
+
+ol.breadcrumbs a {
+    color: inherit;
+}
+
+ol.breadcrumbs li {
+    display: inline-block;
+}
+ol.breadcrumbs li:after {
+    content: " » ";
+    margin-right: .25em;
+}
+
+ol.breadcrumbs li:last-child:after {
+    content: none;
+}
+ol.breadcrumbs li:last-child a {
+    text-decoration: none;
+    cursor: inherit;
+}
