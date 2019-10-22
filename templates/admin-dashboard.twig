@@ -2,10 +2,14 @@
 
 {% block page_title %}Список нод{% endblock %}
 
-{% block page_contents %}
+{% block page_header %}
     <div class="page-header">
         <h1>Управление сайтом</h1>
     </div>
+{% endblock %}
+
+{% block page_contents %}
+    {% include 'parts/admin-breadcrumbs.twig' with {'path': []} %}
 
     <p>Выбери интересующий раздел:</p>
 
@@ -19,5 +23,6 @@
     <ul>
         <li><a href='/admin/database'>Состояние базы данных</a></li>
         <li><a href='/admin/taskq'>Очередь задач</a></li>
+        <li><a href='/admin/s3'>Облачное хранилище</a> (S3)</li>
     </ul>
 {% endblock %}

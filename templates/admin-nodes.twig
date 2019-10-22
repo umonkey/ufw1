@@ -2,24 +2,27 @@
 
 {% block page_title %}Управление документами{% endblock %}
 
-{% block page_contents %}
+{% block page_header %}
     <div class="page-header">
         <h1>Последние документы</h1>
-        {% if selected_type %}
-            {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
-                'label': 'Список документов',
-                'link': '/admin/nodes',
-            }, {
-                'label': selected_type,
-                'link': request.get.path,
-            }]} %}
-        {% else %}
-            {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
-                'label': 'Список документов',
-                'link': request.get.path,
-            }]} %}
-        {% endif %}
     </div>
+{% endblock %}
+
+{% block page_contents %}
+    {% if selected_type %}
+        {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+            'label': 'Список документов',
+            'link': '/admin/nodes',
+        }, {
+            'label': selected_type,
+            'link': request.get.path,
+        }]} %}
+    {% else %}
+        {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+            'label': 'Список документов',
+            'link': request.get.path,
+        }]} %}
+    {% endif %}
 
     {% if selected_type %}
         {% set template %}list/{{ selected_type }}.twig{% endset %}

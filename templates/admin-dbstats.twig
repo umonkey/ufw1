@@ -2,18 +2,21 @@
 
 {% block page_title %}Состояние базы данных{% endblock %}
 
-{% block page_contents %}
+{% block page_header %}
     <div class="page-header">
         <h1>Состояние базы данных</h1>
-        {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
-            'label': 'Состояние БД',
-            'link': '/admin/database',
-        }]} %}
     </div>
+{% endblock %}
+
+{% block page_contents %}
+    {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+        'label': 'Состояние БД',
+        'link': '/admin/database',
+    }]} %}
 
     <p>Тип базы данных: {{ dbtype }}.</p>
 
-    <table class="table grid">
+    <table class="table lines">
         <thead>
             <tr>
                 <th>Таблица</th>

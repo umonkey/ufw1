@@ -2,15 +2,19 @@
 
 {% block page_title %}taskq{% endblock %}
 
-{% block page_contents %}
+{% block page_header %}
     <div class="page-header">
         <h1>Очередь фоновых задач</h1>
-        {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
-            'label': 'Очередь задач',
-            'link': '/admin/taskq',
-        }]} %}
-        <p class='lead'>Фоновые задачи выполняются после выдачи ответа пользователю, чтобы не заставлять его ждать.&nbsp; Это отправка почты, изменение размеров картинок и прочие длительные операции.</p>
     </div>
+{% endblock %}
+
+{% block page_contents %}
+    {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+        'label': 'Очередь задач',
+        'link': '/admin/taskq',
+    }]} %}
+
+    <p class='lead'>Фоновые задачи выполняются после выдачи ответа пользователю, чтобы не заставлять его ждать.&nbsp; Это отправка почты, изменение размеров картинок и прочие длительные операции.</p>
 
     <h2>Настройки</h2>
 

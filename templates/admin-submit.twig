@@ -2,17 +2,20 @@
 
 {% block page_title %}Добавление документа{% endblock %}
 
-{% block page_contents %}
+{% block page_header %}
     <div class="page-header">
         <h1>Создание документа</h1>
-        {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
-            'label': 'Список документов',
-            'link': '/admin/nodes',
-        }, {
-            'label': 'Новый документ',
-            'link': request.get.path,
-        }]} %}
     </div>
+{% endblock %}
+
+{% block page_contents %}
+    {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+        'label': 'Список документов',
+        'link': '/admin/nodes',
+    }, {
+        'label': 'Новый документ',
+        'link': request.get.path,
+    }]} %}
 
     <p>Выбери тип создаваемого документа:</p>
 

@@ -2,17 +2,20 @@
 
 {% block page_title %}{{ form.edit_title }}{% endblock %}
 
-{% block page_contents %}
+{% block page_header %}
     <div class="page-header">
         <h1>{{ form.edit_title }}</h1>
-        {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
-            'label': 'Список документов',
-            'link': '/admin/nodes',
-        }, {
-            'label': 'Редактирование',
-            'link': request.get.path,
-        }]} %}
     </div>
+{% endblock %}
+
+{% block page_contents %}
+    {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+        'label': 'Список документов',
+        'link': '/admin/nodes',
+    }, {
+        'label': 'Редактирование',
+        'link': request.get.path,
+    }]} %}
 
     <form class='async' action='/admin/nodes/save' method='post'>
         <input type='hidden' name='node[id]' value='{{ node.id }}'/>

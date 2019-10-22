@@ -1,30 +1,26 @@
-<table class="table grid nodes">
+<table class="table lines hover compact nodes">
     <thead>
         <tr>
-            <th>#</th>
+            <th><i title='Пользователь допущен' class="fas fa-eye"></i></th>
             <th>Имя</th>
             <th>Email</th>
             <th>Роль</th>
-            <th title='Дата регистрации'>Д/рег</th>
-            <th><i title='Пользователь допущен' class="fas fa-eye"></i></th>
-            <th/>
+            <th title='Дата регистрации'>Добавлен</th>
         </tr>
     </thead>
     <tbody>
         {% for n in nodes %}
             <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
-                <td class="rowid">{{ n.id }}</td>
+                <td class='check'>{% if n.id != user.id %}<input class='published' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.published %} checked{% endif %}/>{% endif %}</td>
                 <td><a href="/admin/nodes/{{ n.id }}/edit">{% if n.name %}{{ n.name }}{% else %}без имени{% endif %}</a></td>
                 <td>{% if n.email %}<a href='mailto:{{ n.email }}'>{{ n.email }}</a>{% endif %}</td>
                 <td>{{ n.role }}</td>
                 <td>{{ n.created|date('%d.%m.%Y') }}</td>
-                <td style='text-align: center'>{% if n.published %}1{% else %}0{% endif %}</td>
-                <td><a href='/admin/nodes/{{ n.id }}/dump'><i class="far fa-question-circle"></i></a></td>
             </tr>
         {% endfor %}
     </tbody>
 </table>
 
 <div class='form-actions'>
-    <a class='btn btn-default' href='/admin/submit/user?back={{ request.uri|url_encode }}'>Добавить пользователя</a> или <a href='{% if request.get.back %}{{ request.get.back }}{% else %}/admin{% endif %}'>вернуться назад</a>
+    <a class='btn btn-primary' href='/admin/submit/user?back={{ request.uri|url_encode }}'>Добавить пользователя</a> или <a href='{% if request.get.back %}{{ request.get.back }}{% else %}/admin{% endif %}'>вернуться назад</a>
 </div>
