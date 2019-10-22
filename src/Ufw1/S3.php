@@ -53,6 +53,10 @@ class S3
         $data = json_decode(json_encode($xml), true);
 
         if (array_key_exists("Contents", $data)) {
+            $contents = $data['Contents'];
+            if (isset($contents['Key']))
+                $contents = [$contents];
+
             $files = array_map(function ($em) use ($endpoint, $bucket) {
                 return [
                     "name" => $em["Key"],
@@ -60,7 +64,7 @@ class S3
                     "date" => $em["LastModified"],
                     "url" => $em["Key"][-1] == "/" ? null : "https://{$endpoint}/{$bucket}/{$em["Key"]}",
                 ];
-            }, $data["Contents"]);
+            }, $contents);
 
             return $files;
         }

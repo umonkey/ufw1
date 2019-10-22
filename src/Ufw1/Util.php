@@ -132,6 +132,11 @@ class Util
             $tq = new \Ufw1\TaskQ($c);
             return $tq;
         };
+
+        $container['S3'] = function ($c) {
+            $tq = new \Ufw1\S3($c);
+            return $tq;
+        };
     }
 
     public static function runCompressor()
