@@ -1,0 +1,59 @@
+{% extends "base.twig" %}
+
+{% block page_title %}Внешнее хранилище{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <h1>Файлы на внешнем хранилище</h1>
+    </div>
+{% endblock %}
+
+{% block page_contents %}
+    <p class='lead'>Файловое хранилище используется для хранения оригиналов загруженных пользователями файлов.&nbsp; Оно дешёвое, надёжное и снижает требования к размеру диска основного хостинга.&nbsp; Временные файлы всё ещё хранятся локально, но занимают они существенно меньше места.</p>
+
+    {% if config %}
+        <section>
+            <h2>Параметры хранилища</h2>
+            <table class="table lines compact">
+                <tbody>
+                    <tr>
+                        <th>Сервер</th>
+                        <td>{{ config.endpoint }}{% if config.endpoint == "s3.amazonaws.com" %} — <a href="https://s3.console.aws.amazon.com/s3/buckets/{{ config.bucket }}/?region={{ config.bucket_region }}" target="_blank">консоль</a>{% elseif config.endpoint == "storage.yandexcloud.net" %} — <a href="https://console.cloud.yandex.ru/" target="_blank">консоль</a>{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <th>Регион</th>
+                        <td>{{ config.bucket_region }}</td>
+                    </tr>
+                    <tr>
+                        <th>Каталог</th>
+                        <td>{{ config.bucket }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    {% endif %}
+
+    {% if files %}
+        <section>
+            <h2>Список файлов</h2>
+            <table class="table lines files">
+                <thead>
+                    <tr>
+                        <th>Название файла</th>
+                        <th class="number">Размер</th>
+                        <th>Дата</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in files %}
+                        <tr>
+                            <td>{% if f.url %}<a href="{{ f.url }}" target="_blank">{{ f.name }}</a>{% else %}{{ f.name }}{% endif %}</td>
+                            <td class="number" title="{{ f.size }} B">{{ f.size|megabytes }}</td>
+                            <td>{{ f.date }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    {% endif %}
+{% endblock %}

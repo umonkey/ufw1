@@ -293,6 +293,23 @@ class Admin extends CommonHandler
     }
 
     /**
+     * Shows the list of remote files.
+     **/
+    public function onS3(Request $request, Response $response, array $args)
+    {
+        $this->requireAdmin($request);
+
+        $s3 = $this->container->get("S3");
+        $files = $s3->getFileList();
+        $config = $this->container->get("settings")["S3"];
+
+        return $this->render($request, "admin-s3.twig", [
+            "files" => $files,
+            "config" => $config,
+        ]);
+    }
+
+    /**
      * Makes sure that the current user has access to the admin UI.
      *
      * @param Request $request Request information, for cookies etc.
