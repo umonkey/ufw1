@@ -45,65 +45,75 @@ class Compiler
         }
     }
 
-    public function read_sources(array $sources)
+    public function read_sources(array $patterns)
     {
         $res = array();
 
-        foreach ($sources as $src) {
-            if (!is_readable($src))
-                throw new RuntimeException("file {$src} not readable");
+        foreach ($patterns as $pattern) {
+            $files = glob($pattern);
+            sort($files);
 
-            $data = file_get_contents($src);
+            foreach ($files as $src) {
+                if (!is_readable($src))
+                    throw new RuntimeException("file {$src} not readable");
 
-            // Save file path, also close the unclosed comment from previous file.
-            $data = "/* {$src} */ {$data}";
+                $data = file_get_contents($src);
 
-            $res[] = $data;
+                // Save file path, also close the unclosed comment from previous file.
+                $data = "/* {$src} */ {$data}";
+
+                $res[] = $data;
+            }
         }
 
         return $res;
     }
 
-    public function read_sources_min(array $sources)
+    public function read_sources_min(array $patterns)
     {
         $res = array();
 
-        foreach ($sources as $src) {
-            if (!is_readable($src))
-                throw new RuntimeException("file {$src} not readable");
+        foreach ($patterns as $pattern) {
+            $files = glob($pattern);
+            sort($files);
 
-            if (!preg_match('@\.min\.(js|css)@', $src)) {
-                $tmp = explode(".", $src);
-                $ext = end($tmp);
-                $tmp = sys_get_temp_dir() . "/asset_" . md5(realpath($src)) . "." . $ext;
+            foreach ($files as $src) {
+                if (!is_readable($src))
+                    throw new RuntimeException("file {$src} not readable");
 
-                if (is_readable($tmp) and filemtime($tmp) > filemtime($src)) {
-                    $this->debug("reading {$src} (minified, from {$tmp})");
-                    $src = $tmp;  // ready and up to date
-                } elseif ($this->is_js($src)) {
-                    $data = file_get_contents($src);
-                    $data = JSMin::minify($data);
-                    $data = "/* {$src} */ {$data}";
-                    file_put_contents($tmp, $data);
-                    $this->debug("reading {$src} (re-minified, from {$tmp})");
-                    $src = $tmp;
-                } elseif ($this->is_css($src)) {
-                    $min = new CSSmin;
-                    $data = file_get_contents($src);
-                    $data = $min->run($data);
-                    $data = "/* {$src} */ {$data}";
-                    file_put_contents($tmp, $data);
-                    $this->debug("reading {$src} (re-minified, from {$tmp})");
-                    $src = $tmp;
+                if (!preg_match('@\.min\.(js|css)@', $src)) {
+                    $tmp = explode(".", $src);
+                    $ext = end($tmp);
+                    $tmp = sys_get_temp_dir() . "/asset_" . md5(realpath($src)) . "." . $ext;
+
+                    if (is_readable($tmp) and filemtime($tmp) > filemtime($src)) {
+                        $this->debug("reading {$src} (minified, from {$tmp})");
+                        $src = $tmp;  // ready and up to date
+                    } elseif ($this->is_js($src)) {
+                        $data = file_get_contents($src);
+                        $data = JSMin::minify($data);
+                        $data = "/* {$src} */ {$data}";
+                        file_put_contents($tmp, $data);
+                        $this->debug("reading {$src} (re-minified, from {$tmp})");
+                        $src = $tmp;
+                    } elseif ($this->is_css($src)) {
+                        $min = new CSSmin;
+                        $data = file_get_contents($src);
+                        $data = $min->run($data);
+                        $data = "/* {$src} */ {$data}";
+                        file_put_contents($tmp, $data);
+                        $this->debug("reading {$src} (re-minified, from {$tmp})");
+                        $src = $tmp;
+                    } else {
+                        throw new RuntimeException("unsupported source type: {$src}");
+                    }
                 } else {
-                    throw new RuntimeException("unsupported source type: {$src}");
+                    $this->debug("reading {$src}");
                 }
-            } else {
-                $this->debug("reading {$src}");
-            }
 
-            $data = file_get_contents($src);
-            $res[] = $data;
+                $data = file_get_contents($src);
+                $res[] = $data;
+            }
         }
 
         return $res;
