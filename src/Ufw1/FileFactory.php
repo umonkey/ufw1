@@ -40,18 +40,15 @@ class FileFactory
         if ($node["type"] != "file")
             return false;
 
-        $fpath = $this->getBodyPath($node);
-        if (!file_exists($fpath)) {
-            $logger->warning("files: file {name} does not exist.", [
-                "name" => $node["fname"],
-            ]);
-
-            return false;
-        }
-
-        return file_get_contents($fpath);
+        $body = $this->fsget($node['fname']);
+        return $body;
     }
 
+    /**
+     * Adds a new file to the database.
+     *
+     * Creates the node, prepares the thumbnails.  Schedules upload to S3.
+     **/
     public function add($name, $type, $body, array $props = [])
     {
         $nodes = $this->container->get("node");
@@ -59,90 +56,76 @@ class FileFactory
 
         $hash = md5($body);
 
-        if ($old = $nodes->getByKey($hash)) {
+        if ($old = $nodes->getByKey($hash) and $old['deleted'] == 0) {
             $logger->info("files: file {id} reused from {name}", [
                 "id" => $old["id"],
                 "name" => $old["fname"],
             ]);
 
-			$node = $old;
+            $node = $old;
         } else {
-			$kind = "other";
-			if (0 === strpos($type, "image/"))
-				$kind = "photo";
-			elseif (0 === strpos($type, "video/"))
-				$kind = "video";
+            $kind = "other";
+            if (0 === strpos($type, "image/"))
+                $kind = "photo";
+            elseif (0 === strpos($type, "video/"))
+                $kind = "video";
 
-			$now = strftime("%Y-%m-%d %H:%M:%S");
+            $now = strftime("%Y-%m-%d %H:%M:%S");
 
-			$fname = substr($hash, 0, 1) . "/" . substr($hash, 1, 2) . "/" . $hash;
+            $fname = $this->fsput($body);
 
-			$node = array_merge($props, [
-				"type" => "file",
-				"key" => $hash,
-				"name" => $name,
-				"fname" => $fname,
-				"kind" => $kind,
-				"mime_type" => $type,
-				"length" => strlen($body),
-				"created" => $now,
-				"uploaded" => $now,
-				"hash" => $hash,
-				"published" => 1,
-				"files" => [],
-			]);
+            $node = array_merge($props, [
+                "type" => "file",
+                "key" => $hash,
+                "name" => $name,
+                "kind" => $kind,
+                "mime_type" => $type,
+                "length" => strlen($body),
+                "created" => $now,
+                "uploaded" => $now,
+                "hash" => $hash,
+                "published" => 1,
+                "files" => [],
+            ]);
 
-			$node["files"]["original"] = [
-				"type" => $type,
-				"length" => strlen($body),
-				"storage" => "local",
-				"path" => $fname,
-			];
+            $node["files"]["original"] = [
+                "type" => $type,
+                "length" => strlen($body),
+                "storage" => "local",
+                "path" => $fname,
+            ];
 
-			if (substr($type, 0, 6) == 'image/') {
-				if ($img = @imagecreatefromstring($body)) {
-					$node['files']['original']['width'] = imagesx($img);
-					$node['files']['original']['height'] = imagesy($img);
-				} else {
-					$logger->warning('FileFactory: could not read image of type {type}', [
-						'type' => $type,
-					]);
-				}
-			}
+            $node = $nodes->save($node);
 
-			$settings = $this->getSettings();
+            $node['files']['original']['url'] = "/node/{$node['id']}/download/original";
 
-			$storage = $this->getStoragePath();
-			$fpath = $storage . "/" . $node["fname"];
+            if (substr($type, 0, 6) == 'image/') {
+                if ($img = @imagecreatefromstring($body)) {
+                    $node['files']['original']['width'] = imagesx($img);
+                    $node['files']['original']['height'] = imagesy($img);
+                } else {
+                    $logger->warning('FileFactory: could not read image of type {type}', [
+                        'type' => $type,
+                    ]);
+                }
+            }
 
-			$fdir = dirname($fpath);
-			if (!is_dir($fdir)) {
-				$res = @mkdir($fdir, $settings["dmode"], true);
-				if ($res === false) {
-					$logger->error("files: error creating folder {dir}", [
-						"dir" => $fdir,
-					]);
-					throw new \RuntimeException("error saving file");
-				}
-			}
+            if ($this->container->has('thumbnailer')) {
+                $tn = $this->container->get('thumbnailer');
+                $node = $tn->updateNode($node);
+            }
 
-			$res = @file_put_contents($fpath, $body);
-			if ($res === false) {
-				$logger->error("files: error creating file {name}", [
-					"name" => $fpath,
-				]);
-				throw new \RuntimeException("error saving file");
-			}
+            $node = $nodes->save($node);
 
-			chmod($fpath, $settings["fmode"]);
+            $logger->info("files: file {id} saved as {name}", [
+                "id" => $node["id"],
+                "name" => $node["fname"],
+            ]);
 
-			$node = $nodes->save($node);
-
-			$logger->info("files: file {id} saved as {name}", [
-				"id" => $node["id"],
-				"name" => $node["fname"],
-			]);
-		}
+            $this->container->get('taskq')->add('node-s3-upload', [
+                'id' => $node['id'],
+            ]);
+        }
 
         return $node;
     }
@@ -159,13 +142,6 @@ class FileFactory
         }
 
         return $node;
-    }
-
-    protected function getBodyPath(array $node)
-    {
-        $storage = $this->getStoragePath();
-        $fpath = $storage . "/" . $node["fname"];
-        return $fpath;
     }
 
     public function getStoragePath()
@@ -210,5 +186,51 @@ class FileFactory
         }
 
         return $settings;
+    }
+
+    /**
+     * Read contents of the specified file.
+     *
+     * @param string $path Local file path, e.g. '1/b9/1b9a744e14005e033fae6a45fd24f612'
+     * @return string File body, or false if it doesn't exist.
+     **/
+    public function fsget($path)
+    {
+        $st = $this->container->get('settings');
+        $storage = $st['files']['path'] ?? $_SERVER['DOCUMENT_ROOT'] . '/../data/files';
+
+        $fpath = $storage . '/' . $_SERVER['HTTP_HOST'] . '/' . $path;
+        if (!file_exists($fpath))
+            return false;
+
+        return file_get_contents($fpath);
+    }
+
+    /**
+     * Save file body to a file, return local path.
+     *
+     * @param string $body File contents.
+     * @return string Local path to the file, e.g.: '1/b9/1b9a744e14005e033fae6a45fd24f612'
+     **/
+    public function fsput($body)
+    {
+        $st = $this->container->get('settings');
+        $storage = $st['files']['path'] ?? $_SERVER['DOCUMENT_ROOT'] . '/../data/files';
+
+        $hash = md5($body);
+        $fname = substr($hash, 0, 1) . '/' . substr($hash, 1, 2) . '/' . $hash;
+
+        $fpath = $storage . '/' . $_SERVER['HTTP_HOST'] . '/' . $fname;
+        if (!is_dir($dir = dirname($fpath))) {
+            $res = mkdir($dir, 0775, true);
+            if ($res === false)
+                throw new \RuntimeException('could not create file folder');
+        }
+
+        $res = @file_put_contents($fpath, $body);
+        if ($res === false)
+            throw new \RuntimeException('error writing file');
+
+        return $fname;
     }
 }

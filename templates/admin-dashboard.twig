@@ -39,6 +39,8 @@
                     <li>Не настроена <a href='/admin/taskq'>очередь задач</a>, фоновые задачи не работают.</li>
                 {% elseif k == 's3_config' %}
                     <li>Не настроено <a href='/admin/s3'>облако S3</a>, файлы будут занимать место на диске.</li>
+                {% elseif k == 'file_storage' %}
+                    <li>Не настроено файловое хранилище (<code>settings.files.path</code>), загрузка файлов на сайт невозможна.</li>
                 {% endif %}
             {% endfor %}
         </ul>

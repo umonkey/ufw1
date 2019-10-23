@@ -63,7 +63,7 @@ class Thumbnailer
                     $type = 'image/jpeg';
                 }
 
-                $path = $this->filePut($res);
+                $path = $this->container->get('file')->fsput($res);
 
                 $node["files"][$key] = [
                     "type" => $type,
@@ -172,11 +172,7 @@ class Thumbnailer
     protected function getSource(array $file)
     {
         if ($file["storage"] == "local") {
-            $st = $this->container->get("settings")["files"]["path"];
-            $src = $st . "/" . $file["path"];
-            if (!is_readable($src))
-                throw new \RuntimeException("source file {$file['path']} does not exist");
-            return file_get_contents($src);
+            return $this->container->get('file')->fsget($file['path']);
         }
 
         elseif ($file["storage"] == "s3") {
@@ -192,32 +188,5 @@ class Thumbnailer
         else {
             throw new \RuntimeException("unsupported storage type: {$file["storage"]}");
         }
-    }
-
-    protected function filePut($body)
-    {
-        $st = array_merge([
-            "path" => null,
-            "dmode" => 0750,
-            "fmode" => 0640,
-        ], $this->container->get("settings")["files"]);
-
-        $hash = md5($body);
-        $path = substr($hash, 0, 1) . "/" . substr($hash, 1, 2) . "/" . $hash;
-
-        $dst = $st["path"] . "/" . $path;
-
-        $dir = dirname($dst);
-        if (!is_dir($dir))
-            mkdir($dir, $st["dmode"], true);
-
-        $res = file_put_contents($dst, $body);
-        if ($res === false) {
-            throw new \RuntimeException("error saving a file as {$path}");
-        } else {
-            chmod($dst, $st["fmode"]);
-        }
-
-        return $path;
     }
 }

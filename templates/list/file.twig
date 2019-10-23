@@ -2,7 +2,7 @@
     {% for f in nodes %}
         <div class='file'>
             {% if f.files.small %}
-                <a class='thumbnail' data-fancybox='list' data-src='{{ f.files.medium.url }}' href='/admin/nodes/{{ f.id }}/edit'>
+                <a class='thumbnail' data-fancybox='list' data-src='{% if f.files.medium %}{{ f.files.medium.url }}{% else %}{{ f.files.original.url }}{% endif %}' href='/admin/nodes/{{ f.id }}/edit'>
                     <img src='{{ f.files.small.url }}'/>
                 </a>
             {% endif %}

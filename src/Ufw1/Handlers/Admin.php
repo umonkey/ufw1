@@ -312,6 +312,50 @@ class Admin extends CommonHandler
     }
 
     /**
+     * Upload new files to the S3 cloud, via taskq.
+     **/
+    public function onScheduleS3(Request $request, Response $response, array $args)
+    {
+        $this->requireAdmin($request);
+
+        $nodes = $this->node->where('`type` = \'file\' AND `deleted` = 0 ORDER BY `updated`');
+        foreach ($nodes as $node) {
+            $save = false;
+
+            if (empty($node['files']['original'])) {
+                $node['files']['original'] = [
+                    'type' => $node['mime_type'],
+                    'length' => $node['length'],
+                    'storage' => 'local',
+                    'url' => "/node/{$node['id']}/download/original",
+                ];
+
+                $save = true;
+            }
+
+            $count = count($node['files']);
+
+            if ($this->container->has('thumbnailer')) {
+                $tn = $this->container->get('thumbnailer');
+                $node = $tn->updateNode($node);
+                if (count($node['files']) != $count)
+                    $save = true;
+            }
+
+            if ($save)
+                $node = $this->node->save($node);
+
+            $this->taskq->add('node-s3-upload', [
+                'id' => $node['id'],
+            ]);
+        }
+
+        return $response->withJSON([
+            'message' => 'Запланирована фоновая выгрузка.',
+        ]);
+    }
+
+    /**
      * Makes sure that the current user has access to the admin UI.
      *
      * @param Request $request Request information, for cookies etc.

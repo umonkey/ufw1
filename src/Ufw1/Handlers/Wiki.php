@@ -20,16 +20,16 @@ class Wiki extends CommonHandler
     public function onRead(Request $request, Response $response, array $args)
     {
         $name = $request->getQueryParam("name");
-		return $this->showPageByName($request, $response, $name);
+        return $this->showPageByName($request, $response, $name);
     }
 
-	/**
-	 * Show a page by its name.
-	 *
-	 * Makes it possible to access pages with unusual routing.
-	 **/
-	protected function showPageByName(Request $request, Response $response, $name)
-	{
+    /**
+     * Show a page by its name.
+     *
+     * Makes it possible to access pages with unusual routing.
+     **/
+    protected function showPageByName(Request $request, Response $response, $name)
+    {
         if (empty($name))
             return $response->withRedirect("/wiki?name=Welcome", 301);
 
@@ -73,7 +73,7 @@ class Wiki extends CommonHandler
         $response->getBody()->write($html);
 
         return $response;
-	}
+    }
 
     public function onReadCached(Request $request, Response $response, array $args)
     {
@@ -273,9 +273,9 @@ class Wiki extends CommonHandler
         $file = $this->file->add($name, $type, $body);
         $fid = $file["id"];
 
-		$this->taskq('node-s3-upload', [
-			'id' => (int)$fid,
-		]);
+        $this->taskq('node-s3-upload', [
+            'id' => (int)$fid,
+        ]);
 
         $pname = "File:" . $fid;
         if (!($page = $this->pageGet($pname))) {
@@ -318,9 +318,9 @@ class Wiki extends CommonHandler
 
         // TODO: flush related cache.
 
-		$next = isset($node['url'])
-			? $node['url']
-			: "/wiki?name=" . urlencode($name);
+        $next = isset($node['url'])
+            ? $node['url']
+            : "/wiki?name=" . urlencode($name);
 
         return $response->withJSON([
             "redirect" => $next,
@@ -452,7 +452,7 @@ class Wiki extends CommonHandler
                         $res["type"] = "image";
                         $res["link"] = $url;
                         $res["code"] = "[[image:{$id}]]";
-                        $res["image"] = "/i/thumbnails/{$id}.jpg";
+                        $res["image"] = "/node/{$id}/download/small";
                         $res["page"] = "/wiki?name=File:{$id}";
                         $res["title"] = $name;
 
@@ -834,7 +834,7 @@ class Wiki extends CommonHandler
             $parts = explode(":", $m[1]);
             $fileId = array_shift($parts);
 
-			// TODO: use S3 links
+            // TODO: use S3 links
 
             $info = $this->node->get($fileId);
             if (empty($info) or $info["type"] != "file")
@@ -874,15 +874,15 @@ class Wiki extends CommonHandler
                 $iw = round(150 * $rate) . "px";
             }
 
-			if (isset($info['files']['medium']['url']))
-				$small = $info['files']['medium']['url'];
-			else
-				$small = "/i/thumbnails/{$fileId}.jpg";
+            if (isset($info['files']['medium']['url']))
+                $small = $info['files']['medium']['url'];
+            else
+                $small = "/node/{$fileId}/download/small";
 
-			if (isset($info['files']['original']['url']))
-				$large = $info['files']['original']['url'];
-			else
-				$large = "/i/photos/{$fileId}.jpg";
+            if (isset($info['files']['original']['url']))
+                $large = $info['files']['original']['url'];
+            else
+                $large = "/i/photos/{$fileId}.jpg";
 
             $page = "/wiki?name=File:{$fileId}";
             $title = "untitled";
@@ -941,23 +941,23 @@ class Wiki extends CommonHandler
         $file = $this->file->get($fileId);
 
         if ($file) {
-			if (isset($file['files']['original']['width']) and isset($file['files']['original']['height']))
-				return [$file['files']['original']['width'], $file['files']['original']['height']];
+            if (isset($file['files']['original']['width']) and isset($file['files']['original']['height']))
+                return [$file['files']['original']['width'], $file['files']['original']['height']];
 
-			if ($file['files']['original']['storage'] == 'local') {
-				$storage = $this->file->getStoragePath();
-				$fpath = $storage . "/" . $file["fname"];
+            if ($file['files']['original']['storage'] == 'local') {
+                $storage = $this->file->getStoragePath();
+                $fpath = $storage . "/" . $file["fname"];
 
-				if (file_exists($fpath)) {
-					$body = file_get_contents($fpath);
+                if (file_exists($fpath)) {
+                    $body = file_get_contents($fpath);
 
-					$img = imagecreatefromstring($body);
-					$w = imagesx($img);
-					$h = imagesy($img);
+                    $img = imagecreatefromstring($body);
+                    $w = imagesx($img);
+                    $h = imagesy($img);
 
-					return [$w, $h];
-				}
-			}
+                    return [$w, $h];
+                }
+            }
 
             $this->logger->warning("file {id} not found in the file system, path: {path}", [
                 "id" => $fileId,
@@ -1077,9 +1077,9 @@ class Wiki extends CommonHandler
 
         $node["source"] = $source;
 
-		// Add YAML style properties, make them available for indexing.
-		$props = $this->getPageProperties($source);
-		$node = array_merge($props, $node);
+        // Add YAML style properties, make them available for indexing.
+        $props = $this->getPageProperties($source);
+        $node = array_merge($props, $node);
 
         $node = $this->node->save($node);
 
@@ -1232,7 +1232,7 @@ class Wiki extends CommonHandler
      **/
     public function onRecentFilesJson(Request $request, Response $response, array $args)
     {
-        $files = $this->node->where("`type` = 'file' AND `published` = 1 AND `id` IN (SELECT `id` FROM `nodes_file_idx` WHERE `kind` = 'photo') ORDER BY `created` DESC LIMIT 50");
+        $files = $this->node->where("`type` = 'file' AND `published` = 1 AND `deleted` = 0 AND `id` IN (SELECT `id` FROM `nodes_file_idx` WHERE `kind` = 'photo') ORDER BY `created` DESC LIMIT 50");
 
         $files = $this->fillNodes($files);
 
@@ -1264,29 +1264,29 @@ class Wiki extends CommonHandler
         return $nodes;
     }
 
-	/**
-	 * Get extra page properties from the source.
-	 *
-	 * Properties are the YAML formatted stuff before the page body.
-	 *
-	 * @param string $source Page source code.
-	 * @return array Properties, if any.
-	 **/
-	protected function getPageProperties($source)
-	{
-		$props = [];
+    /**
+     * Get extra page properties from the source.
+     *
+     * Properties are the YAML formatted stuff before the page body.
+     *
+     * @param string $source Page source code.
+     * @return array Properties, if any.
+     **/
+    protected function getPageProperties($source)
+    {
+        $props = [];
 
-		$lines = explode("\n", $source);
-		foreach ($lines as $line) {
-			$line = trim($line);
+        $lines = explode("\n", $source);
+        foreach ($lines as $line) {
+            $line = trim($line);
 
-			if (0 === strpos($line, '---'))
-				return $props;
+            if (0 === strpos($line, '---'))
+                return $props;
 
-			if (preg_match('@^([a-z0-9_-]+):\s+(.+)$@i', $line, $m))
-				$props[$m[1]] = $m[2];
-		}
+            if (preg_match('@^([a-z0-9_-]+):\s+(.+)$@i', $line, $m))
+                $props[$m[1]] = $m[2];
+        }
 
-		return [];
-	}
+        return [];
+    }
 }

@@ -1,0 +1,32 @@
+/**
+ * File node list, at /admin/nodes/file
+ **/
+.admin_files {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.admin_files .file {
+    display: block;
+    position: relative;
+    min-height: 104px;
+    margin-bottom: 20px;
+    margin-left: -2px;
+}
+.admin_files .thumbnail {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    line-height: 0
+}
+.admin_files img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border: 1px solid #f8f8f8;
+    padding: 1px;
+}
+.admin_files .info {
+    margin-left: 114px;
+}

@@ -1,0 +1,41 @@
+table.table {
+    border-collapse: collapse;
+}
+table.table td {
+    padding: 4px 10px;
+}
+table.table .nowrap,
+table.table .number {
+    text-align: right;
+    white-space: nowrap;
+}
+
+table.grid {
+    border-collapse: collapse;
+}
+table.grid td,
+table.grid th {
+    padding: 4px 10px;
+}
+table.grid thead th {
+    color: #444;
+    font-weight: bold;
+    font-size: 85%;
+}
+table.grid tbody td {
+    border: solid 1px #ccc;
+}
+
+
+table.compact {
+    font-size: 15px;
+}
+
+
+table.lines th,
+table.lines td {
+    border-bottom: 1px solid #ddd;
+    padding: 5px 20px;
+    text-align: left;
+    font-weight: normal;
+}

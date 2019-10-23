@@ -57,6 +57,8 @@ class NodeFactory
             $node["created"] = $now;
         $node["updated"] = $now;
 
+        $node['deleted'] = empty($node['deleted']) ? 0 : 1;
+
         if (empty($node["lb"])) {
             $last = (int)$db->fetchcell("SELECT MAX(`rb`) FROM `nodes`");
             $node["lb"] = $last + 1;
