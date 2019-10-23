@@ -39,6 +39,8 @@ class Thumbnailer
         }
 
         $original = $this->getSource($node['files']['original']);
+        if (empty($original))
+            throw new \RuntimeException('source file not found');
 
         foreach ($config as $key => $options) {
             if ($key == 'original')
