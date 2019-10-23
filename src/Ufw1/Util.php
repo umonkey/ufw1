@@ -137,6 +137,11 @@ class Util
             $tq = new \Ufw1\S3($c);
             return $tq;
         };
+
+        $container['telega'] = function ($c) {
+            $t = new \Ufw1\Telega($c);
+            return $t;
+        };
     }
 
     public static function runCompressor()
@@ -168,5 +173,13 @@ class Util
         $app->get ('/admin/submit', '\App\Handlers\Admin:onSubmitList');
         $app->get ('/admin/submit/{type}', '\App\Handlers\Admin:onSubmit');
         $app->get ('/admin/taskq', '\App\Handlers\Admin:onTaskQ');
+
+        if (class_exists('\App\Handlers\TaskQ')) {
+            $app->get('/taskq/list', '\App\Handlers\TaskQ:onList');
+            $app->any('/taskq/{id:[0-9]+}/run', '\App\Handlers\TaskQ:onRun');
+        } else {
+            $app->get('/taskq/list', '\Ufw1\Handlers\TaskQ:onList');
+            $app->any('/taskq/{id:[0-9]+}/run', '\Ufw1\Handlers\TaskQ:onRun');
+        }
     }
 }

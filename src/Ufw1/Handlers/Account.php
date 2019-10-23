@@ -33,11 +33,11 @@ class Account extends CommonHandler
     public function onLogin(Request $request, Response $response, array $args)
     {
         try {
-            $email = $request->getParam("email");
+            $email = $request->getParam("login");
             $password = $request->getParam("password");
             $next = $request->getParam("next");
 
-            $nodes = $this->node->where("`type` = 'user' AND `id` IN (SELECT `id` FROM `nodes_user_idx` WHERE `email` = ?) ORDER BY `id`", [$email]);
+            $nodes = $this->node->where("`type` = 'user' AND `deleted` = 0 AND `id` IN (SELECT `id` FROM `nodes_user_idx` WHERE `email` = ?) ORDER BY `id`", [$email]);
 
             if (empty($nodes))
                 $this->fail("Нет пользователя с таким адресом.");
@@ -116,6 +116,8 @@ class Account extends CommonHandler
                 "user_id" => $node["id"],
             ]);
 
+            $this->notifyAdmin($request, $node);
+
             return $response->withJSON([
                 "redirect" => $form["next"] ? $form["next"] : "/",
             ]);
@@ -140,5 +142,18 @@ class Account extends CommonHandler
         foreach ($require as $k => $msg)
             if (empty($form[$k]))
                 $this->fail($msg);
+    }
+
+    protected function notifyAdmin(Request $request, array $node)
+    {
+        $base = $request->getUri()->getBaseUrl();
+        $url = "{$base}/admin/nodes/{$node['id']}/edit";
+
+        $message = "Зарегистрирован новый пользователь:\n";
+        $message .= "Email: {$node['email']}\n";
+        $message .= "Имя: {$node['name']}\n";
+        $message .= $url;
+
+        $this->container->get('telega')->sendMessage($message);
     }
 }
