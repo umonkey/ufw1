@@ -647,7 +647,9 @@ class Wiki extends CommonHandler
 
             $sel = $this->db->query("SELECT `id` FROM `nodes` WHERE `type` = 'wiki' AND `published` = 1 ORDER BY `updated` DESC");
             while ($id = $sel->fetchColumn(0)) {
-                $this->taskAdd("/tasks/reindex/wiki/{$id}");
+                $this->task->add('wiki-reindex', [
+                    'id' => $id,
+                ]);
             }
         });
 
@@ -941,8 +943,12 @@ class Wiki extends CommonHandler
         $file = $this->file->get($fileId);
 
         if ($file) {
-            if (isset($file['files']['original']['width']) and isset($file['files']['original']['height']))
-                return [$file['files']['original']['width'], $file['files']['original']['height']];
+            // We just need the proportions, so get the first one we have.
+            foreach ($file['files'] as $k => $v) {
+                if (isset($v['width']) and isset($v['height'])) {
+                    return [$v['width'], $v['height']];
+                }
+            }
 
             if ($file['files']['original']['storage'] == 'local') {
                 $storage = $this->file->getStoragePath();
