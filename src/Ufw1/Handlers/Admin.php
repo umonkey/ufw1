@@ -14,9 +14,11 @@ class Admin extends CommonHandler
     public function onDashboard(Request $request, Response $response, array $args)
     {
         $user = $this->requireAdmin($request);
+        $warnings = $this->getWarnings();
 
         return $this->render($request, 'admin-dashboard.twig', [
             'user' => $user,
+            'warnings' => $warnings,
         ]);
     }
 
@@ -346,5 +348,32 @@ class Admin extends CommonHandler
         }
 
         return $st;
+    }
+
+    /**
+     * Returns status of some systems.
+     **/
+    protected function getWarnings()
+    {
+        $res = [];
+
+        try {
+            $limit = strftime('%Y-%m-%d %H:%M:%S', time() - 600);
+            $count = $this->db->fetchcell('SELECT COUNT(1) FROM `taskq` WHERE `added` < ?', [$limit]);
+            if ($count > 0)
+                $res['taskq_stale'] = $count;
+        } catch (\Exception $e) {
+            $res['taskq_dberror'] = $e->getMessage();
+        }
+
+        $st = $this->container->get('settings')['taskq'];
+        if (empty($st['ping_url']) or empty($st['exec_pattern']))
+            $res['taskq_config'] = true;
+
+        $st = $this->container->get('settings')['S3'];
+        if (empty($st['access_key']))
+            $res['s3_config'] = true;
+
+        return $res;
     }
 }

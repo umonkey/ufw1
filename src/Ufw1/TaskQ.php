@@ -9,21 +9,22 @@ class TaskQ
 {
     protected $container;
 
-	protected $ping = false;
+    protected $ping = false;
 
-	public function __construct($c)
-	{
-		$this->container = $c;
-	}
+    public function __construct($c)
+    {
+        $this->container = $c;
+    }
 
-	public function add($action, array $data = [], $priority = 0)
-	{
-		$db = $this->container->get('database');
+    public function add($action, array $data = [], $priority = 0)
+    {
+        $db = $this->container->get('database');
         $logger = $this->container->get('logger');
 
         $data['__action'] = $action;
 
         $id = $db->insert('taskq', [
+            'added' => strftime('%Y-%m-%d %H:%M:%S'),
             'priority' => $priority,
             'payload' => serialize($data),
         ]);
@@ -51,5 +52,5 @@ class TaskQ
         }
 
         return $id;
-	}
+    }
 };
