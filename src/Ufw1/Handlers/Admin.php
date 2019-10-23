@@ -328,6 +328,7 @@ class Admin extends CommonHandler
                     'length' => $node['length'],
                     'storage' => 'local',
                     'url' => "/node/{$node['id']}/download/original",
+                    'path' => $node['fname'],
                 ];
 
                 $save = true;
