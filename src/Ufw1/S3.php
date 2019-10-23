@@ -469,4 +469,80 @@ class S3
             $parts[$k] = rawurlencode($v);
         return implode("/", $parts);
     }
+
+    /**
+     * Upload node files to remote storage.
+     **/
+    public function uploadNodeFiles(array $node)
+    {
+        if (!array_key_exists("type", $node))
+            return $node;
+
+        if ($node["type"] != "file")
+            return $node;
+
+        if (empty($node["files"]) or !is_array($node["files"]))
+            return $node;
+
+        $lstorage = $this->container->get("settings")["files"]["path"] ?? $_SERVER['DOCUMENT_ROOT'] . '/../data/files';
+        $lstorage .= '/' . $_SERVER['HTTP_HOST'];
+
+        $s3 = $this->container->get("S3");
+
+        foreach ($node["files"] as $part => &$file) {
+            if (isset($file["storage"]) and $file["storage"] == "local") {
+                $src = $lstorage . "/" . $file["path"];
+                if (!is_readable($src)) {
+                    $this->logger->warning("s3: source file {src} is not readable, cannot upload node/{id}/{part}.", [
+                        "src" => $src,
+                        "id" => $node["id"],
+                        "part" => $part,
+                    ]);
+                    continue;
+                }
+
+                $this->logger->debug("s3: uploading node/{id}/{part} to S3 as {path}, {len} bytes.", [
+                    "id" => $node["id"],
+                    "part" => $part,
+                    "len" => $file["length"],
+                    "path" => $file["path"],
+                ]);
+
+                $rpath = "/" . $file["path"];
+                if ($part == "original")
+                    $rpath .= "/" . urlencode($node["name"]);
+                elseif ($node["kind"] == "photo")
+                    $rpath .= "/image.jpg";
+
+                $res = $s3->putObject($rpath, $src, [
+                    "type" => $file["type"],
+                    "acl" => "public-read",
+                ]);
+
+                $this->logger->debug("s3 response: {res}", [
+                    "res" => $res,
+                ]);
+
+                if ($res[0]["status"] != 200) {
+                    $this->logger->error("s3: error uploading file {path}", ["path" => $rpath]);
+                } else {
+                    $this->logger->info("s3: node {id}: file {path} uploaded to S3.", [
+                        "id" => $node["id"],
+                        "path" => $file["path"],
+                    ]);
+
+                    $file["storage"] = "s3";
+                    $file["url"] = "https://{$this->config['bucket']}.{$this->config['endpoint']}{$rpath}";
+
+                    if (unlink($src)) {
+                        $this->logger->info("s3: source file {path} deleted.", [
+                            "path" => $src,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return $node;
+    }
 };
