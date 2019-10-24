@@ -189,13 +189,13 @@ class Admin extends CommonHandler
         $this->db->commit();
 
         if ($node['type'] == 'user' and $deleted)
-            $message = 'Пользователь восстановлен.';
-        elseif ($node['type'] == 'user' and !$deleted)
             $message = 'Пользователь удалён.';
+        elseif ($node['type'] == 'user' and !$deleted)
+            $message = 'Пользователь восстановлен.';
         elseif ($deleted)
-            $message = 'Документ восстановлен';
+            $message = 'Документ удалён';
         elseif (!$deleted)
-            $message = 'Документ удалён.';
+            $message = 'Документ восстановлен.';
 
         return $response->withJSON([
             'success' => true,
