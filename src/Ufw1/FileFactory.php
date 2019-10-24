@@ -105,9 +105,6 @@ class FileFactory
 
             $node['files']['original']['url'] = "/node/{$node['id']}/download/original";
 
-            if (0 === strpos($node['mime_type'], 'image/'))
-                $node = $this->processImage($node);
-
             $node = $nodes->save($node);
 
             $logger->info("files: file {id} saved as {name}", [
@@ -118,16 +115,6 @@ class FileFactory
             $this->container->get('taskq')->add('node-s3-upload', [
                 'id' => $node['id'],
             ]);
-        }
-
-        return $node;
-    }
-
-    protected function processImage($node)
-    {
-        if ($this->container->has('thumbnailer')) {
-            $tn = $this->container->get('thumbnailer');
-            $node = $tn->updateNode($node);
         }
 
         return $node;
