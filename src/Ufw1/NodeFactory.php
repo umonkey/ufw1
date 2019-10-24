@@ -83,9 +83,9 @@ class NodeFactory
                 ]);
                 return $node;
             }
+        } else {
+            $node["id"] = $db->insert("nodes", $row);
         }
-
-        $node["id"] = $db->insert("nodes", $row);
 
         $this->indexUpdate($node);
 
