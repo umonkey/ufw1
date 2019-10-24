@@ -152,6 +152,8 @@ class Admin extends CommonHandler
 
         $node = $this->node->save($node);
 
+        $this->taskq->add('update-node-thumbnail', ['id' => $node['id']]);
+
         $next = $request->getParam('next');
 
         $this->db->commit();
