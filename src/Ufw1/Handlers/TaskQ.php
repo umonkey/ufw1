@@ -176,11 +176,6 @@ class TaskQ extends CommonHandler
                 ]);
             }
 
-            if ($this->container->has('thumbnailer')) {
-                $tn = $this->container->get('thumbnailer');
-                $node = $tn->updateNode($node);
-            }
-
             $s3 = $this->container->get("S3");
 
             $node = $s3->uploadNodeFiles($node);
@@ -207,6 +202,10 @@ class TaskQ extends CommonHandler
         $tn = $this->container->get('thumbnailer');
         $node = $tn->updateNode($node);
         $node = $this->node->save($node);
+
+        $this->container->get('taskq')->add('node-s3-upload', [
+            'id' => $node['id'],
+        ]);
     }
 
     protected function onTelega($message)
