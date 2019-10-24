@@ -1,0 +1,33 @@
+{% extends "base.twig" %}
+
+{% block page_title %}Редактирование сессии{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <h1>Редактирование сессии</h1>
+    </div>
+{% endblock %}
+
+{% block page_contents %}
+    {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+        'label': 'Сессия',
+        'link': request.uri,
+    }]} %}
+
+    <form class='async' action='/admin/session' method='post'>
+        <input type='hidden' name='next' value='/admin'/>
+
+        <div class='form-group'>
+            <label>Содержимое сессии</label>
+            <textarea class='form-control code' style='min-height: 315px' name='session' spellcheck='false'>{{ session }}</textarea>
+        </div>
+
+        <div class='form-actions'>
+            <button class='btn btn-primary'>Сохранить изменения</button>
+            или <a href='/admin/nodes'>вернуться в админку</a>
+        </div>
+
+        <div class='msgbox'></div>
+    </form>
+{% endblock %}
+

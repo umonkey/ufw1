@@ -408,10 +408,34 @@ class Admin extends CommonHandler
         ]);
     }
 
-    public function onDumpSession(Request $request, Response $response, array $args)
+    public function onEditSession(Request $request, Response $response, array $args)
     {
-        $session = $this->sessionGet($request);
-        debug($session);
+        $user = $this->requireAdmin($request);
+
+        if ($request->getMethod() == 'POST') {
+            $code = $request->getParam('session');
+            $update = json_decode($code, true);
+
+            $this->sessionEdit($request, function ($data) use ($update) {
+                return $update;
+            });
+
+            $next = $request->getParam('next');
+
+            return $response->withJSON([
+                'redirect' => $next,
+            ]);
+        }
+
+        else {
+            $session = $this->sessionGet($request);
+            $session = json_encode($session, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+            return $this->render($request, 'admin-session-editor.twig', [
+                'user' => $user,
+                'session' => $session,
+            ]);
+        }
     }
 
     /**
