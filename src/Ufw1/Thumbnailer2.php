@@ -45,4 +45,9 @@ class Thumbnailer2 extends Thumbnailer
     {
         return $img;
     }
+
+    protected function destroyImage($img)
+    {
+        $img->destroy();
+    }
 }
