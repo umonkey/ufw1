@@ -9,8 +9,8 @@ class Util
         // See also the |type markdown filter.
 
         // Some typography.
-        //$html = preg_replace('@\s+--\s+@', '&nbsp;— ', $html);
-        //$html = preg_replace('@\.  @', '.&nbsp; ', $html);
+        $html = preg_replace('@\s+--\s+@', '&nbsp;— ', $html);
+        $html = preg_replace('@\.  @', '.&nbsp; ', $html);
 
         // Closing tags should never have leading space.
         $html = preg_replace('@\s+</([a-z0-9]+)>@', '</\1>', $html);
