@@ -46,17 +46,21 @@ class Thumbnailer
             return $node;
         }
 
-        $original = $this->getSource($node['files']['original']);
-        if (empty($original)) {
-            $logger->debug('thumbnailer: could not read original of node {0}.', [$node['id']]);
-            throw new \RuntimeException('source file not found');
-        }
+        $original = null;
 
         foreach ($config as $key => $options) {
             if ($key == 'original')
                 continue;
 
             if ($force or empty($node["files"][$key])) {
+                if ($original === null) {
+                    $original = $this->getSource($node['files']['original']);
+                    if (empty($original)) {
+                        $logger->debug('thumbnailer: could not read original of node {0}.', [$node['id']]);
+                        throw new \RuntimeException('source file not found');
+                    }
+                }
+
                 $img = $this->readImageFromString($original);
                 $img = $this->scaleImage($img, $options);
 
