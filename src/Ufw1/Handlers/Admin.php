@@ -408,6 +408,12 @@ class Admin extends CommonHandler
         ]);
     }
 
+    public function onDumpSession(Request $request, Response $response, array $args)
+    {
+        $session = $this->sessionGet($request);
+        debug($session);
+    }
+
     /**
      * Makes sure that the current user has access to the admin UI.
      *
