@@ -162,6 +162,37 @@ class Admin extends CommonHandler
     }
 
     /**
+     * Delete or undelete a node.
+     **/
+    public function onDeleteNode(Request $request, Response $response, array $args)
+    {
+        $this->db->beginTransaction();
+
+        $user = $this->requireUser($request);
+
+        $id = (int)$request->getParam('id');
+        $deleted = (int)$request->getParam('deleted');
+
+        if (!($node = $this->node->get($id)))
+            $this->fail('Документ не найден.');
+
+        // Check access.
+        $config = $this->getNodeConfig($node['type']);
+        if ($user['role'] != 'admin' and (empty($config['edit_roles']) or !in_array($user['role'], $config['edit_roles'])))
+            $this->forbidden();
+
+        $node['deleted'] = $deleted;
+        $node = $this->node->save($node);
+
+        $this->db->commit();
+
+        return $response->withJSON([
+            'success' => true,
+            'message' => $deleted ? 'Объект удалён.' : 'Объект восстановлен.',
+        ]);
+    }
+
+    /**
      * Publish or unpublish a node.
      **/
     public function onPublishNode(Request $request, Response $response, array $args)

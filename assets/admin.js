@@ -18,4 +18,16 @@ jQuery(function ($) {
             dataType: 'json'
         }).done(handle_ajax);
     });
+
+    $(document).on('change', 'table input[type=checkbox].deleted', function (e) {
+        var value = $(this).is(':checked') ? 1 : 0,
+            id = $(this).attr('value');
+
+        $.ajax({
+            url: '/admin/nodes/delete',
+            data: {id: id, deleted: value},
+            type: 'POST',
+            dataType: 'json'
+        }).done(handle_ajax);
+    });
 });

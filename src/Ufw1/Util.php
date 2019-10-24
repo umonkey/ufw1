@@ -163,6 +163,7 @@ class Util
         $app->get ('/admin/database', '\App\Handlers\Admin:onDatabaseStatus');
         $app->get ('/admin/nodes', '\App\Handlers\Admin:onNodeList');
         $app->get ('/admin/nodes/{type}', '\App\Handlers\Admin:onNodeList');
+        $app->post('/admin/nodes/delete', '\App\Handlers\Admin:onDeleteNode');
         $app->post('/admin/nodes/save', '\App\Handlers\Admin:onSaveNode');
         $app->post('/admin/nodes/publish', '\App\Handlers\Admin:onPublishNode');
         $app->get ('/admin/nodes/{id:[0-9]+}/edit', '\App\Handlers\Admin:onEditNode');
