@@ -186,9 +186,18 @@ class Admin extends CommonHandler
 
         $this->db->commit();
 
+        if ($node['type'] == 'user' and $deleted)
+            $message = 'Пользователь восстановлен.';
+        elseif ($node['type'] == 'user' and !$deleted)
+            $message = 'Пользователь удалён.';
+        elseif ($deleted)
+            $message = 'Документ восстановлен';
+        elseif (!$deleted)
+            $message = 'Документ удалён.';
+
         return $response->withJSON([
             'success' => true,
-            'message' => $deleted ? 'Объект удалён.' : 'Объект восстановлен.',
+            'message' => $message,
         ]);
     }
 
@@ -217,8 +226,18 @@ class Admin extends CommonHandler
 
         $this->db->commit();
 
+        if ($node['type'] == 'user' and $published)
+            $message = 'Пользователь активирован.';
+        elseif ($node['type'] == 'user' and !$published)
+            $message = 'Пользователь заблокирован.';
+        elseif ($published)
+            $message = 'Документ опубликован';
+        elseif (!$published)
+            $message = 'Документ сокрыт.';
+
         return $response->withJSON([
             'success' => true,
+            'message' => $message,
         ]);
     }
 
