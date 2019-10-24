@@ -105,6 +105,9 @@ class Common
 
     public static function renderMarkdown($source)
     {
+        if (empty($source))
+            return "";
+
         $environment = \League\CommonMark\Environment::createCommonMarkEnvironment();
         $environment->addExtension(new \League\CommonMark\Ext\Table\TableExtension);
 
