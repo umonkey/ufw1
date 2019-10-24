@@ -102,6 +102,8 @@ class TaskQ extends CommonHandler
                 $action = $payload["__action"];
                 unset($payload["__action"]);
 
+                $this->logger->debug('taskq: action={0} payload={1}', [$action, $payload]);
+
                 $this->handleTask($action, $payload);
 
                 $this->db->query("DELETE FROM `taskq` WHERE `id` = ?", [$id]);
@@ -131,6 +133,12 @@ class TaskQ extends CommonHandler
     {
         if ($action == "node-s3-upload")
             return $this->onUploadNodeS3($payload["id"]);
+
+        elseif ($action == 'update-node-thumbnail')
+            return $this->onUpdateNodeThumbnail($payload['id']);
+
+        elseif ($action == 'telega')
+            return $this->onTelega($payload['message']);
 
         $this->logger->warning("taskq: unhandled task with action={action}.", [
             "action" => $action,
@@ -187,5 +195,22 @@ class TaskQ extends CommonHandler
                 'message' => $e->getMessage(),
             ]);
         }
+    }
+
+    protected function onUpdateNodeThumbnail($id)
+    {
+        if (!($node = $this->node->get($id))) {
+            $this->logger->debug('taskq: update-node-thumbnail: node {0} not found.', [$id]);
+            return;
+        }
+
+        $tn = $this->container->get('thumbnailer');
+        $node = $tn->updateNode($node);
+        $node = $this->node->save($node);
+    }
+
+    protected function onTelega($message)
+    {
+        $this->container->get('telega')->sendMessage($message);
     }
 }
