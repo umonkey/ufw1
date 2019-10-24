@@ -534,11 +534,9 @@ class S3
                     $file["storage"] = "s3";
                     $file["url"] = "https://{$this->config['bucket']}.{$this->config['endpoint']}{$rpath}";
 
-                    if (unlink($src)) {
-                        $this->logger->info("s3: source file {path} deleted.", [
-                            "path" => $src,
-                        ]);
-                    }
+                    $this->container->get('taskq')->add('unlink', [
+                        'path' => $src,
+                    ]);
                 }
             }
         }
