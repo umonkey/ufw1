@@ -24,23 +24,33 @@ class Thumbnailer
      **/
     public function updateNode(array $node, $force = false)
     {
-        if ($node["type"] != "file")
-            return $node;
+        $logger = $this->container->get('logger');
 
-        if (empty($node["files"]["original"]))
+        if ($node["type"] != "file") {
+            $logger->debug('thumbnailer: node {0} is not a file.', [$node['id']]);
             return $node;
+        }
 
-        if (!($config = @$this->container->get("settings")["thumbnails"]))
+        if (empty($node["files"]["original"])) {
+            $logger->debug('thumbnailer: node {0} has no original.', [$node['id']]);
             return $node;
+        }
+
+        if (!($config = @$this->container->get("settings")["thumbnails"])) {
+            $logger->debug('thumbnailer: not configured.');
+            return $node;
+        }
 
         if (empty($node['files']['original']['storage'])) {
-            $this->container->get('logger')->debug('thumbnailer: node {0} has no original section.', [$node['id']]);
+            $logger->debug('thumbnailer: node {0} has no original section.', [$node['id']]);
             return $node;
         }
 
         $original = $this->getSource($node['files']['original']);
-        if (empty($original))
+        if (empty($original)) {
+            $logger->debug('thumbnailer: could not read original of node {0}.', [$node['id']]);
             throw new \RuntimeException('source file not found');
+        }
 
         foreach ($config as $key => $options) {
             if ($key == 'original')
@@ -59,6 +69,7 @@ class Thumbnailer
                 }
 
                 list($w, $h) = $this->getImageSize($img);
+                $this->destroyImage($img);
 
                 $path = $this->container->get('file')->fsput($res);
 
@@ -71,8 +82,12 @@ class Thumbnailer
                     "height" => $h,
                     "url" => "/node/{$node['id']}/download/{$key}",
                 ];
+            } else {
+                $logger->debug('thumbnailer: node {0} already has file {1}.', [$node['id'], $key]);
             }
         }
+
+        $logger->debug('thumbnailer: node {0} updated, files={1}', [$node['id'], $node['files']]);
 
         return $node;
     }
@@ -199,12 +214,10 @@ class Thumbnailer
         }
 
         elseif ($file["storage"] == "s3") {
-            $st = $this->container->get("settings")["S3"];
-            $bucket = $st["bucket"];
-            $endpoint = $st["endpoint"];
-            // $url = "https://{$bucket}.{$endpoint}/{$file["path"]}";
             $url = $file['url'];
+            $this->container->get('logger')->debug('thumbnailer: fetching {0}', [$url]);
             $data = @file_get_contents($url);
+            $this->container->get('logger')->debug('thumbnailer: read {0} bytes.', [strlen($data)]);
             return $data;
         }
 
@@ -227,5 +240,10 @@ class Thumbnailer
         $img = $dst;
 
         return $img;
+    }
+
+    protected function destroyImage($img)
+    {
+        imagedestroy($img);
     }
 }
