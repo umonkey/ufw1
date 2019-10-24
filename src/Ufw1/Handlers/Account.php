@@ -33,7 +33,7 @@ class Account extends CommonHandler
     public function onLogin(Request $request, Response $response, array $args)
     {
         try {
-            $email = $request->getParam("login");
+            $email = $request->getParam("email");
             $password = $request->getParam("password");
             $next = $request->getParam("next");
 

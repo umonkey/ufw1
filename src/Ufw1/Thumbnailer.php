@@ -47,23 +47,18 @@ class Thumbnailer
                 continue;
 
             if ($force or empty($node["files"][$key])) {
-                $img = @imageCreateFromString($original);
-                if (false === $img)
-                    throw new \RuntimeException("error parsing image");
-
+                $img = $this->readImageFromString($original);
                 $img = $this->scaleImage($img, $options);
 
                 $type = $node['files']['original']['type'];
                 if ($type == 'image/png') {
-                    ob_start();
-                    imagepng($img, null, 9);
-                    $res = ob_get_clean();
+                    $res = $this->getImagePNG($img);
                 } else {
-                    ob_start();
-                    imagejpeg($img, null, 85);
-                    $res = ob_get_clean();
+                    $res = $this->getImageJPEG($img);
                     $type = 'image/jpeg';
                 }
+
+                list($w, $h) = $this->getImageSize($img);
 
                 $path = $this->container->get('file')->fsput($res);
 
@@ -72,8 +67,8 @@ class Thumbnailer
                     "length" => strlen($res),
                     "storage" => "local",
                     "path" => $path,
-                    "width" => imagesx($img),
-                    "height" => imagesy($img),
+                    "width" => $w,
+                    "height" => $h,
                     "url" => "/node/{$node['id']}/download/{$key}",
                 ];
             }
@@ -100,6 +95,32 @@ class Thumbnailer
         return $res;
     }
 
+    protected function readImageFromString($blob)
+    {
+        $img = @imagecreatefromstring($blob);
+
+        if (false === $img)
+            throw new \RuntimeException('error parsing image');
+
+        return $img;
+    }
+
+    protected function getImagePNG($img)
+    {
+        ob_start();
+        imagepng($img, null, 9);
+        $res = ob_get_clean();
+        return $res;
+    }
+
+    protected function getImageJPEG($img)
+    {
+        ob_start();
+        imagejpeg($img, null, 85);
+        $res = ob_get_clean();
+        return $res;
+    }
+
     /**
      * Downscale the image.
      *
@@ -117,8 +138,7 @@ class Thumbnailer
             "sharpen" => false,
         ], $options);
 
-        $iw = imagesx($img);
-        $ih = imagesy($img);
+        list($iw, $ih) = $this->getImageSize($img);
 
         $scale = 1;
 
@@ -131,19 +151,20 @@ class Thumbnailer
         $nw = round($iw * $scale);
         $nh = round($ih * $scale);
 
-        $dst = imagecreatetruecolor($nw, $nh);
-
-        $res = imagecopyresampled($dst, $img, 0, 0, 0, 0, $nw, $nh, $iw, $ih);
-        if (false === $res)
-            throw new \RuntimeException("could not resize the image");
-
-        imagedestroy($img);
-        $img = $dst;
+        $img = $this->resizeImage($img, $nw, $nh);
 
         if ($options['sharpen'])
             $img = $this->sharpenImage($img);
 
         return $img;
+    }
+
+    protected function getImageSize($img)
+    {
+        $w = imagesx($img);
+        $h = imagesy($img);
+
+        return [$w, $h];
     }
 
     protected function sharpenImage($img)
@@ -190,5 +211,21 @@ class Thumbnailer
         else {
             throw new \RuntimeException("unsupported storage type: {$file["storage"]}");
         }
+    }
+
+    protected function resizeImage($img, $nw, $nh)
+    {
+        list($iw, $ih) = $this->getImageSize($img);
+
+        $dst = imagecreatetruecolor($nw, $nh);
+
+        $res = imagecopyresampled($dst, $img, 0, 0, 0, 0, $nw, $nh, $iw, $ih);
+        if (false === $res)
+            throw new \RuntimeException('could not resize the image');
+
+        imagedestroy($img);
+        $img = $dst;
+
+        return $img;
     }
 }

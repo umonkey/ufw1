@@ -9,8 +9,8 @@ class Util
         // See also the |type markdown filter.
 
         // Some typography.
-        $html = preg_replace('@\s+--\s+@', '&nbsp;— ', $html);
-        $html = preg_replace('@\.  @', '.&nbsp; ', $html);
+        //$html = preg_replace('@\s+--\s+@', '&nbsp;— ', $html);
+        //$html = preg_replace('@\.  @', '.&nbsp; ', $html);
 
         // Closing tags should never have leading space.
         $html = preg_replace('@\s+</([a-z0-9]+)>@', '</\1>', $html);
@@ -97,7 +97,10 @@ class Util
 
         $container["errorHandler"] = function ($c) {
             return function ($request, $response, $e) use ($c) {
-                $h = new \Ufw1\Handlers\Error($c);
+                if (class_exists('\App\Handlers\Error'))
+                    $h = new \App\Handlers\Error($c);
+                else
+                    $h = new \Ufw1\Handlers\Error($c);
                 return $h($request, $response, ["exception" => $e]);
             };
         };
@@ -124,7 +127,10 @@ class Util
         };
 
         $container["thumbnailer"] = function ($c) {
-            $t = new \Ufw1\Thumbnailer($c);
+            if (class_exists('\Imagick'))
+                $t = new \Ufw1\Thumbnailer2($c);
+            else
+                $t = new \Ufw1\Thumbnailer($c);
             return $t;
         };
 

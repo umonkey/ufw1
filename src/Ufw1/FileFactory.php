@@ -95,25 +95,18 @@ class FileFactory
                 "path" => $fname,
             ];
 
+            if (isset($props['width']))
+                $node['files']['original']['width'] = $props['width'];
+            if (isset($props['height']))
+                $node['files']['original']['height'] = $props['height'];
+
+            // Need an id to build the link.
             $node = $nodes->save($node);
 
             $node['files']['original']['url'] = "/node/{$node['id']}/download/original";
 
-            if (substr($type, 0, 6) == 'image/') {
-                if ($img = @imagecreatefromstring($body)) {
-                    $node['files']['original']['width'] = imagesx($img);
-                    $node['files']['original']['height'] = imagesy($img);
-                } else {
-                    $logger->warning('FileFactory: could not read image of type {type}', [
-                        'type' => $type,
-                    ]);
-                }
-            }
-
-            if ($this->container->has('thumbnailer')) {
-                $tn = $this->container->get('thumbnailer');
-                $node = $tn->updateNode($node);
-            }
+            if (0 === strpos($node['mime_type'], 'image/'))
+                $node = $this->processImage($node);
 
             $node = $nodes->save($node);
 
@@ -125,6 +118,16 @@ class FileFactory
             $this->container->get('taskq')->add('node-s3-upload', [
                 'id' => $node['id'],
             ]);
+        }
+
+        return $node;
+    }
+
+    protected function processImage($node)
+    {
+        if ($this->container->has('thumbnailer')) {
+            $tn = $this->container->get('thumbnailer');
+            $node = $tn->updateNode($node);
         }
 
         return $node;
