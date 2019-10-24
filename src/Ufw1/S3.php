@@ -488,6 +488,7 @@ class S3
         $lstorage .= '/' . $_SERVER['HTTP_HOST'];
 
         $s3 = $this->container->get("S3");
+        $unlink = [];
 
         foreach ($node["files"] as $part => &$file) {
             if (isset($file["storage"]) and $file["storage"] == "local") {
@@ -510,7 +511,8 @@ class S3
 
                 $rpath = "/" . $file["path"];
                 if ($part == "original")
-                    $rpath .= "/" . urlencode($node["name"]);
+                    // $rpath .= "/" . urlencode($node["name"]);  // has problems with unicode
+                    $rpath .= "/original";
                 elseif ($node["kind"] == "photo")
                     $rpath .= "/image.jpg";
 
@@ -534,11 +536,14 @@ class S3
                     $file["storage"] = "s3";
                     $file["url"] = "https://{$this->config['bucket']}.{$this->config['endpoint']}{$rpath}";
 
-                    $this->container->get('taskq')->add('unlink', [
-                        'path' => $src,
-                    ]);
+                    $unlink[] = $src;
                 }
             }
+        }
+
+        foreach ($unlink as $src) {
+            unlink($src);
+            $this->logger->info('s3: deleted local file {0}', [$src]);
         }
 
         return $node;
