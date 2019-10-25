@@ -485,7 +485,6 @@ class S3
             return $node;
 
         $lstorage = $this->container->get("settings")["files"]["path"] ?? $_SERVER['DOCUMENT_ROOT'] . '/../data/files';
-        $lstorage .= '/' . $_SERVER['HTTP_HOST'];
 
         $s3 = $this->container->get("S3");
         $unlink = [];
