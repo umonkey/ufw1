@@ -13,12 +13,18 @@
         'label': 'Список документов',
         'link': '/admin/nodes',
     }, {
+        'label': node.type,
+        'link': "/admin/nodes/#{node.type}",
+    }, {
         'label': 'Редактирование',
         'link': request.get.path,
     }]} %}
 
     <form class='async' action='/admin/nodes/save' method='post'>
         <input type='hidden' name='node[id]' value='{{ node.id }}'/>
+        {% if request.get.back %}
+            <input type='hidden' name='next' value='{{ request.get.back }}'/>
+        {% endif %}
 
         {% for key, field in form.fields %}
             {% set template %}fields/{{ field.type }}.twig{% endset %}
