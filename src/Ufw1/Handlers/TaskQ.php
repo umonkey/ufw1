@@ -126,19 +126,26 @@ class TaskQ extends CommonHandler
             return $response->withJSON([
                 "message" => sprintf("%s: %s", get_class($e), $e->getMessage()),
             ]);
+        } catch (\Throwable $e) {
+            return $response->withJSON([
+                "message" => sprintf("%s: %s", get_class($e), $e->getMessage()),
+            ]);
         }
     }
 
     protected function handleTask($action, array $payload)
     {
         if ($action == "node-s3-upload")
-            return $this->onUploadNodeS3($payload["id"]);
+            return $this->onNodeS3Upload($payload["id"]);
 
         elseif ($action == 'update-node-thumbnail')
             return $this->onUpdateNodeThumbnail($payload['id']);
 
         elseif ($action == 'telega')
             return $this->onTelega($payload['message']);
+
+        elseif ($action == 'handle-file-upload')
+            return $this->onHandleFileUpload($payload['id']);
 
         $this->logger->warning("taskq: unhandled task with action={action}.", [
             "action" => $action,
@@ -154,9 +161,11 @@ class TaskQ extends CommonHandler
     /**
      * Upload node files to S3, if configured.
      *
+     * action: node-s3-upload
+     *
      * @param int $id Node id.
      **/
-    protected function onUploadNodeS3($id)
+    protected function onNodeS3Upload($id)
     {
         try {
             $node = $this->node->get($id);
@@ -211,5 +220,21 @@ class TaskQ extends CommonHandler
     protected function onTelega($message)
     {
         $this->container->get('telega')->sendMessage($message);
+    }
+
+    protected function onHandleFileUpload($id)
+    {
+        if (!($node = $this->node->get($id))) {
+            $this->logger->debug('taskq: node {0} not found.', [$id]);
+            return;
+        }
+
+        if ($this->container->has('thumbnailer')) {
+            $tn = $this->container->get('thumbnailer');
+            $node = $tn->updateNode($node);
+            $node = $this->node->save($node);
+        }
+
+        $this->container->get('taskq')->add('node-s3-upload', ['id' => $id]);
     }
 }
