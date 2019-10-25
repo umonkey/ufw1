@@ -154,6 +154,8 @@ class Account extends CommonHandler
         $message .= "Имя: {$node['name']}\n";
         $message .= $url;
 
-        $this->container->get('telega')->sendMessage($message);
+        $this->container->get('taskq')->add('telega', [
+            'message' => $message,
+        ]);
     }
 }
