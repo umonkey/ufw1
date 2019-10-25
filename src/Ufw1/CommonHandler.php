@@ -484,9 +484,9 @@ class CommonHandler
         throw new \Ufw1\Errors\Unauthorized;
     }
 
-    protected function notfound()
+    protected function notfound($message = null)
     {
-        throw new \Ufw1\Errors\NotFound;
+        throw new \Ufw1\Errors\NotFound($message);
     }
 
     protected function unavailable($message = null)
