@@ -24,6 +24,11 @@ class Thumbnailer
      **/
     public function updateNode(array $node, $force = false)
     {
+        /*
+        if (php_sapi_name() == 'apache2handler')
+            return $node;
+        */
+
         $logger = $this->container->get('logger');
 
         if ($node["type"] != "file") {
@@ -46,24 +51,31 @@ class Thumbnailer
             return $node;
         }
 
-        $original = null;
+        $src = null;
+        $updateCount = 0;
 
         foreach ($config as $key => $options) {
             if ($key == 'original')
                 continue;
 
-            if ($force or empty($node["files"][$key])) {
-                if ($original === null) {
-                    $original = $this->getSource($node['files']['original']);
-                    if (empty($original)) {
-                        $logger->debug('thumbnailer: could not read original of node {0}.', [$node['id']]);
-                        throw new \RuntimeException('source file not found');
-                    }
-                }
+            $missing = empty($node['files'][$key]);
 
-                $img = $this->readImageFromString($original);
+            if (isset($node['files'][$key]) and $node['files'][$key]['storage'] == 'local') {
+                $dst = $this->container->get('file')->fsgetpath($node['files'][$key]['path']);
+                if (!file_exists($dst))
+                    $missing = true;
+            }
+
+            if ($force or $missing) {
+                $srckey = $options['from'] ?? 'original';
+                $src = $this->getSourcePath($node, $srckey);
+
+                $logger->debug('thumbnailer: reading {0} image from file {1}', [$srckey, $src]);
+                $img = $this->readImageFromFile($src);
+
                 $img = $this->scaleImage($img, $options);
 
+                $logger->debug('thumbnailer: getting image blob');
                 $type = $node['files']['original']['type'];
                 if ($type == 'image/png') {
                     $res = $this->getImagePNG($img);
@@ -73,8 +85,11 @@ class Thumbnailer
                 }
 
                 list($w, $h) = $this->getImageSize($img);
+
+                $logger->debug('thumbnailer: destroying the image');
                 $this->destroyImage($img);
 
+                $logger->debug('thumbnailer: saving the image');
                 $path = $this->container->get('file')->fsput($res);
 
                 $node["files"][$key] = [
@@ -86,12 +101,17 @@ class Thumbnailer
                     "height" => $h,
                     "url" => "/node/{$node['id']}/download/{$key}",
                 ];
+
+                $logger->debug('thumbnailer: done with {0}', [$key]);
+
+                $updateCount++;
             } else {
                 $logger->debug('thumbnailer: node {0} already has file {1}.', [$node['id'], $key]);
             }
         }
 
-        $logger->debug('thumbnailer: node {0} updated, files={1}', [$node['id'], $node['files']]);
+        if ($updateCount)
+            $logger->debug('thumbnailer: node {0} updated, files={1}', [$node['id'], $node['files']]);
 
         return $node;
     }
@@ -121,6 +141,14 @@ class Thumbnailer
         if (false === $img)
             throw new \RuntimeException('error parsing image');
 
+        return $img;
+    }
+
+    protected function readImageFromFile($src)
+    {
+        $data = file_get_contents($src);
+        $img = imagecreatefromstring($data);
+        unset($data);
         return $img;
     }
 
@@ -170,10 +198,16 @@ class Thumbnailer
         $nw = round($iw * $scale);
         $nh = round($ih * $scale);
 
-        $img = $this->resizeImage($img, $nw, $nh);
+        $this->container->get('logger')->debug('thumbnailer: resizing image from {0}x{1} to {2}x{3}', [$iw, $ih, $nw, $nh]);
 
-        if ($options['sharpen'])
+        // Never upscale.
+        if ($nw < $iw and $nh < $ih)
+            $img = $this->resizeImage($img, $nw, $nh);
+
+        if ($options['sharpen']) {
+            $this->container->get('logger')->debug('thumbnailer: sharpening');
             $img = $this->sharpenImage($img);
+        }
 
         return $img;
     }
@@ -249,5 +283,41 @@ class Thumbnailer
     protected function destroyImage($img)
     {
         imagedestroy($img);
+    }
+
+    protected function getSourcePath(array $file, $key)
+    {
+        $logger = $this->container->get('logger');
+
+        if (empty($file['files'][$key]))
+            throw new \RuntimeException('file version not found: ' . $key);
+
+        $f = $file['files'][$key];
+        if (empty($f['path']))
+            throw new \RuntimeException('file version has no path: ' . $key);
+
+        $src = $this->container->get('file')->fsgetpath($f['path']);
+        if (file_exists($src))
+            return $src;
+
+        if ($f['storage'] == 's3') {
+            $url = $f['url'];
+            $logger->debug('thumbnailer: pulling {0} from {1}', [$src, $url]);
+
+            if (false === ($body = file_get_contents($url))) {
+                $logger->error('thumbnailer: could not fetch {0}', [$url]);
+                throw new \RuntimeException('error fetching remote file');
+            }
+
+            if (!is_dir($dir = dirname($src)))
+                mkdir($dir, 0775, true);
+
+            file_put_contents($src, $body);
+            unset($body);
+
+            $logger->debug('thumbnailer: file {0} successfully saved.');
+        }
+
+        return $src;
     }
 }
