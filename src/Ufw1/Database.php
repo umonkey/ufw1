@@ -75,7 +75,7 @@ class Database {
             $this->conn = new \PDO($this->dsn["name"], @$this->dsn["user"], @$this->dsn["password"]);
             $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
-			$this->conn->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+            $this->conn->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
 
             // Perform initialization stuff, like SET NAMES utf8.
             if (!empty($this->dsn["bootstrap"])) {
@@ -156,6 +156,13 @@ class Database {
             return $sth;
         } catch (\PDOException $e) {
             $_m = $e->getMessage();
+
+            // Server gone away.
+            if ($_m == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone awa') {
+                $this->conn = $this->connect();
+                return $this->query($query, $params);
+            }
+
             if ($_m = "SQLSTATE[HY000]: General error: 8 attempt to write a readonly database") {
                 if (0 === strpos($this->dsn["name"], "sqlite:")) {
                     $fn = substr($this->dsn["name"], 7);
