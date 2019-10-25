@@ -47,7 +47,8 @@ class FileFactory
     /**
      * Adds a new file to the database.
      *
-     * Creates the node, prepares the thumbnails.  Schedules upload to S3.
+     * Creates the node only.
+     * Does not prepare thumbnails or upload to S3: use taskq for that.
      **/
     public function add($name, $type, $body, array $props = [])
     {
@@ -110,10 +111,6 @@ class FileFactory
             $logger->info("files: file {id} saved as {name}", [
                 "id" => $node["id"],
                 "name" => $node["fname"],
-            ]);
-
-            $this->container->get('taskq')->add('node-s3-upload', [
-                'id' => $node['id'],
             ]);
         }
 
@@ -186,13 +183,9 @@ class FileFactory
      **/
     public function fsget($path)
     {
-        $st = $this->container->get('settings');
-        $storage = $st['files']['path'] ?? $_SERVER['DOCUMENT_ROOT'] . '/../data/files';
-
-        $fpath = $storage . '/' . $_SERVER['HTTP_HOST'] . '/' . $path;
+        $fpath = $this->fsgetpath($path);
         if (!file_exists($fpath))
             return false;
-
         return file_get_contents($fpath);
     }
 
@@ -210,7 +203,7 @@ class FileFactory
         $hash = md5($body);
         $fname = substr($hash, 0, 1) . '/' . substr($hash, 1, 2) . '/' . $hash;
 
-        $fpath = $storage . '/' . $_SERVER['HTTP_HOST'] . '/' . $fname;
+        $fpath = $storage . '/' . $fname;
         if (!is_dir($dir = dirname($fpath))) {
             $res = mkdir($dir, 0775, true);
             if ($res === false)
@@ -222,5 +215,21 @@ class FileFactory
             throw new \RuntimeException('error writing file');
 
         return $fname;
+    }
+
+    /**
+     * Returns absolute path to the specified storage-local one.
+     *
+     * @param string $path Storage-local path.
+     * @return string Absolute path.
+     **/
+    public function fsgetpath($path)
+    {
+        $st = $this->container->get('settings');
+        $storage = $st['files']['path'] ?? $_SERVER['DOCUMENT_ROOT'] . '/../data/files';
+
+        $fpath = $storage . '/' . $path;
+
+        return $fpath;
     }
 }
