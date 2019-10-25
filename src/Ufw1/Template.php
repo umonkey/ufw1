@@ -75,12 +75,12 @@ class Template
             return $dt;
         }));
 
-        $this->twig->addFunction(new \Twig\TwigFunction("file_link", function ($node, $version = "original") {
+        $this->twig->addFunction(new \Twig\TwigFunction("file_link", function ($node, $version = 'original', $missing = '') {
             if ($node["type"] != "file")
-                return "";
+                return $missing;
 
             if (empty($node["files"][$version]))
-                return "";
+                return $missing;
 
             $ver = array_merge([
                 "storage" => "local",
@@ -95,7 +95,7 @@ class Template
                 return "/node/{$node["id"]}/download/{$version}";
             }
 
-            return "";
+            return $missing;
         }));
     }
 
@@ -110,7 +110,7 @@ class Template
         $data = $this->addDefaults($data);
         $data = array_merge($this->defaults, $data);
 
-        if (@$_GET["debug"] == "tpl")
+        if (isset($_GET['debug']) and $_GET['debug'] == 'tpl')
             debug($fileName, $data);
 
         $template = $this->twig->load($fileName);
