@@ -127,7 +127,7 @@ class Util
         };
 
         $container["thumbnailer"] = function ($c) {
-            if (class_exists('\Imagick'))
+            if (class_exists('\Imagickx'))
                 $t = new \Ufw1\Thumbnailer2($c);
             else
                 $t = new \Ufw1\Thumbnailer($c);
