@@ -126,6 +126,7 @@ class Admin extends CommonHandler
         $user = $this->requireUser($request);
 
         $form = $request->getParam('node');
+        $next = $request->getParam('next');
 
         if (isset($form['id'])) {
             $node = $this->node->get($form['id']);
@@ -152,14 +153,16 @@ class Admin extends CommonHandler
 
         $node = $this->node->save($node);
 
-        $this->taskq->add('update-node-thumbnail', ['id' => $node['id']]);
+        if ($node['type'] == 'file')
+            $this->taskq->add('update-node-thumbnail', ['id' => $node['id']]);
 
-        $next = $request->getParam('next');
+        if (empty($next))
+            $next = "/admin/nodes/{$node['type']}?edited={$node['id']}";
 
         $this->db->commit();
 
         return $response->withJSON([
-            'redirect' => $next ? $next : '/admin/nodes?edited=' . $node['id'],
+            'redirect' => $next,
         ]);
     }
 
@@ -286,7 +289,6 @@ class Admin extends CommonHandler
                 "id" => $row["id"],
                 "age" => $age,
                 "action" => $payload["__action"],
-                "attempts" => $row["attempts"],
                 "priority" => $row["priority"],
             ];
         });
