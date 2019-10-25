@@ -1,14 +1,16 @@
 <div class='admin_files'>
     {% for f in nodes %}
         <div class='file'>
-            {% if f.files.small %}
-                <a class='thumbnail' data-fancybox='list' data-src='{% if f.files.medium %}{{ f.files.medium.url }}{% else %}{{ f.files.original.url }}{% endif %}' href='/admin/nodes/{{ f.id }}/edit'>
+            <a class='thumbnail' data-fancybox='list' data-src='{% if f.files.medium %}{{ f.files.medium.url }}{% else %}{{ f.files.original.url }}{% endif %}' href='/admin/nodes/{{ f.id }}/edit'>
+                {% if f.files.small %}
                     <img src='{{ f.files.small.url }}'/>
-                </a>
-            {% endif %}
+                {% else %}
+                    <img src='/images/no-thumbnail.png'/>
+                {% endif %}
+            </a>
             <div class='info'>
                 <div class='title'><a href='/admin/nodes/{{ f.id }}/edit?back={{ request.uri|url_encode }}'>{{ f.name }}</a></div>
-                <div class='meta'>{{ f.created|date_simple }} &middot; {{ f.length|filesize }}{% if f.files.original.url %} &middot; <a href='{{ f.files.original.url }}'>скачать оригинал</a>{% endif %}</div>
+                <div class='meta'>{{ f.created|date_simple }}{% if f.width %} &middot; {{ f.width }}×{{ f.height }}{% endif %} &middot; {{ f.length|filesize }}{% if f.files.original.url %} &middot; <a href='{{ f.files.original.url }}'>скачать оригинал</a>{% endif %}</div>
             </div>
         </div>
     {% endfor %}
