@@ -51,6 +51,8 @@ class NodeFactory
         $db = $this->container->get("database");
         $logger = $this->container->get("logger");
 
+        $this->saveCurrent($node, $db);
+
         $now = strftime("%Y-%m-%d %H:%M:%S");
 
         if (empty($node["created"]))
@@ -94,6 +96,49 @@ class NodeFactory
         ]);
 
         return $node;
+    }
+
+    /**
+     * Save current node to the history table.
+     *
+     * If the node already exists, and its type is within the configured list,
+     * then the node will be read, re-packed and saved in the nodes_history table.
+     *
+     * @param array $node Node to be saved.
+     * @return void
+     **/
+    protected function saveCurrent(array $node, $db)
+    {
+        if (empty($node['id']) or empty($node['type']))
+            return;
+
+        $st = $this->container->get('settings')['node_history'] ?? [];
+        if (empty($st['types']))
+            return;
+
+        $types = $st['types'];
+        $compression = $st['compression'] ?? null;
+
+        if ($types != '*' and !in_array($node['type'], $types))
+            return;
+
+        if ($compression == 'bzip' and !function_exists('bzcompress'))
+            $compression = null;
+
+        $old = $this->get($node['id']);
+
+        if ($compression == 'gzip')
+            $item = 'g' . gzcompress(serialize($old));
+        elseif ($compression == 'bzip')
+            $item = 'b' . bzcompress(serialize($old));
+        else
+            $item = '-' . serialize($old);
+
+        $db->insert('nodes_history', [
+            'id' => $node['id'],
+            'updated' => $old['updated'],
+            'contents' => $item,
+        ]);
     }
 
     public function unpack(array $row)
