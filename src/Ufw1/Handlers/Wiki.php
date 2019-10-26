@@ -1124,6 +1124,8 @@ class Wiki extends CommonHandler
             $meta["image"] = $page["image"];
 
         $this->fts->reindexDocument("wiki:" . $node["id"], $title, $text, $meta);
+
+        $this->container->get('logger')->debug('wiki: reindexed wiki:{0}, title={1}', [$node['id'], $title]);
     }
 
     protected function canReadPage(Request $request)
