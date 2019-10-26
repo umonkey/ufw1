@@ -43,8 +43,6 @@ class Telega
         $res = curl_exec($ch);
         curl_close($ch);
 
-        $res = file_get_contents($url);
-
         $this->container->get('logger')->debug('telega: url={0} res={1}', [$url, $res]);
 
         return $res !== false;
