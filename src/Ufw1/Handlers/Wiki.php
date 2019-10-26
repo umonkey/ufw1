@@ -119,8 +119,6 @@ class Wiki extends CommonHandler
 
     public function onEdit(Request $request, Response $response, array $args)
     {
-        $this->requireAdmin($request);
-
         $pageName = $request->getQueryParam("name");
         $sectionName = $request->getQueryParam("section");
         $canEdit = $this->canEditPage($request);
@@ -170,6 +168,8 @@ class Wiki extends CommonHandler
      **/
     public function onUpload(Request $request, Response $response, array $args)
     {
+        $user = $this->requireUser($request);
+
         if (!$this->canEditPage($request))
             return $this->forbidden();
 
@@ -254,7 +254,7 @@ class Wiki extends CommonHandler
             if ($comment)
                 $text .= $comment;
 
-            $this->pageSave($pname, $text);
+            $this->pageSave($pname, $text, $user);
         }
     }
 
@@ -295,6 +295,8 @@ class Wiki extends CommonHandler
      **/
     public function onSave(Request $request, Response $response, array $args)
     {
+        $user = $this->requireUser($request);
+
         if (!$this->canEditPage($request)) {
             return $response->withJSON([
                 "message" => "Страница не может быть изменена.",
@@ -312,11 +314,22 @@ class Wiki extends CommonHandler
 
                 $text = implode("", $parts);
             }
+
+            $this->container->get('logger')->info('wiki: user {uid} ({uname}) edited page "{page}" section "{section}"', [
+                'uid' => $user['id'],
+                'uname' => $user['name'],
+                'page' => $name,
+                'section' => $section,
+            ]);
+        } else {
+            $this->container->get('logger')->info('wiki: user {uid} ({uname}) edited page "{page}"', [
+                'uid' => $user['id'],
+                'uname' => $user['name'],
+                'page' => $name,
+            ]);
         }
 
-        $node = $this->pageSave($name, $text);
-
-        // TODO: flush related cache.
+        $node = $this->pageSave($name, $text, $user);
 
         $next = isset($node['url'])
             ? $node['url']
@@ -1068,7 +1081,7 @@ class Wiki extends CommonHandler
         return  "# {$name}\n\n**{$name}** is ....";
     }
 
-    protected function pageSave($name, $source)
+    protected function pageSave($name, $source, $user = null)
     {
         $node = $this->pageGet($name);
 
@@ -1086,6 +1099,11 @@ class Wiki extends CommonHandler
         // Add YAML style properties, make them available for indexing.
         $props = $this->getPageProperties($source);
         $node = array_merge($props, $node);
+
+        if (isset($node['last_editor']) and $node['last_editor'] != $user['id'])
+            $this->notifyEdit($name, $node['last_editor'], $user);
+
+        $node['last_editor'] = $user['id'];
 
         $node = $this->node->save($node);
 
@@ -1153,7 +1171,7 @@ class Wiki extends CommonHandler
     protected function canEditPage(Request $request)
     {
         $settings = $this->container->get("settings");
-        $role = $settings["wiki"]["edit_role"] ?? null;
+        $role = $settings["wiki"]["edit_roles"] ?? null;
         return $role ? $this->requireRole($request, $role) : true;
     }
 
@@ -1296,5 +1314,22 @@ class Wiki extends CommonHandler
         }
 
         return [];
+    }
+
+    protected function notifyEdit($pageName, $lastId, array $user)
+    {
+        if (!($last = $this->node->get($lastId)))
+            return;  // TODO: log?
+
+        if (empty($last['email']))
+            return;
+
+        $this->taskq('wiki-edit-notify', [
+            'pageName' => $pageName,
+            'newUser' => [
+                'id' => $user['id'],
+                'name' => $user['name'],
+            ],
+        ], -10);
     }
 }

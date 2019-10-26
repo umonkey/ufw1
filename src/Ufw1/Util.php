@@ -9,8 +9,8 @@ class Util
         // See also the |type markdown filter.
 
         // Some typography.
-        //$html = preg_replace('@\s+--\s+@', '&nbsp;— ', $html);
-        //$html = preg_replace('@\.  @', '.&nbsp; ', $html);
+        $html = preg_replace('@\s+--\s+@', '&nbsp;— ', $html);
+        $html = preg_replace('@\.  @', '.&nbsp; ', $html);
 
         // Closing tags should never have leading space.
         $html = preg_replace('@\s+</([a-z0-9]+)>@', '</\1>', $html);
@@ -175,6 +175,7 @@ class Util
         $app->get ('/admin/nodes/{id:[0-9]+}/edit', '\App\Handlers\Admin:onEditNode');
         $app->get ('/admin/nodes/{id:[0-9]+}/edit-raw', '\App\Handlers\Admin:onEditRawNode');
         $app->get ('/admin/nodes/{id:[0-9]+}/dump', '\App\Handlers\Admin:onDumpNode');
+        $app->post('/admin/nodes/{id:[0-9]+}/sudo', '\App\Handlers\Admin:onSudo');
         $app->get ('/admin/s3', '\App\Handlers\Admin:onS3');
         $app->post('/admin/s3', '\App\Handlers\Admin:onScheduleS3');
         $app->any ('/admin/session', '\App\Handlers\Admin:onEditSession');

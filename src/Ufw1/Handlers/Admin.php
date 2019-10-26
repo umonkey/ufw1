@@ -441,6 +441,36 @@ class Admin extends CommonHandler
     }
 
     /**
+     * Switch to another user.
+     **/
+    public function onSudo(Request $request, Response $response, array $args)
+    {
+        $user = $this->requireAdmin($request);
+
+        $node = $this->node->get($args["id"]);
+        if (empty($node) or $node['type'] != 'user')
+            $this->notfound();
+
+        $this->sessionEdit($request, function ($data) use ($node) {
+            $data['user_stack'][] = [
+                'id' => $data['user_id'],
+                'password' => $data['password'],
+            ];
+
+            $data['user_id'] = (int)$node['id'];
+            $data['password'] = $node['password'];
+
+            return $data;
+        });
+
+        $next = $request->getParam('next');
+
+        return $response->withJSON([
+            'redirect' => $next ? $next : '/',
+        ]);
+    }
+
+    /**
      * Makes sure that the current user has access to the admin UI.
      *
      * @param Request $request Request information, for cookies etc.
