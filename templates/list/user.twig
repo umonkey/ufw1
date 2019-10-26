@@ -1,21 +1,25 @@
 <table class="table lines hover compact nodes">
     <thead>
         <tr>
-            <th><i title='Пользователь допущен' class="fas fa-eye"></i></th>
             <th>Имя</th>
             <th>Email</th>
             <th>Роль</th>
             <th title='Дата регистрации'>Добавлен</th>
+            <th><i title='Пользователь допущен' class="fas fa-eye"></i></th>
+            <th><i title='Удалить пользователя' class="fas fa-trash-alt"></i></th>
+            <th/>
         </tr>
     </thead>
     <tbody>
         {% for n in nodes %}
             <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
-                <td class='check'>{% if n.id != user.id %}<input class='published' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.published %} checked{% endif %}/>{% endif %}</td>
                 <td><a href="/admin/nodes/{{ n.id }}/edit">{% if n.name %}{{ n.name }}{% else %}без имени{% endif %}</a></td>
                 <td>{% if n.email %}<a href='mailto:{{ n.email }}'>{{ n.email }}</a>{% endif %}</td>
                 <td>{{ n.role }}</td>
                 <td>{{ n.created|date('%d.%m.%Y') }}</td>
+                <td class='check'>{% if n.id != user.id %}<input class='published' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.published %} checked{% endif %}/>{% endif %}</td>
+                <td class='check'>{% if n.id != user.id %}<input class='deleted' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.deleted %} checked{% endif %}/>{% endif %}</td>
+                <td>{% if user.role == 'admin' and n.id != user.id %}<a class='btn btn-default async post' href='/admin/nodes/{{ n.id }}/sudo' title='Переключиться в пользователя'><i class='fas fa-sign-out-alt'></i></a>{% endif %}</td>
             </tr>
         {% endfor %}
     </tbody>
@@ -24,3 +28,5 @@
 <div class='form-actions'>
     <a class='btn btn-primary' href='/admin/submit/user?back={{ request.uri|url_encode }}'>Добавить пользователя</a> или <a href='{% if request.get.back %}{{ request.get.back }}{% else %}/admin{% endif %}'>вернуться назад</a>
 </div>
+
+<div class='msgbox'></div>
