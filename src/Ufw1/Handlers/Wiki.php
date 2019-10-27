@@ -20,146 +20,98 @@ class Wiki extends CommonHandler
     public function onRead(Request $request, Response $response, array $args)
     {
         $name = $request->getQueryParam("name");
-        return $this->showPageByName($request, $response, $name);
-    }
 
-    /**
-     * Show a page by its name.
-     *
-     * Makes it possible to access pages with unusual routing.
-     **/
-    protected function showPageByName(Request $request, Response $response, $name)
-    {
-        if (empty($name))
-            return $response->withRedirect("/wiki?name=Welcome", 301);
-
-        if (!$this->canReadPage($request))
-            return $this->forbidden();
-
-        $page = $this->pageGet($name);
-
-        if ($page and $name != $page["name"]) {
-            return $response->withRedirect("/wiki?name=" . urlencode($page["name"]), 301);
+        if (empty($name)) {
+            $st = $this->container->get('settings')['wiki']['homePage'] ?? 'Welcome';
+            $next = '/wiki?name=' . urlencode($st);
+            return $response->withRedirect($next);
         }
 
-        if (empty($page)) {
-            return $this->render($request, "wiki-nopage.twig", [
-                "title" => "Page not found",
-                "page_name" => $name,
-                "edit_link" => "/wiki/edit?name=" . urlencode($name),
-            ]);
-        }
+        $wiki = $this->container->get('wiki');
 
-        $age = round((time() - strtotime($page["updated"])) / 86400);
-        $page = $this->pageProcess($page);
+        $user = $this->getUser($request);
+        if (!$wiki->canReadPages($user))
+            throw new Errors\Forbidden;
 
-        if (!empty($page["redirect"])) {
-            return $response->withRedirect("/wiki?name=" . urlencode($page["redirect"]));
-        }
+        $node = $wiki->getPageByName($name);
+        $res = $wiki->renderPage($node);
 
-        $html = $this->renderHTML($request, "wiki-page.twig", [
-            "language" => $page["language"],
-            "page" => $page,
-            "page_age" => $age,
-            "canonical_link" => "/wiki?name=" . urlencode($name),
-            "edit_link" => "/wiki/edit?name=" . urlencode($name),
+        return $this->render($request, 'wiki-page.twig', [
+            'language' => $res['language'],
+            'page' => $res,
+            'edit_link' => "/wiki/edit?name=" . urlencode($name),
             "jsdata" => json_encode([
                 "wiki_page" => $name,
             ]),
         ]);
 
-        $response = $response->withHeader("Content-Type", "text/html; charset=utf-8")
-            ->withHeader("Content-Length", strlen($html));
-        $response->getBody()->write($html);
-
-        return $response;
+        return $this->showPageByName($request, $response, $name);
     }
 
-    public function onReadCached(Request $request, Response $response, array $args)
-    {
-        $name = $request->getQueryParam("name");
-
-        if (empty($name))
-            return $response->withRedirect("/wiki?name=Welcome", 301);
-
-        if (!$this->canReadPage($request))
-            return $this->forbidden();
-
-        return $this->sendFromCache($request, function ($request) use ($name, $response) {
-            $page = $this->pageGet($name);
-
-            if ($page and $name != $page["name"]) {
-                return $response->withRedirect("/wiki?name=" . urlencode($page["name"]), 301);
-            }
-
-            if (empty($page)) {
-                return $this->render($request, "wiki-nopage.twig", [
-                    "title" => "Page not found",
-                    "page_name" => $name,
-                    "edit_link" => "/wiki/edit?name=" . urlencode($name),
-                ]);
-            }
-
-            $page = $this->pageProcess($page);
-
-            if (!empty($page["redirect"])) {
-                return $response->withRedirect("/wiki?name=" . urlencode($page["redirect"]));
-            }
-
-            $html = $this->renderHTML($request, "wiki-page.twig", [
-                "language" => $page["language"],
-                "page" => $page,
-                "canonical_link" => "/wiki?name=" . urlencode($name),
-                "edit_link" => "/wiki/edit?name=" . urlencode($name),
-            ]);
-
-            return ["text/html; charset=utf-8", $html];
-        }, "wiki:" . $name);
-    }
-
+    /**
+     * Show page editor.
+     **/
     public function onEdit(Request $request, Response $response, array $args)
     {
         $pageName = $request->getQueryParam("name");
         $sectionName = $request->getQueryParam("section");
-        $canEdit = $this->canEditPage($request);
 
         if (empty($pageName))
-            return $this->notfound($request);
+            $this->notfound();
 
-        $page = $this->pageGet($pageName);
+        $wiki = $this->container->get('wiki');
 
-        if (empty($page)) {
-            $contents = $this->pageGetTemplate($pageName);
+        $user = $this->getUser($request);
+        if (!$wiki->canEditPages($user))
+            $this->forbidden();
 
-            // TODO: configurable templates.  Read from wiki:templates, map name regexp to page names, e.g.
-            // ^File:(.+)$ wiki:templates:file
-        }
-
-        else {
-            $contents = $page["source"];
-        }
-
-        if ($sectionName) {
-            $tmp = $this->findSection($contents, $sectionName);
-            if (empty($tmp["wanted"]))
-                $sectionName = "";
-            else
-                $contents = $tmp["wanted"];
-        }
-
-        $size = $this->file->getStorageSize();
-        if ($size >= 1073741824)
-            $size = sprintf("%.2f Гб", $size / 1073741824);
-        else
-            $size = sprintf("%.2f Мб", $size / 1048576);
+        $source = $wiki->getPageSource($pageName, $sectionName);
 
         return $this->render($request, "wiki-edit.twig", [
             "page_name" => $pageName,
             "page_section" => $sectionName,
-            "page_source" => $contents,
-            "is_editable" => $canEdit,
+            "page_source" => $source,
             "body_class" => "wiki_edit",
-            "storage_size" => $size,
+        ]);
+    }
+
+    /**
+     * Update page contents.
+     **/
+    public function onSave(Request $request, Response $response, array $args)
+    {
+        $name = $request->getParam("page_name");
+        $source = $request->getParam("page_source");
+        $section = $request->getParam("page_section");
+
+        $wiki = $this->container->get('wiki');
+
+        $user = $this->getUser($request);
+
+        $node = $wiki->updatePage($name, $source, $user, $section);
+        $node = $this->node->save($node);
+
+        if ($section) {
+            $this->container->get('logger')->info('wiki: user {uid} ({uname}) edited page "{page}" section "{section}"', [
+                'uid' => $user['id'],
+                'uname' => $user['name'],
+                'page' => $name,
+                'section' => $section,
+            ]);
+        } else {
+            $this->container->get('logger')->info('wiki: user {uid} ({uname}) edited page "{page}"', [
+                'uid' => $user['id'],
+                'uname' => $user['name'],
+                'page' => $name,
+            ]);
+        }
+
+        $next = isset($node['url'])
+            ? $node['url']
+            : "/wiki?name=" . urlencode($name);
+
+        return $response->withJSON([
+            "redirect" => $next,
         ]);
     }
 
@@ -288,75 +240,6 @@ class Wiki extends CommonHandler
         }
 
         return "[[image:{$fid}]]";
-    }
-
-    /**
-     * Update page contents.
-     **/
-    public function onSave(Request $request, Response $response, array $args)
-    {
-        $user = $this->requireUser($request);
-
-        if (!$this->canEditPage($request)) {
-            return $response->withJSON([
-                "message" => "Страница не может быть изменена.",
-            ]);
-        }
-
-        $name = $request->getParam("page_name");
-        $text = $request->getParam("page_source");
-        $section = $request->getParam("page_section");
-
-        if ($section) {
-            if ($page = $this->pageGet($name)) {
-                $parts = $this->findSection($page["source"], $section);
-                $parts["wanted"] = rtrim($text) . PHP_EOL . PHP_EOL;
-
-                $text = implode("", $parts);
-            }
-
-            $this->container->get('logger')->info('wiki: user {uid} ({uname}) edited page "{page}" section "{section}"', [
-                'uid' => $user['id'],
-                'uname' => $user['name'],
-                'page' => $name,
-                'section' => $section,
-            ]);
-        } else {
-            $this->container->get('logger')->info('wiki: user {uid} ({uname}) edited page "{page}"', [
-                'uid' => $user['id'],
-                'uname' => $user['name'],
-                'page' => $name,
-            ]);
-        }
-
-        $node = $this->pageSave($name, $text, $user);
-
-        $next = isset($node['url'])
-            ? $node['url']
-            : "/wiki?name=" . urlencode($name);
-
-        return $response->withJSON([
-            "redirect" => $next,
-        ]);
-    }
-
-    public function onBacklinks(Request $request, Response $response, array $args)
-    {
-        if (!($name = $request->getParam("name")))
-            return $this->notfound($request);
-
-        if (!($page = $this->pageGet($name)))
-            return $this->notfound($request);
-
-        $names = $this->node->where("`type` = 'wiki' AND `id` IN (SELECT `tid` FROM `nodes_rel` WHERE `nid` = ?)", [$page["id"]], function ($node) {
-            return $node["name"];
-        });
-
-        return $this->render($request, "wiki-backlinks.twig", [
-            "name" => $name,
-            "pages" => $names,
-            "edit_link" => "/wiki/edit?name=" . urlencode($name),
-        ]);
     }
 
     public function onRecentRSS(Request $request, Response $response, array $args)
@@ -600,55 +483,6 @@ class Wiki extends CommonHandler
     }
 
     /**
-     * Преобразование старой таблицы wiki в nodes.
-     **/
-    public function onMigrate(Request $request, Response $response, array $args)
-    {
-        $this->requireAdmin($request);
-
-        $this->db->transact(function ($db) {
-            $sel = $db->query("SELECT * FROM `pages`");
-            while ($row = $sel->fetch(\PDO::FETCH_ASSOC)) {
-                $key = md5(mb_strtolower(trim($row["name"])));
-
-                if ($old = $this->node->getByKey($key)) {
-                    $this->logger->warning("wiki: migrate: node with key {key} exists, id={id}, name={name}", [
-                        "key" => $key,
-                        "id" => $old["id"],
-                        "name" => $row["name"],
-                    ]);
-
-                    continue;
-                }
-
-                $node = $this->node->save([
-                    "type" => "wiki",
-                    "key" => $key,
-                    "name" => $row["name"],
-                    "source" => $row["source"],
-                    "created" => strftime("%Y-%m-%d %H:%M:%S", $row["created"]),
-                    "updated" => strftime("%Y-%m-%d %H:%M:%S", $row["updated"]),
-                    "published" => 1,
-                ]);
-
-                $db->query("DELETE FROM `pages` WHERE `id` = ?", [$row["id"]]);
-            }
-        });
-
-        return "Done.";
-    }
-
-    public function onFlush(Request $request, Response $response, array $args)
-    {
-        if (!$this->canEditPage($request))
-            return $this->forbidden();
-
-        $this->db->query("DELETE FROM `cache` WHERE `key` LIKE 'wiki:%'");
-
-        return $response->withRedirect("/wiki");
-    }
-
-    /**
      * Update the search index.
      **/
     public function onReindex(Request $request, Response $response, array $args)
@@ -749,208 +583,6 @@ class Wiki extends CommonHandler
         return $image;
     }
 
-    /**
-     * Process wiki page syntax.
-     *
-     * @param array $node Node contents.
-     * @return array Page properties: title, html, etc.
-     **/
-    protected function pageProcess(array $node)
-    {
-        $res = [
-            "name" => $node["name"],
-            "title" => $node["name"],
-            "image" => null,
-            "images" => [],
-            "summary" => null,
-            "language" => "ru",
-            "source" => $node["source"],
-        ];
-
-        $source = "";
-
-        $lines = explode("\n", str_replace("\r", "", $node["source"]));
-        foreach ($lines as $idx => $line) {
-            if ($line == "---") {
-                $lines = array_slice($lines, $idx + 1);
-                $source = implode("\n", $lines);
-                break;
-            }
-
-            if (preg_match('@^([a-z0-9-_]+):\s+(.+)$@', $line, $m)) {
-                $res[$m[1]] = $m[2];
-            }
-
-            else {
-                // wrong format
-                $source = $node["source"];
-                break;
-            }
-        }
-
-        $source = $this->processPhotoAlbums($source);
-
-        // Process wiki links.
-        $interwiki = @$this->container->get("settings")["interwiki"];
-        $source = preg_replace_callback('@\[\[([^]]+)\]\]@', function ($m) use ($interwiki) {
-            // Embed images later.
-            if (0 === strpos($m[1], "image:"))
-                return $m[0];
-
-            // Embed maps.
-            if (0 === strpos($m[1], "map:")) {
-                $parts = explode(":", $m[1]);
-
-                $id = mt_rand(1111, 9999);
-                $tag = $parts[1];
-
-                $html = "<div id='map_{$id}' class='map' data-src='/map/points.json?tag=" . $tag . "'></div>";
-                return $html;
-            }
-
-            $link = $m[1];
-            $label = $m[1];
-
-            if (count($parts = explode("|", $m[1], 2)) == 2) {
-                $link = $parts[0];
-                $label = $parts[1];
-            }
-
-            $cls = "good";
-            $title = $link;
-
-            if ($interwiki) {
-                foreach ($interwiki as $pattern => $target) {
-                    if (preg_match($pattern, $link, $m)) {
-                        if ($link == $title)
-                            $title = $m[1];
-                        $link = str_replace('%s', urlencode($m[1]), $target);
-                        $html = sprintf("<a class='interwiki' href='%s'>%s</a>", htmlspecialchars($link), htmlspecialchars($label));
-                        return $html;
-                    }
-                }
-            }
-
-            if (!($fpage = $this->pageGet($link))) {
-                $cls = "broken";
-                $title = "Нет такой страницы";
-            }
-
-            $html = sprintf("<a href='/wiki?name=%s' class='wiki %s' title='%s'>%s</a>", urlencode($link), $cls, htmlspecialchars($title), htmlspecialchars($label));
-
-            return $html;
-        }, $source);
-
-        $html = \Ufw1\Common::renderMarkdown($source);
-        $html = \Ufw1\Common::renderTOC($html);
-
-        // Embed images.
-        $html = preg_replace_callback('@\[\[image:([^]]+)\]\]@', function ($m) use ($node, &$res) {
-            $parts = explode(":", $m[1]);
-            $fileId = array_shift($parts);
-
-            // TODO: use S3 links
-
-            $info = $this->node->get($fileId);
-            if (empty($info) or $info["type"] != "file")
-                return "<!-- file {$fileId} does not exist -->";
-            elseif (0 !== strpos($info["mime_type"], "image/"))
-                return "<!-- file {$fileId} is not an image -->";
-
-            $className = "image";
-            $iw = "auto";
-            $ih = "auto";
-
-            list($w, $h) = $this->getImageSize($fileId);
-
-            if (!$w or !$h)
-                return "<!-- file {$fileId} does not exist -->";
-
-            $rate = $w / $h;
-
-            foreach ($parts as $part) {
-                if (preg_match('@^width=(\d+)$@', $part, $m)) {
-                    $iw = $m[1] . "px";
-                    $ih = round($m[1] / $rate) . "px";
-                }
-
-                elseif (preg_match('@^height=(\d+)$@', $part, $m)) {
-                    $ih = $m[1] . "px";
-                    $iw = round($m[1] * $rate) . "px";
-                }
-
-                else {
-                    $className .= " " . $part;
-                }
-            }
-
-            if ($iw == "auto" and $ih == "auto") {
-                $ih = "150px";
-                $iw = round(150 * $rate) . "px";
-            }
-
-            if (isset($info['files']['medium']['url']))
-                $small = $info['files']['medium']['url'];
-            else
-                $small = "/node/{$fileId}/download/small";
-
-            if (isset($info['files']['original']['url']))
-                $large = $info['files']['original']['url'];
-            else
-                $large = "/i/photos/{$fileId}.jpg";
-
-            $page = "/wiki?name=File:{$fileId}";
-            $title = "untitled";
-
-            $res["images"][] = [
-                "src" => $large,
-                "width" => $w,
-                "height" => $h,
-            ];
-
-            if ($tmp = $this->getFileTitle($fileId))
-                $title = $tmp;
-
-            // TODO: add lazy loading
-
-            $html = "<a class='{$className}' href='{$page}' data-src='{$large}' data-fancybox='gallery' title='{$title}'>";
-            $html .= "<img src='{$small}' style='width: {$iw}; height: {$ih}' alt='{$title}'/>";
-            $html .= "</a>";
-
-            $html .= "<script type='application/ld+json'>" . json_encode([
-                "@context" => "http://schema.org",
-                "@type" => "ImageObject",
-                "contentUrl" => $large,
-                "name" => $title,
-                "thumbnail" => $small,
-            ]) . "</script>";
-
-            return $html;
-        }, $html);
-
-        $html = preg_replace_callback('@<h1>(.+)</h1>@', function ($m) use (&$res) {
-            $res["title"] = $m[1];
-            return "";
-        }, $html);
-
-        if (empty($res["summary"])) {
-            if (preg_match('@<p>(.+?)</p>@', $html, $m)) {
-                $res["summary"] = strip_tags($m[1]);
-            }
-        }
-
-        if (preg_match_all('@<img[^>]+>@', $html, $m)) {
-            foreach ($m[0] as $_img) {
-                $attrs = \Ufw1\Util::parseHtmlAttrs($_img);
-            }
-        }
-
-        $html = \Ufw1\Util::cleanHtml($html);
-        $res["html"] = $html;
-
-        return $res;
-    }
-
     protected function getImageSize($fileId)
     {
         $file = $this->file->get($fileId);
@@ -987,59 +619,6 @@ class Wiki extends CommonHandler
         }
 
         throw new \RuntimeException("file not found");
-    }
-
-    /**
-     * Find specific section in page source.
-     *
-     * @param string $text Page source.
-     * @param string $sectionName The name of desired section.
-     * @return array Keys: before, wanted, after.
-     **/
-    protected function findSection($text, $sectionName)
-    {
-        // Simplify line endings.
-        $text = str_replace("\r\n", "\n", $text);
-
-        $before = null;
-        $wanted = null;
-        $after = null;
-
-        $lines = explode("\n", $text);
-        foreach ($lines as $line) {
-            if ($after !== null) {
-                $after .= $line . PHP_EOL;
-                continue;
-            }
-
-            $found = preg_match('@^#+\s*(.+)$@', $line, $m);
-
-            if ($wanted !== null) {
-                if ($found) {
-                    $after .= $line . PHP_EOL;
-                    continue;
-                } else {
-                    $wanted .= $line . PHP_EOL;
-                }
-            }
-
-            else {
-                if ($found and trim($m[1]) == $sectionName) {
-                    $wanted .= $line . PHP_EOL;
-                    continue;
-                } else {
-                    $before .= $line . PHP_EOL;
-                }
-            }
-        }
-
-        $res = [
-            "before" => $before,
-            "wanted" => $wanted,
-            "after" => $after,
-        ];
-
-        return $res;
     }
 
     /**
@@ -1081,43 +660,6 @@ class Wiki extends CommonHandler
         return  "# {$name}\n\n**{$name}** is ....";
     }
 
-    protected function pageSave($name, $source, $user = null)
-    {
-        $node = $this->pageGet($name);
-
-        if (empty($node)) {
-            $node = [
-                "type" => "wiki",
-                "published" => 1,
-                "name" => $name,
-                "key" => md5(mb_strtolower(trim($name))),
-            ];
-        }
-
-        $node["source"] = $source;
-
-        // Add YAML style properties, make them available for indexing.
-        $props = $this->getPageProperties($source);
-        $node = array_merge($props, $node);
-
-        if (isset($node['last_editor']) and $node['last_editor'] != $user['id'])
-            $this->notifyEdit($name, $node['last_editor'], $user);
-
-        $node['last_editor'] = $user['id'];
-
-        $node = $this->node->save($node);
-
-        $key = "wiki:" . $node["name"];
-        $this->db->query("DELETE FROM `cache` WHERE `key` = ?", [$key]);
-
-        $this->pageReindex($node);
-
-        // TODO: update backlinks
-        // TODO: flush backlinks cache
-
-        return $node;
-    }
-
     /**
      * Update page in the fulltext search index.
      **/
@@ -1146,190 +688,21 @@ class Wiki extends CommonHandler
         $this->container->get('logger')->debug('wiki: reindexed wiki:{0}, title={1}', [$node['id'], $title]);
     }
 
-    protected function canReadPage(Request $request)
-    {
-        $settings = $this->container->get("settings");
-        $roles = $settings["wiki"]["require_role"] ?? [];
-
-        if (empty($roles))
-            return true;
-
-        $user = $this->getUser($request);
-
-        if (empty($user))
-            $this->unauthorized();
-
-        if ($user["published"] == 0)
-            $this->forbidden();
-
-        if (!in_array($user["role"], $roles))
-            $this->forbidden();
-
-        return true;
-    }
-
-    protected function canEditPage(Request $request)
-    {
-        $settings = $this->container->get("settings");
-        $role = $settings["wiki"]["edit_roles"] ?? null;
-        return $role ? $this->requireRole($request, $role) : true;
-    }
-
-    protected function findLinks($html)
-    {
-        $links = [];
-
-        if (preg_match_all('@<a(.+?)>@', $html, $m)) {
-            foreach ($m[0] as $tag) {
-                $attrs = \Ufw1\Util::parseHtmlAttrs($tag);
-                if (!empty($attrs["href"]))
-                    $links[] = $attrs;
-            }
-        }
-
-        return $links;
-    }
-
     /**
-     * Flush cache for linking pages.
-     **/
-    protected function backlinksFlush($name)
-    {
-        // TODO: add table wiki_backlinks, use it.
-    }
-
-    protected function backlinksUpdate($name, array $names)
-    {
-        // TODO
-    }
-
-    protected function getFileTitle($id)
-    {
-        if ($page = $this->pageGet("File:" . $id)) {
-            if (preg_match('@^# (.+)$@m', $page["source"], $n)) {
-                $title = htmlspecialchars($n[1]);
-                return $title;
-            }
-        }
-
-        return null;
-    }
-
-    protected function processPhotoAlbums($source)
-    {
-        $out = [];
-        $album = [];
-
-        $lines = explode("\n", $source);
-        foreach ($lines as $line) {
-            if (preg_match('@^\s*\[\[image:[^]]+\]\]\s*$@', $line, $m)) {
-                $album[] = trim($line);
-            } else {
-                if ($album) {
-                    if (count($album) == 1) {
-                        $out[] = $album[0];
-                    } else {
-                        $code = "<div class='photoalbum'>";
-                        $code .= implode("", $album);
-                        $code .= "</div>";
-                        $out[] = $code;
-                    }
-                    $album = [];
-                }
-                $out[] = $line;
-            }
-        }
-
-        if (count($album) == 1)
-            $out[] = $album[0];
-        elseif (count($album) > 1) {
-            $code = "<div class='photoalbum'>";
-            $code .= implode("", $album);
-            $code .= "</div>";
-            $out[] = $code;
-        }
-
-        $source = implode(PHP_EOL, $out);
-        return $source;
-    }
-
-    /**
-     * Вывод списка последних загруженных картинок.
-     **/
-    public function onRecentFilesJson(Request $request, Response $response, array $args)
-    {
-        $files = $this->node->where("`type` = 'file' AND `published` = 1 AND `deleted` = 0 AND `id` IN (SELECT `id` FROM `nodes_file_idx` WHERE `kind` = 'photo') ORDER BY `created` DESC LIMIT 50");
-
-        $files = $this->fillNodes($files);
-
-        return $response->withJSON([
-            "files" => $files,
-        ]);
-    }
-
-    protected function fillNodes(array $nodes)
-    {
-        $nodes = array_map(function ($node) {
-            $res = [
-                "id" => (int)$node["id"],
-                "name" => $node["name"],
-            ];
-
-            $key = md5(mb_strtolower("File:" . $node["id"]));
-            if ($desc = $this->node->getByKey($key)) {
-                if (preg_match('@^# (.+)$@m', $desc["source"], $m)) {
-                    $res["name"] = trim($m[1]);
-                }
-            }
-
-            $res["name_html"] = htmlspecialchars($res["name"]);
-
-            return $res;
-        }, $nodes);
-
-        return $nodes;
-    }
-
-    /**
-     * Get extra page properties from the source.
+     * Add handlers to the routing table.
      *
-     * Properties are the YAML formatted stuff before the page body.
-     *
-     * @param string $source Page source code.
-     * @return array Properties, if any.
+     * Call this from within src/routes.php
      **/
-    protected function getPageProperties($source)
+    public static function setupRoutes(&$app)
     {
-        $props = [];
+        $class = get_called_class();
 
-        $lines = explode("\n", $source);
-        foreach ($lines as $line) {
-            $line = trim($line);
-
-            if (0 === strpos($line, '---'))
-                return $props;
-
-            if (preg_match('@^([a-z0-9_-]+):\s+(.+)$@i', $line, $m))
-                $props[$m[1]] = $m[2];
-        }
-
-        return [];
-    }
-
-    protected function notifyEdit($pageName, $lastId, array $user)
-    {
-        if (!($last = $this->node->get($lastId)))
-            return;  // TODO: log?
-
-        if (empty($last['email']))
-            return;
-
-        $this->taskq('wiki-edit-notify', [
-            'pageName' => $pageName,
-            'newUser' => [
-                'id' => $user['id'],
-                'name' => $user['name'],
-            ],
-        ], -10);
+        $app->get ('/wiki',                 $class . ':onRead');
+        $app->get ('/wiki/edit',            $class . ':onEdit');
+        $app->post('/wiki/edit',            $class . ':onSave');
+        $app->post('/wiki/embed-clipboard', $class . ':onEmbedClipboard');
+        $app->get ('/wiki/index',           $class . ':onIndex');
+        $app->get ('/wiki/recent',          $class . ':onRecent');
+        $app->any ('/wiki/upload',          $class . ':onUpload');
     }
 }

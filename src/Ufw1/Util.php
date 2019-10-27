@@ -148,6 +148,11 @@ class Util
             $t = new \Ufw1\Telega($c);
             return $t;
         };
+
+        $container['wiki'] = function ($c) {
+            $t = new \Ufw1\Wiki($c);
+            return $t;
+        };
     }
 
     public static function runCompressor()
@@ -165,24 +170,6 @@ class Util
      **/
     public static function addAdminRoutes(&$app)
     {
-        $app->get ('/admin', '\App\Handlers\Admin:onDashboard');
-        $app->get ('/admin/database', '\App\Handlers\Admin:onDatabaseStatus');
-        $app->get ('/admin/nodes', '\App\Handlers\Admin:onNodeList');
-        $app->get ('/admin/nodes/{type}', '\App\Handlers\Admin:onNodeList');
-        $app->post('/admin/nodes/delete', '\App\Handlers\Admin:onDeleteNode');
-        $app->post('/admin/nodes/save', '\App\Handlers\Admin:onSaveNode');
-        $app->post('/admin/nodes/publish', '\App\Handlers\Admin:onPublishNode');
-        $app->get ('/admin/nodes/{id:[0-9]+}/edit', '\App\Handlers\Admin:onEditNode');
-        $app->get ('/admin/nodes/{id:[0-9]+}/edit-raw', '\App\Handlers\Admin:onEditRawNode');
-        $app->get ('/admin/nodes/{id:[0-9]+}/dump', '\App\Handlers\Admin:onDumpNode');
-        $app->post('/admin/nodes/{id:[0-9]+}/sudo', '\App\Handlers\Admin:onSudo');
-        $app->get ('/admin/s3', '\App\Handlers\Admin:onS3');
-        $app->post('/admin/s3', '\App\Handlers\Admin:onScheduleS3');
-        $app->any ('/admin/session', '\App\Handlers\Admin:onEditSession');
-        $app->get ('/admin/submit', '\App\Handlers\Admin:onSubmitList');
-        $app->get ('/admin/submit/{type}', '\App\Handlers\Admin:onSubmit');
-        $app->get ('/admin/taskq', '\App\Handlers\Admin:onTaskQ');
-
         if (class_exists('\App\Handlers\TaskQ')) {
             $app->get('/taskq/list', '\App\Handlers\TaskQ:onList');
             $app->any('/taskq/{id:[0-9]+}/run', '\App\Handlers\TaskQ:onRun');
