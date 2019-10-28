@@ -424,10 +424,15 @@ class CommonHandler
     protected function sendCached(Request $request, $body, $type, $lastmod)
     {
         $etag = sprintf("\"%x-%x\"", $lastmod, strlen($body));
-        $ts = gmstrftime("%a, %d %b %Y %H:%M:%S %z", $lastmod);
 
         $response = new Response(200);
-        $response = $response->withHeader("Last-Modified", $ts);
+
+        if ($lastmod) {
+            if (!is_numeric($lastmod))
+                $lastmod = strtotime($lastmod);
+            $ts = gmstrftime("%a, %d %b %Y %H:%M:%S %z", $lastmod);
+            $response = $response->withHeader("Last-Modified", $ts);
+        }
 
         $headers = $request->getHeaders();
         if (@$headers["HTTP_IF_NONE_MATCH"][0] == $etag) {
@@ -486,7 +491,10 @@ class CommonHandler
 
     protected function notfound($message = null)
     {
-        throw new \Ufw1\Errors\NotFound($message);
+        if ($message)
+            throw new Errors\NotFound($message);
+        else
+            throw new Errors\NotFound();
     }
 
     protected function unavailable($message = null)
