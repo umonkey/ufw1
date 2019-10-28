@@ -52,11 +52,15 @@ jQuery(function ($) {
             type: "GET",
             dataType: "json"
         }).done(function (res) {
-            var items = res.files.map(function (f) {
-                return sfmt("<a data-id='{0}' href='/wiki?name=File:{0}' title='{1}' target='_blank'><img src='/node/{0}/download/small'/></a>", f.id, f.name_html);
-            });
+            if ('files' in res) {
+                var items = res.files.map(function (f) {
+                    return sfmt("<a data-id='{0}' href='/wiki?name=File:{0}' title='{1}' target='_blank'><img src='/node/{0}/download/small'/></a>", f.id, f.name_html);
+                });
 
-            $("#dlg-upload .recent").html(items.join(""));
+                $("#dlg-upload .recent").html(items.join(""));
+            } else {
+                handle_ajax(res);
+            }
         });
     });
 
