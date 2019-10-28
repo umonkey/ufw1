@@ -31,7 +31,28 @@ class Error extends CommonHandler
             "stack" => $stack,
         ];
 
-        $this->logger->error('exception: {class}: {message}, stack: {stack}', $data['e']);
+        $log = true;
+
+        if ($e instanceof \Ufw1\Errors\Unauthorized) {
+            $tpl = "unauthorized.twig";
+            $status = 401;
+            $log = false;
+        }
+
+        elseif ($e instanceof \Ufw1\Errors\Forbidden) {
+            $tpl = "forbidden.twig";
+            $status = 403;
+            $log = false;
+        }
+
+        elseif ($e instanceof \Ufw1\Errors\NotFound) {
+            $tpl = "notfound.twig";
+            $status = 404;
+            $log = false;
+        }
+
+        if ($log)
+            $this->logger->error('exception: {class}: {message}, stack: {stack}', $data['e']);
 
         $xrw = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? null;
         if ($xrw == "XMLHttpRequest") {
@@ -48,21 +69,6 @@ class Error extends CommonHandler
                 "error" => $data["e"]["class"],
                 "message" => $message,
             ]);
-        }
-
-        if ($e instanceof \Ufw1\Errors\Unauthorized) {
-            $tpl = "unauthorized.twig";
-            $status = 401;
-        }
-
-        elseif ($e instanceof \Ufw1\Errors\Forbidden) {
-            $tpl = "forbidden.twig";
-            $status = 403;
-        }
-
-        elseif ($e instanceof \Ufw1\Errors\NotFound) {
-            $tpl = "notfound.twig";
-            $status = 404;
         }
 
         $response = $this->render($request, $tpl, $data);
