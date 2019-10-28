@@ -217,31 +217,65 @@ class Files extends CommonHandler
         ]);
     }
 
+    /**
+     * Download a file.
+     *
+     * URL: /node/{id}/download/{size}
+     *
+     * If the file is on remote storage, issues a redirect.
+     **/
     public function onDownload(Request $request, Response $response, array $args)
     {
-        $id = $args["id"];
-        $file = $this->node->get($id);
+        $id = $args['id'];
+        $size = $args['size'];
 
-        if (empty($file) or $file["type"] != "file")
-            return $this->notfound($response);
+        $logger = $this->container->get('logger');
 
-        if (!($body = $this->file->getBody($file)))
-            return $this->notfound($response);
-
-        if (preg_match('@^image/@', $file["mime_type"])) {
-            $dispo = "inline";
-        } else {
-            $dispo = "attachment; filename=\"" . urlencode($file["name"]) . "\"";
+        $file = $this->container->get('file')->get($id);
+        if ($file['deleted'] == 1) {
+            $logger->debug('file {0} is gone.', [$id]);
+            $this->gone();
         }
 
-        $response = $response->withHeader("Content-Type", $file["mime_type"])
-            ->withHeader("Content-Length", $file["length"])
-            ->withHeader("ETag", "\"{$file["hash"]}\"")
-            ->withHeader("Cache-Control", "public, max-age=31536000")
-            ->withHeader("Content-Disposition", $dispo);
+        if ($file['published'] == 0) {
+            $logger->debug('file {0} is not published.', [$id]);
+            $this->forbidden();
+        }
 
-        $response->getBody()->write($body);
-        return $response;
+        if (empty($file['files'][$size])) {
+            if ($this->container->has('thumbnailer')) {
+                $tn = $this->container->get('thumbnailer');
+                $file = $tn->updateNode($file);
+                if (!empty($file['files'][$size])) {
+                    $file = $this->container->get('node')->save($file);
+                }
+            }
+
+            if (empty($file['files'][$size])) {
+                $logger->debug('file {0} has no {1} size.', [$id, $size]);
+                $this->notfound();
+            }
+        }
+
+        if ($file['files'][$size]['storage'] == 'local') {
+            $files = $this->container->get('file');
+            $lpath = $file['files'][$size]['path'];
+            $path = $files->fsgetpath($lpath);
+
+            if (!file_exists($path)) {
+                $logger->warning('file {0} does not exist in the storage -- {1}', [$id, $lpath]);
+                $this->notfound();
+            }
+
+            $body = file_get_contents($path);
+            return $this->sendCached($request, $body, $file['files'][$size]['type'], $file['created']);
+        }
+
+        if (!empty($file['files'][$size]['url']))
+            return $response->withRedirect($file['files'][$size]['url']);
+
+        $logger->warning('don\'t know how to serve file {0}, data: {1}', [$id, $file['files'][$size]]);
+        $this->unavailable();
     }
 
     public function onThumbnail(Request $request, Response $response, array $args)
@@ -583,5 +617,12 @@ class Files extends CommonHandler
         }
 
         return "Done.";
+    }
+
+    public static function setupRoutes(&$app)
+    {
+        $class = get_called_class();
+
+        $app->get ('/node/{id:[0-9]+}/download/{size}', $class . ':onDownload');
     }
 }
