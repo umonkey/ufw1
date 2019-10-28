@@ -89,7 +89,7 @@ class Wiki
      * Returns page node, if any.
      *
      * @param string $name Page name.
-     * @return array Page node.
+     * @return array Page node or null.
      **/
     public function getPageByName($name)
     {
@@ -286,7 +286,7 @@ class Wiki
             $parts = explode(":", $m[1]);
             $fileId = array_shift($parts);
 
-            $info = $nodes->get($fileId);
+            $info = $this->container->get('file')->get($fileId);
 
             if (empty($info) or $info["type"] != "file")
                 return "<!-- file {$fileId} does not exist -->";
@@ -336,7 +336,6 @@ class Wiki
                 $large = "/i/photos/{$fileId}.jpg";
 
             $page = "/wiki?name=File:{$fileId}";
-            $title = "untitled";
 
             $res["images"][] = [
                 "src" => $large,
@@ -344,8 +343,7 @@ class Wiki
                 "height" => $h,
             ];
 
-            if ($tmp = $this->getFileTitle($fileId))
-                $title = $tmp;
+            $title = $info['title'] ?? $info['name'];
 
             // TODO: add lazy loading
 
@@ -484,5 +482,45 @@ class Wiki
 
         $node['last_editor'] = $user['id'];
         return $node;
+    }
+
+    protected function getImageSize($fileId)
+    {
+        $files = $this->container->get('file');
+        $logger = $this->container->get('logger');
+
+        $file = $files->get($fileId);
+
+        if ($file) {
+            // We just need the proportions, so get the first one we have.
+            foreach ($file['files'] as $k => $v) {
+                if (isset($v['width']) and isset($v['height'])) {
+                    return [$v['width'], $v['height']];
+                }
+            }
+
+            if ($file['files']['original']['storage'] == 'local') {
+                $fpath = $files->fsgetpath($file['files']['original']['path']);
+
+                if (file_exists($fpath)) {
+                    $body = file_get_contents($fpath);
+
+                    $img = imagecreatefromstring($body);
+                    $w = imagesx($img);
+                    $h = imagesy($img);
+
+                    return [$w, $h];
+                }
+            }
+
+            $logger->warning("file {id} not found in the file system, path: {path}", [
+                "id" => $fileId,
+                "path" => $fpath,
+            ]);
+
+            return [null, null];
+        }
+
+        throw new \RuntimeException("file not found");
     }
 }
