@@ -116,9 +116,13 @@ class Logger implements LoggerInterface
         foreach (explode("\n", rtrim($message)) as $line)
             $text .= $prefix . rtrim($line) . PHP_EOL;
 
+        $umask = umask(0117);
+
         $fp = fopen($fn, "a");
         if ($fp === false)
             throw new \RuntimeException("could not open log file {$fn} for writing");
+
+        umask($umask);
 
         if (flock($fp, LOCK_EX)) {
             fwrite($fp, $text);
