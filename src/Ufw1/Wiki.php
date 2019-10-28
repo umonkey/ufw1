@@ -61,7 +61,7 @@ class Wiki
      **/
     public function canReadPages(array $user = null)
     {
-        $roles = $this->container->get('settings')['wiki']['reader_roles'];
+        $roles = $this->container->get('settings')['wiki']['reader_roles'] ?? [];
         if (empty($roles))
             return true;
 
