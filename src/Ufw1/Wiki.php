@@ -31,7 +31,7 @@ class Wiki
             $parts = $this->findSection($node['source'] ?? '', $section);
             $parts['wanted'] = $source;
 
-            $source = $parts['before'] . PHP_EOL . trim($parts['wanted']) . PHP_EOL . $parts['after'];
+            $source = $parts['before'] . PHP_EOL . PHP_EOL . trim($parts['wanted']) . PHP_EOL . PHP_EOL . $parts['after'];
             $source = trim($source);
         }
 
