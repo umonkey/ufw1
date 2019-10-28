@@ -16,11 +16,8 @@ class Account extends CommonHandler
 {
     public function onGetLoginForm(Request $request, Response $response, array $args)
     {
-        $back = @$_GET["back"];
-
         return $this->render($request, "login.twig", [
             "title" => "Идентификация",
-            "back" => $back,
         ]);
     }
 
@@ -163,22 +160,10 @@ class Account extends CommonHandler
     {
         $class = get_called_class();
 
-        $app->get ('/admin',                            $class . ':onDashboard');
-        $app->get ('/admin/database',                   $class . ':onDatabaseStatus');
-        $app->get ('/admin/nodes',                      $class . ':onNodeList');
-        $app->get ('/admin/nodes/{type}',               $class . ':onNodeList');
-        $app->post('/admin/nodes/delete',               $class . ':onDeleteNode');
-        $app->post('/admin/nodes/save',                 $class . ':onSaveNode');
-        $app->post('/admin/nodes/publish',              $class . ':onPublishNode');
-        $app->get ('/admin/nodes/{id:[0-9]+}/edit',     $class . ':onEditNode');
-        $app->get ('/admin/nodes/{id:[0-9]+}/edit-raw', $class . ':onEditRawNode');
-        $app->get ('/admin/nodes/{id:[0-9]+}/dump',     $class . ':onDumpNode');
-        $app->post('/admin/nodes/{id:[0-9]+}/sudo',     $class . ':onSudo');
-        $app->get ('/admin/s3',                         $class . ':onS3');
-        $app->post('/admin/s3',                         $class . ':onScheduleS3');
-        $app->any ('/admin/session',                    $class . ':onEditSession');
-        $app->get ('/admin/submit',                     $class . ':onSubmitList');
-        $app->get ('/admin/submit/{type}',              $class . ':onSubmit');
-        $app->get ('/admin/taskq',                      $class . ':onTaskQ');
+        $app->get ('/login',    $class . ':onGetLoginForm');
+        $app->post('/login',    $class . ':onLogin');
+        $app->get ('/logout',   $class . ':onLogout');
+        $app->any ('/profile',  $class . ':onProfile');
+        $app->any ('/register', $class . ':onRegister');
     }
 }
