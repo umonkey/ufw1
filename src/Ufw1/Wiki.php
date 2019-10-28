@@ -41,7 +41,7 @@ class Wiki
         $node['deleted'] = 0;
         $node['published'] = 1;
 
-        if ($props = $this->extractNodeProperties($node))
+        if ($props = $this->extractNodeProperties($source))
             $node = array_merge($node, $props);
 
         $node = $this->notifyEdits($node, $user);
@@ -59,9 +59,9 @@ class Wiki
      * @param array $user User node.
      * @return bool True, if the user can read pages.
      **/
-    public function canReadPages(array $user)
+    public function canReadPages(array $user = null)
     {
-        $roles = $this->container->get('settings')['reader_roles'];
+        $roles = $this->container->get('settings')['wiki']['reader_roles'];
         if (empty($roles))
             return true;
 
@@ -72,9 +72,9 @@ class Wiki
         return false;
     }
 
-    public function canEditPages(array $user)
+    public function canEditPages(array $user = null)
     {
-        $roles = $this->container->get('settings')['editor_roles'];
+        $roles = $this->container->get('settings')['wiki']['editor_roles'];
         if (empty($roles))
             return true;
 
