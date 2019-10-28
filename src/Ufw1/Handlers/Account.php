@@ -161,9 +161,7 @@ class Account extends CommonHandler
 
     public static function setupRoutes(&$app)
     {
-        $class = class_exists('\App\Handlers\Admin')
-            ? '\App\Handlers\Admin'
-            : '\Ufw1\Handlers\Admin';
+        $class = get_called_class();
 
         $app->get ('/admin',                            $class . ':onDashboard');
         $app->get ('/admin/database',                   $class . ':onDatabaseStatus');
