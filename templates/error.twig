@@ -8,6 +8,8 @@
             <h1>Файловое хранилище недоступно</h1>
         {% elseif e.class == 'Ufw1\\Errors\\Unavailable' %}
             <h1>Функция недоступна</h1>
+        {% elseif e.class == 'Ufw1\\Errors\\Unauthorized' %}
+            <h1>Доступ ограничен</h1>
         {% else %}
             <h1>Ошибка</h1>
         {% endif %}
@@ -21,6 +23,9 @@
     {% elseif e.class == 'Ufw1\\Errors\\Unavailable' %}
         <p>Извините, эта часть сайта временно не работает.</p>
         <p>Попробуйте повторить операцию чуть позже.</p>
+    {% elseif e.class == 'Ufw1\\Errors\\Unauthorized' %}
+        <p>Эта страница доступна только проверенным пользователям.</p>
+        <p><a href='/login?back={{ request.uri }}'>Пройти проверку</a></p>
     {% elseif e.class == 'Ufw1\\Errors\\Forbidden' %}
         <p>Извини, эта функция тебе недоступна.</p>
     {% elseif e.class == 'PDOException' %}
