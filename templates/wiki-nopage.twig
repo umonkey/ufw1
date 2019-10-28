@@ -2,18 +2,26 @@
 
 {% block page_title %}Страница не найдена{% endblock %}
 
-{% block page_h1 %}{{ page.name }}{% endblock %}
-
 {% block more_head %}
- <link rel="edit" title="Edit this page" href="/wiki/edit?name={{ page_name }}"/>
- <link rel="alternate" type="application/x-wiki" title="Edit this page" href="/wiki/edit?name={{ page_name }}"/>
+    {% if edit_link %}
+        <link rel="edit" title="Edit this page" href="/wiki/edit?name={{ page_name }}"/>
+        <link rel="alternate" type="application/x-wiki" title="Edit this page" href="/wiki/edit?name={{ page_name }}"/>
+    {% endif %}
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <h1>Страница не найдена</h1>
+    </div>
 {% endblock %}
 
 {% block page_contents %}
-    <p>В базе знаний <strong>нет статьи</strong> с таким названием.</p>
+    <p>В базе знаний <strong>нет статьи</strong> с названием «{{ page.name }}».</p>
     <p>Вы можете:</p>
     <ul>
         <li><a href="/search?query={{ page.name }}">найти упоминания</a> этого названия в других статьях;</li>
-        <li><a href="/wiki/edit?name={{ page.name }}">создать статью</a> с таким названием.</li>
+        {% if edit_link %}
+            <li><a href="/wiki/edit?name={{ page.name }}">создать статью</a> с таким названием.</li>
+        {% endif %}
     </ul>
 {% endblock %}

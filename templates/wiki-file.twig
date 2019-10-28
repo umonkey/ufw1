@@ -1,0 +1,83 @@
+{% extends "base.twig" %}
+
+{% block more_head %}
+    <link rel="edit" title="Редактировать страницу" href="{{ edit_link }}"/>
+    <link rel="alternate" type="application/x-wiki" title="Редактировать страницу" href="{{ edit_link }}"/>
+    <meta name="robots" content="noindex"/>
+{% endblock %}
+
+{% block page_title %}{{ file.name }}{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <h1 itemprop="name">{{ file.title ?? file.name }}</h1>
+    </div>
+{% endblock %}
+
+{% block page_contents %}
+    <div class="formatted" itemprop="articleBody">
+        {% if file.description %}
+            {{ file.description }}
+        {% else %}
+            <p>Описание файла отсутствует, вы можете <a href='{{ edit_link }}'>добавить его</a>.</p>
+        {% endif %}
+    </div>
+
+    {% if file.files.small %}
+        <div><a data-fancybox='gallery' href='{{ file.files.original.url }}'><img src='{{ file.files.small.url }}'/></a></div>
+    {% endif %}
+
+    <h2>Свойства файла</h2>
+    <table class='table lines'>
+        <tbody>
+            <tr>
+                <th>Код файла:</th>
+                <td>{{ file.id }}</td>
+            </tr>
+            <tr>
+                <th>Имя файла:</th>
+                <td>{{ file.name }}</td>
+            </tr>
+            <tr>
+                <th>Тип содержимого:</th>
+                <td>{{ file.mime_type }}</td>
+            </tr>
+            <tr>
+                <th>Объём:</th>
+                <td>{{ file.length|filesize }}</td>
+            </tr>
+            <tr>
+                <th>Дата загрузки:</th>
+                <td>{{ file.created|date_simple }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    {% if file.kind == 'photo' and file.files|length > 1 %}
+        <h2>Другие варианты</h2>
+        <table class='table lines'>
+            <thead>
+                <tr>
+                    <th>Код</th>
+                    <th>Тип</th>
+                    <th>Объём</th>
+                    <th>Размер</th>
+                    <th/>
+                </tr>
+            </thead>
+            <tbody>
+                {% for k, v in file.files %}
+                    <tr>
+                        <td>{{ k }}</td>
+                        <td>{{ v.type }}</td>
+                        <td class='number'>{{ v.length|filesize }}</td>
+                        <td>{% if v.width %}{{ v.width }}×{{ v.height }}{% endif %}</td>
+                        <td><a href='{{ v.url }}'>скачать</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <div id="disqus_thread"></div>
+{% endblock %}
