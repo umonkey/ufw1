@@ -122,7 +122,8 @@ class Wiki extends CommonHandler
     {
         $user = $this->requireUser($request);
 
-        if (!$this->canEditPage($request))
+        $wiki = $this->container->get('wiki');
+        if (!$wiki->canEditPages($user))
             return $this->forbidden();
 
         $comment = null;
@@ -228,16 +229,6 @@ class Wiki extends CommonHandler
         $this->taskq('node-s3-upload', [
             'id' => (int)$fid,
         ]);
-
-        $pname = "File:" . $fid;
-        if (!($page = $this->pageGet($pname))) {
-            $text = "# {$name}\n\n";
-            $text .= "[[image:{$fid}]]\n\n";
-            if ($comment)
-                $text .= $comment;
-
-            $this->pageSave($pname, $text);
-        }
 
         return "[[image:{$fid}]]";
     }
@@ -450,6 +441,38 @@ class Wiki extends CommonHandler
     }
 
     /**
+     * List recently uploaded files.
+     *
+     * Used in the file upload dialog.
+     **/
+    public function onRecentFiles(Request $request, Response $response, array $args)
+    {
+        $files = $this->node->where("`type` = 'file' AND `published` = 1 AND `deleted` = 0 AND `id` IN (SELECT `id` FROM `nodes_file_idx` WHERE `kind` = 'photo') ORDER BY `created` DESC LIMIT 50");
+
+        $files = array_map(function ($node) {
+            $res = [
+                "id" => (int)$node["id"],
+                "name" => $node["name"],
+            ];
+
+            $key = md5(mb_strtolower("File:" . $node["id"]));
+            if ($desc = $this->node->getByKey($key)) {
+                if (preg_match('@^# (.+)$@m', $desc["source"], $m)) {
+                    $res["name"] = trim($m[1]);
+                }
+            }
+
+            $res["name_html"] = htmlspecialchars($res["name"]);
+
+            return $res;
+        }, $files);
+
+        return $response->withJSON([
+            "files" => $files,
+        ]);
+    }
+
+    /**
      * Background task: reindex a page.
      **/
     public function onReindexPage(Request $request, Response $response, array $args)
@@ -583,44 +606,6 @@ class Wiki extends CommonHandler
         return $image;
     }
 
-    protected function getImageSize($fileId)
-    {
-        $file = $this->file->get($fileId);
-
-        if ($file) {
-            // We just need the proportions, so get the first one we have.
-            foreach ($file['files'] as $k => $v) {
-                if (isset($v['width']) and isset($v['height'])) {
-                    return [$v['width'], $v['height']];
-                }
-            }
-
-            if ($file['files']['original']['storage'] == 'local') {
-                $storage = $this->file->getStoragePath();
-                $fpath = $storage . "/" . $file["fname"];
-
-                if (file_exists($fpath)) {
-                    $body = file_get_contents($fpath);
-
-                    $img = imagecreatefromstring($body);
-                    $w = imagesx($img);
-                    $h = imagesy($img);
-
-                    return [$w, $h];
-                }
-            }
-
-            $this->logger->warning("file {id} not found in the file system, path: {path}", [
-                "id" => $fileId,
-                "path" => $fpath,
-            ]);
-
-            return [null, null];
-        }
-
-        throw new \RuntimeException("file not found");
-    }
-
     /**
      * Reads a page by its name.
      *
@@ -697,12 +682,13 @@ class Wiki extends CommonHandler
     {
         $class = get_called_class();
 
-        $app->get ('/wiki',                 $class . ':onRead');
-        $app->get ('/wiki/edit',            $class . ':onEdit');
-        $app->post('/wiki/edit',            $class . ':onSave');
-        $app->post('/wiki/embed-clipboard', $class . ':onEmbedClipboard');
-        $app->get ('/wiki/index',           $class . ':onIndex');
-        $app->get ('/wiki/recent',          $class . ':onRecent');
-        $app->any ('/wiki/upload',          $class . ':onUpload');
+        $app->get ('/wiki',                   $class . ':onRead');
+        $app->get ('/wiki/edit',              $class . ':onEdit');
+        $app->post('/wiki/edit',              $class . ':onSave');
+        $app->post('/wiki/embed-clipboard',   $class . ':onEmbedClipboard');
+        $app->get ('/wiki/index',             $class . ':onIndex');
+        $app->get ('/wiki/recent',            $class . ':onRecent');
+        $app->get ('/wiki/recent-files.json', $class . ':onRecentFiles');
+        $app->any ('/wiki/upload',            $class . ':onUpload');
     }
 }
