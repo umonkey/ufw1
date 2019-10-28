@@ -37,9 +37,11 @@
             </div>
         {% endif %}
 
-        <div class='form-group'>
-            <label class='checkbox'><input type='checkbox' name='node[deleted]' value='1'{% if node.deleted %} checked{% endif %} autocomplete='off'/> удалить документ</label>
-        </div>
+        {% if not form.fields.deleted %}
+            <div class='form-group'>
+                <label class='checkbox'><input type='checkbox' name='node[deleted]' value='1'{% if node.deleted %} checked{% endif %} autocomplete='off'/> удалить документ</label>
+            </div>
+        {% endif %}
 
         <div class='form-actions'>
             <button class='btn btn-primary'>Сохранить изменения</button>
