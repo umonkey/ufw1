@@ -33,19 +33,23 @@ class Wiki extends CommonHandler
         if (!$wiki->canReadPages($user))
             throw new Errors\Forbidden;
 
-        $node = $wiki->getPageByName($name);
-        $res = $wiki->renderPage($node);
-
-        return $this->render($request, 'wiki-page.twig', [
-            'language' => $res['language'],
-            'page' => $res,
-            'edit_link' => "/wiki/edit?name=" . urlencode($name),
-            "jsdata" => json_encode([
-                "wiki_page" => $name,
-            ]),
-        ]);
-
-        return $this->showPageByName($request, $response, $name);
+        if ($node = $wiki->getPageByName($name)) {
+            return $this->render($request, 'wiki-page.twig', [
+                'user' => $user,
+                'language' => $res['language'],
+                'page' => $res,
+                'edit_link' => "/wiki/edit?name=" . urlencode($name),
+                "jsdata" => json_encode([
+                    "wiki_page" => $name,
+                ]),
+            ]);
+        } else {
+            return $this->render($request, 'wiki-nopage.twig', [
+                'user' => $user,
+                'page' => ['name' => $name],
+                'edit_link' => "/wiki/edit?name=" . urlencode($name),
+            ]);
+        }
     }
 
     /**

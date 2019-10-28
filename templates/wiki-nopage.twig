@@ -1,0 +1,19 @@
+{% extends "base.twig" %}
+
+{% block page_title %}Страница не найдена{% endblock %}
+
+{% block page_h1 %}{{ page.name }}{% endblock %}
+
+{% block more_head %}
+ <link rel="edit" title="Edit this page" href="/wiki/edit?name={{ page_name }}"/>
+ <link rel="alternate" type="application/x-wiki" title="Edit this page" href="/wiki/edit?name={{ page_name }}"/>
+{% endblock %}
+
+{% block page_contents %}
+    <p>В базе знаний <strong>нет статьи</strong> с таким названием.</p>
+    <p>Вы можете:</p>
+    <ul>
+        <li><a href="/search?query={{ page.name }}">найти упоминания</a> этого названия в других статьях;</li>
+        <li><a href="/wiki/edit?name={{ page.name }}">создать статью</a> с таким названием.</li>
+    </ul>
+{% endblock %}
