@@ -129,7 +129,7 @@ class Wiki
      * Only the wiki page itself, not the actual HTML page with template stuff.
      *
      * @param array $node Wiki page node.
-     * @return string HTML code.
+     * @return array Page properties and HTML code.
      **/
     public function renderPage(array $node)
     {
