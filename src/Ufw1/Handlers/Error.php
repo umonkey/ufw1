@@ -34,7 +34,7 @@ class Error extends CommonHandler
         $log = true;
 
         if ($e instanceof \Ufw1\Errors\Unauthorized) {
-            $tpl = "unauthorized.twig";
+            // $tpl = "unauthorized.twig";
             $status = 401;
             $log = false;
         }
