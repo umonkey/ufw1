@@ -1,3 +1,18 @@
+window.wiki_insert_text = function (text) {
+    var ta = $("textarea.wiki")[0],
+        tv = ta.value,
+        ss = ta.selectionStart,
+        se = ta.selectionEnd,
+        tt = tv.substring(ss, se);
+
+    var ntext = tv.substring(0, ss) + text + tv.substring(se);
+    ta.value = ntext;
+    ta.selectionStart = ss; // ss + text.length;
+    ta.selectionEnd = ss + text.length;
+    ta.focus();
+};
+
+
 jQuery(function ($) {
     enable_wiki_fancybox();
     enable_map();
@@ -264,19 +279,7 @@ function enable_wiki_fancybox()
 
 function enable_toolbar()
 {
-    var insert_text = function (text) {
-        var ta = $("textarea.wiki")[0],
-            tv = ta.value,
-            ss = ta.selectionStart,
-            se = ta.selectionEnd,
-            tt = tv.substring(ss, se);
-
-        var ntext = tv.substring(0, ss) + text + tv.substring(se);
-        ta.value = ntext;
-        ta.selectionStart = ss; // ss + text.length;
-        ta.selectionEnd = ss + text.length;
-        ta.focus();
-    };
+    insert_text = wiki_insert_text;
 
     $(document).on("click", "a.tool", function (e) {
         var dsel = $(this).attr("data-dialog");
@@ -296,9 +299,6 @@ function enable_toolbar()
         var action = $(this).attr("data-action");
         if (action == "map") {
             $("#dlgMap").show();
-            e.preventDefault();
-        } else if (action == "toc") {
-            insert_text("<div id=\"toc\"></div>");
             e.preventDefault();
         }
     });
