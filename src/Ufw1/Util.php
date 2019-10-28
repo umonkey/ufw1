@@ -12,6 +12,10 @@ class Util
         $html = preg_replace('@\s+--\s+@', '&nbsp;— ', $html);
         $html = preg_replace('@\.  @', '.&nbsp; ', $html);
 
+        // Use nbsp with some words.
+        $html = preg_replace('@ (а|В|в|Для|и|из|на|о|от|с)\s+@u', ' \1&nbsp;', $html);
+        $html = preg_replace('@\s+(году|год)([.,])@u', '&nbsp;\1\2', $html);
+
         // Closing tags should never have leading space.
         $html = preg_replace('@\s+</([a-z0-9]+)>@', '</\1>', $html);
 
@@ -107,8 +111,7 @@ class Util
 
         $container["notFoundHandler"] = function ($c) {
             return function ($request, $response) use ($c) {
-                $h = new \Ufw1\Handlers\NotFound($c);
-                return $h($request, $response, []);
+                throw new \Ufw1\Errors\NotFound;
             };
         };
 
