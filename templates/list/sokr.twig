@@ -1,0 +1,34 @@
+<form class='async sokr' method='post' action='/admin/shortener'>
+    <input type='text' name='target' required placeholder='Ссылка для сокращения...' autocomplete='off'/>
+    <button class='btn btn-primary'>Сократить</button>
+</form>
+
+<div class='msgbox'></div>
+
+{% if nodes %}
+    <table class="table lines nodes">
+        <thead>
+            <tr>
+                <th class='rowid'>#</th>
+                <th>Откуда</th>
+                <th>Куда</th>
+                <th><i title='Удалить документ' class="fas fa-trash-alt"></i></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for n in nodes %}
+                <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
+                    <td class="rowid">{{ n.id }}</td>
+                    <td><a href="/admin/nodes/{{ n.id }}/edit">{{ n.name }}</a></td>
+                    <td><a href='{{ n.target }}' target='_blank'>{{ n.target }}</a></td>
+                    <td class='check'>{% if n.id != user.id %}<input class='deleted' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.deleted %} checked{% endif %}/>{% endif %}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p><a href='/admin/nodes'>Показать другие документы</a></p>
+{% else %}
+    <p>Нет ни одной сокращённой ссылки.</p>
+    <p><a href='/admin/nodes'>Показать другие документы</a></p>
+{% endif %}

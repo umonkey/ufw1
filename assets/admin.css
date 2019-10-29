@@ -68,3 +68,24 @@ td.nowrap {
 td.check {
     text-align: center;
 }
+
+
+/**
+ * URL shortener.
+ * Available at /admin/nodes/sokr
+ **/
+form.sokr input {
+    width: 500px;
+    border: 1px solid #ccc;
+    line-height: 28px;
+    height: 30px;
+    padding: 0 10px;
+    width: 100%;
+    max-width: calc(100% - 105px);
+    background-color: #f8f8f8;
+    margin: 0 5px 0 0;
+    box-sizing: border-box;
+}
+form.sokr button {
+    width: 100px;
+}
