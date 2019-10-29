@@ -4,6 +4,7 @@ table.table {
 table.table th,
 table.table td {
     padding: 4px 10px;
+    text-align: left;
 }
 
 table.table .nowrap,
@@ -37,6 +38,5 @@ table.compact {
 table.lines th,
 table.lines td {
     border-bottom: 1px solid #ddd;
-    text-align: left;
     font-weight: normal;
 }
