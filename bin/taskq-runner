@@ -1,0 +1,78 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Local TaskQ runner.
+ *
+ * Monitors database for new tasks, then calls the handlers via the https urls.
+ **/
+
+require __DIR__ . '/../autoload.php';
+
+// Instantiate the app
+$settings = require __DIR__ . '/../../src/settings.php';
+$app = new \Slim\App($settings);
+
+// Set up dependencies
+require __DIR__ . '/../../src/dependencies.php';
+
+// Register middleware
+require __DIR__ . '/../../src/middleware.php';
+
+// Register routes
+require __DIR__ . '/../../src/routes.php';
+
+
+$container = $app->getContainer();
+$db = $container->get('database');
+$st = $container->get('settings')['taskq'];
+$logger = $container->get('logger');
+
+while (true) {
+    $rows = $db->fetch('SELECT `id` FROM `taskq` ORDER BY `priority` DESC, `id`');
+    foreach ($rows as $row) {
+        $url = sprintf($st['exec_pattern'], $row['id']);
+        http_post($url, [], $logger);
+    }
+
+    if (empty($rows))
+        sleep(1);
+}
+
+
+function http_post($url, array $args = [], $logger)
+{
+    $payload = http_build_query($args);
+
+    $context = stream_context_create([
+        "http" => [
+            "method" => "POST",
+            "header" => "Content-Type: application/x-www-form-urlencoded",
+            "content" => $payload,
+            "ignore_errors" => true,
+            "timeout" => 1200,
+        ],
+    ]);
+
+    $res = [
+        "status" => null,
+        "headers" => [],
+        "body" => null,
+    ];
+
+    $logger->info('taskq: POST {0}', [$url]);
+    $res["body"] = file_get_contents($url, false, $context);
+
+    foreach ($http_response_header as $k => $v) {
+        if ($k == 0) {
+            $s = explode(" ", $http_response_header[0], 3);
+            $res["status"] = (int)$s[1];
+        }
+
+        else {
+            $kv = preg_split('@:\s+@', $v, 2, PREG_SPLIT_NO_EMPTY);
+            $res["headers"][$kv[0]] = $kv[1];
+        }
+    }
+
+    return $res;
+}

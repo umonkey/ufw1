@@ -158,7 +158,7 @@ class Database {
             $_m = $e->getMessage();
 
             // Server gone away.
-            if ($_m == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone awa') {
+            if ($_m == 'SQLSTATE[HY000]: General error: 2006 MySQL server has gone away') {
                 $this->conn = $this->connect();
                 return $this->query($query, $params);
             }
