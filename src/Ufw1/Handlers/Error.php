@@ -40,7 +40,7 @@ class Error extends CommonHandler
         }
 
         elseif ($e instanceof \Ufw1\Errors\Forbidden) {
-            $tpl = "forbidden.twig";
+            // $tpl = "forbidden.twig";
             $status = 403;
             $log = false;
         }
