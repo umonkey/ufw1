@@ -158,16 +158,6 @@ class Util
         };
     }
 
-    public static function runCompressor()
-    {
-        require __DIR__ . '/compress.php';
-
-        $map = include 'src/assets.php';
-        $compiler = new \Compiler($map);
-        $compiler->compile();
-        $compiler->compile_min();
-    }
-
     /**
      * Adds admin UI to the touring table.
      **/

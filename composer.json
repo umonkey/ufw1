@@ -23,7 +23,5 @@
             "Ufw1\\": "src/Ufw1"
         }
     },
-	"scripts": {
-		"assets": "Ufw1\\Util::runCompressor"
-	}
+	"bin": ["bin/build-assets"]
 }

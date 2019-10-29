@@ -1,0 +1,30 @@
+#!/usr/bin/env php
+<?php
+
+ini_set('display_errors', 'stderr');
+
+requireAutoloader();
+
+require __DIR__ . '/../src/Ufw1/compress.php';
+
+$map = include 'src/assets.php';
+$compiler = new \Compiler($map);
+$compiler->compile();
+$compiler->compile_min();
+
+
+function requireAutoloader()
+{
+    $autoloadPaths = [
+        // Local package usage
+        __DIR__ . '/../vendor/autoload.php',
+        // Package was included as a library
+        __DIR__ . '/../../../autoload.php',
+    ];
+    foreach ($autoloadPaths as $path) {
+        if (file_exists($path)) {
+            require_once $path;
+            break;
+        }
+    }
+}
