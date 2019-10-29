@@ -3,21 +3,21 @@
 <table class="table lines nodes">
     <thead>
         <tr>
-            <th>#</th>
+            <th class='rowid'>#</th>
             <th>Название</th>
-            <th>Создан</th>
             <th><i title='Документ виден на сайте' class="fas fa-eye"></i></th>
-            <th/>
+            <th><i title='Удалить документ' class="fas fa-trash-alt"></i></th>
+            <th>Создан</th>
         </tr>
     </thead>
     <tbody>
         {% for n in nodes %}
             <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
-                <td class="number"><a href="/admin/nodes/{{ n.id }}/edit">{{ n.id }}</a></td>
-                <td>{{ n.name }}</td>
-                <td>{{ n.created }}</td>
-                <td style='text-align: center'>{% if n.published %}1{% else %}0{% endif %}</td>
-                <td><a href='/admin/nodes/{{ n.id }}/dump'><i class="far fa-question-circle"></i></a></td>
+                <td class="rowid">{{ n.id }}</td>
+                <td><a href="/admin/nodes/{{ n.id }}/edit">{{ n.name }}</a></td>
+                <td class='check'>{% if n.id != user.id %}<input class='published' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.published %} checked{% endif %}/>{% endif %}</td>
+                <td class='check'>{% if n.id != user.id %}<input class='deleted' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.deleted %} checked{% endif %}/>{% endif %}</td>
+                <td>{{ n.created|date_simple }}</td>
             </tr>
         {% endfor %}
     </tbody>
