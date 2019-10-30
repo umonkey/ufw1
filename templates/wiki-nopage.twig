@@ -4,8 +4,8 @@
 
 {% block more_head %}
     {% if edit_link %}
-        <link rel="edit" title="Edit this page" href="/wiki/edit?name={{ page_name }}"/>
-        <link rel="alternate" type="application/x-wiki" title="Edit this page" href="/wiki/edit?name={{ page_name }}"/>
+        <link rel="edit" title="Edit this page" href="{{ edit_link }}"/>
+        <link rel="alternate" type="application/x-wiki" title="Edit this page" href="{{ edit_link }}"/>
     {% endif %}
 {% endblock %}
 
@@ -21,7 +21,7 @@
     <ul>
         <li><a href="/search?query={{ page.name }}">найти упоминания</a> этого названия в других статьях;</li>
         {% if edit_link %}
-            <li><a href="/wiki/edit?name={{ page.name }}">создать статью</a> с таким названием.</li>
+            <li><a href="{{ edit_link }}">создать статью</a> с таким названием.</li>
         {% endif %}
     </ul>
 {% endblock %}
