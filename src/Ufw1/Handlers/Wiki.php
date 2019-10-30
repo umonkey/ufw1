@@ -24,8 +24,12 @@ class Wiki extends CommonHandler
         $wiki = $this->container->get('wiki');
 
         $user = $this->getUser($request);
-        if (!$wiki->canReadPages($user))
-            throw new Errors\Forbidden;
+        if (!$wiki->canReadPages($user)) {
+            if ($user)
+                throw new \Ufw1\Errors\Forbidden;
+            else
+                throw new \Ufw1\Errors\Unauthorized;
+        }
 
         if (empty($name)) {
             $st = $this->container->get('settings')['wiki']['homePage'] ?? 'Welcome';

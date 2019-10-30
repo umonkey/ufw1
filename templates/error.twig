@@ -10,6 +10,8 @@
             <h1>Функция недоступна</h1>
         {% elseif e.class == 'Ufw1\\Errors\\Unauthorized' %}
             <h1>Доступ ограничен</h1>
+        {% elseif e.class == 'Ufw1\\Errors\\NotFound' %}
+            <h1>Страница не найдена</h1>
         {% else %}
             <h1>Ошибка</h1>
         {% endif %}
@@ -26,6 +28,9 @@
     {% elseif e.class == 'Ufw1\\Errors\\Unauthorized' %}
         <p>Эта страница доступна только проверенным пользователям.</p>
         <p><a href='/login?back={{ request.uri }}'>Пройти проверку</a></p>
+    {% elseif e.class == 'Ufw1\\Errors\\NotFound' %}
+        <p>Попробуйте воспользоваться <a href='/search'>поиском</a>.</p>
+        <p>Или исследуйте сайт с <a href='/'>главной страницы</a>.</p>
     {% elseif e.class == 'Ufw1\\Errors\\Forbidden' %}
         <p>Извини, эта функция тебе недоступна.</p>
     {% elseif e.class == 'PDOException' %}

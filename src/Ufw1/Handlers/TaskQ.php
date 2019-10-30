@@ -237,4 +237,15 @@ class TaskQ extends CommonHandler
 
         $this->container->get('taskq')->add('node-s3-upload', ['id' => $id]);
     }
+
+    /**
+     * Adds admin UI to the touring table.
+     **/
+    public static function setupRoutes(&$app)
+    {
+        $class = get_called_class();
+
+        $app->get('/taskq/list',            $class . ':onList');
+        $app->any('/taskq/{id:[0-9]+}/run', $class . ':onRun');
+    }
 }

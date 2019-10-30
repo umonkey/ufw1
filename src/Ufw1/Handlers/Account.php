@@ -160,10 +160,14 @@ class Account extends CommonHandler
     {
         $class = get_called_class();
 
-        $app->get ('/login',    $class . ':onGetLoginForm');
-        $app->post('/login',    $class . ':onLogin');
-        $app->get ('/logout',   $class . ':onLogout');
-        $app->any ('/profile',  $class . ':onProfile');
-        $app->any ('/register', $class . ':onRegister');
+        $app->get ('/account',      $class . ':onInfo');
+        $app->get ('/login',        $class . ':onGetLoginForm');
+        $app->post('/login',        $class . ':onLogin');
+        $app->get ('/login/google', $class . ':onLoginGoogle');
+        $app->get ('/login/vk',     $class . ':onLoginVK');
+        $app->any ('/logout',       $class . ':onLogout');
+        $app->get ('/logout/bye',   $class . ':onLogoutComplete');
+        $app->any ('/profile',      $class . ':onProfile');
+        $app->any ('/register',     $class . ':onRegister');
     }
 }
