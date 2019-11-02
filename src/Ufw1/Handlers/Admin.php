@@ -46,6 +46,8 @@ class Admin extends CommonHandler
 
         $nodes = $this->node->where("`deleted` = 0 AND `type` IN ({$types}) ORDER BY `id` DESC LIMIT 100");
 
+        $types = $this->getNodeTypes();
+
         return $this->render($request, 'admin-nodes.twig', [
             'user' => $user,
             'nodes' => $nodes,
@@ -557,5 +559,18 @@ class Admin extends CommonHandler
         $app->get ('/admin/submit',                     $class . ':onSubmitList');
         $app->get ('/admin/submit/{type}',              $class . ':onSubmit');
         $app->get ('/admin/taskq',                      $class . ':onTaskQ');
+    }
+
+    protected function getNodeTypes()
+    {
+        $st = $this->container->get('settings')['node_forms'] ?? [];
+
+        $types = [];
+        foreach ($st as $k => $v)
+            $types[$k] = $v['title'] ?? $k;
+
+        asort($types);
+
+        return $types;
     }
 }
