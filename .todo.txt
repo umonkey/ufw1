@@ -1,1 +1,6 @@
 LESS compiler: https://github.com/leafo/lessphp
+
+Создание проекта по образцу yii:
+- https://www.yiiframework.com/
+- https://www.yiiframework.com/image/tour/1.gif
+Включая create-project-cmd скрипт для создания папок и миграций, симлинков на документацию.
