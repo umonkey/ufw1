@@ -4,3 +4,5 @@ LESS compiler: https://github.com/leafo/lessphp
 - https://www.yiiframework.com/
 - https://www.yiiframework.com/image/tour/1.gif
 Включая create-project-cmd скрипт для создания папок и миграций, симлинков на документацию.
+
+Админка: кричать при возможности модификации скиптов.  Видимо тест по крону.
