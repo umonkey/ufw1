@@ -6,16 +6,6 @@ class Util
 {
     public static function cleanHtml($html)
     {
-        // See also the |type markdown filter.
-
-        // Some typography.
-        $html = preg_replace('@\s+--\s+@', '&nbsp;— ', $html);
-        $html = preg_replace('@\.  @', '.&nbsp; ', $html);
-
-        // Use nbsp with some words.
-        $html = preg_replace('@ (а|В|в|Для|и|из|на|о|от|с)\s+@u', ' \1&nbsp;', $html);
-        $html = preg_replace('@\s+(году|год)([.,])@u', '&nbsp;\1\2', $html);
-
         // Closing tags should never have leading space.
         $html = preg_replace('@\s+</([a-z0-9]+)>@', '</\1>', $html);
 
