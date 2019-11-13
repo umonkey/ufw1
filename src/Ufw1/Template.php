@@ -219,7 +219,7 @@ class Template
 
         foreach ($patterns as $pattern) {
             $text = preg_replace_callback($pattern, function ($m) {
-                return Util::processTypography($text);
+                return Util::processTypography($m[0]);
             }, $text);
         }
 
