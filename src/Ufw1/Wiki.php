@@ -46,6 +46,8 @@ class Wiki
 
         $node = $this->notifyEdits($node, $user);
 
+        $this->container->get('taskq')->add('wiki-reindex', [$node['id']]);
+
         return $node;
     }
 
@@ -93,6 +95,8 @@ class Wiki
      **/
     public function getPageByName($name)
     {
+        $name = explode('#', $name)[0];
+
         $key = $this->getPageKey($name);
         $node = $this->container->get('node')->where('`type` = \'wiki\' AND `key` = ? ORDER BY `id` LIMIT 1', [$key]);
         return $node ? $node[0] : null;
@@ -108,8 +112,13 @@ class Wiki
     public function getPageSource($name, $section = null)
     {
         $page = $this->getPageByName($name);
-        if (empty($page))
-            return null;
+        if (empty($page) or empty($page['source'])) {
+            $text = "# {$name}\n\n";
+            $text .= "**{$name}** -- это ...\n\n";
+            $text .= "## Источники информации\n\n";
+            $text .= "- [[w:{$name}|{$name}]] в Википедии";
+            return $text;
+        }
 
         $source = $page['source'];
 
@@ -180,6 +189,8 @@ class Wiki
         $html = \Ufw1\Util::cleanHtml($html);
         $res["html"] = $html;
 
+        $res['snippet'] = $this->getSnippet($html);
+
         return $res;
     }
 
@@ -234,7 +245,9 @@ class Wiki
      **/
     protected function processWikiLinks($source)
     {
-        $source = preg_replace_callback('@\[\[([^]]+)\]\]@', function ($m) {
+        $interwiki = $this->container->get('settings')['interwiki'] ?? [];
+
+        $source = preg_replace_callback('@\[\[([^]]+)\]\]@', function ($m) use ($interwiki) {
             // Embed images later.
             if (0 === strpos($m[1], "image:"))
                 return $m[0];
@@ -262,20 +275,41 @@ class Wiki
                 $label = $parts[1];
             }
 
-            $cls = "good";
+            $cls = "wiki good";
             $title = $link;
 
-            if (!($tmp = $this->getPageByName($link))) {
-                $cls = "broken";
+            if ($tmp = $this->processInterwiki($link, $interwiki)) {
+                $link = $tmp;
+                $cls = 'external';
+            } elseif (!($tmp = $this->getPageByName($link))) {
+                $cls = "wiki broken";
                 $title = "Нет такой страницы";
             }
 
-            $html = sprintf("<a href='/wiki?name=%s' class='wiki %s' title='%s'>%s</a>", urlencode($link), $cls, htmlspecialchars($title), htmlspecialchars($label));
+            if ($cls != 'external') {
+                $parts = explode('#', $link);
+                $parts[0] = urlencode($parts[0]);
+                $link = implode('#', $parts);
+                $link = '/wiki?name=' . $link;
+            }
+
+            $html = sprintf("<a href='%s' class='%s' title='%s'>%s</a>", $link, $cls, htmlspecialchars($title), htmlspecialchars($label));
 
             return $html;
         }, $source);
 
         return $source;
+    }
+
+    protected function processInterwiki($link, array $interwiki)
+    {
+        foreach ($interwiki as $re => $format) {
+            if (preg_match($re, $link, $m)) {
+                return sprintf($format, $m[1]);
+            }
+        }
+
+        return false;
     }
 
     protected function processImages($html)
@@ -522,5 +556,22 @@ class Wiki
         }
 
         throw new \RuntimeException("file not found");
+    }
+
+    protected function getSnippet($html)
+    {
+        // strip_tags mishandles scripts, and we use them heavily for microdata,
+        // so just strip them off in advance.
+        $html = preg_replace('@<script.*?</script>@', '', $html);
+
+        if (preg_match_all('@<p>(.+?)</p>@ms', $html, $m)) {
+            foreach ($m[0] as $_html) {
+                if ($text = strip_tags($_html)) {
+                    return $text;
+                }
+            }
+        }
+
+        return null;
     }
 }
