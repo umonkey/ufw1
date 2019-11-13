@@ -52,6 +52,23 @@ class Shortener extends \Ufw1\CommonHandler
     }
 
     /**
+     * Display shortener UI.
+     **/
+    public function onPreview(Request $request, Response $response, array $args)
+    {
+        $user = $this->requireUser($request);
+
+        $src = $request->getParam('url');
+        $dst = $request->getUri()->getBaseUrl() . $this->shorten($src);
+
+        return $this->render($request, 'shortener.twig', [
+            'user' => $user,
+            'src' => $src,
+            'dst' => $dst,
+        ]);
+    }
+
+    /**
      * Handle a redirect.
      **/
     public function onRedirect(Request $request, Response $response, array $args)
@@ -84,7 +101,38 @@ class Shortener extends \Ufw1\CommonHandler
     {
         $class = get_called_class();
 
-        $app->post('/admin/shortener',        $class . ':onShorten');
-        $app->get ('/l/{link}',               $class . ':onRedirect');
+        $app->post('/admin/shortener', $class . ':onShorten');
+        $app->get ('/l/{link}',        $class . ':onRedirect');
+        $app->get ('/shorten',         $class . ':onPreview');
+    }
+
+    protected function shorten($link)
+    {
+        $key = md5($link);
+
+        $this->db->beginTransaction();
+
+        $node = $this->node->getByKey($key);
+
+        if ($node and $node['type'] != 'sokr')
+            $this->fail('Невозможно создать ссылку: коллизия.');
+
+        $node = array_merge($node ?? [], [
+            'type' => 'sokr',
+            'key' => $key,
+            'name' => null,
+            'target' => $link,
+            'published' => 1,
+            'deleted' => 0,
+        ]);
+
+        $node = $this->node->save($node);
+
+        $node['name'] = '/l/' . base_convert($node['id'], 10, 36);
+        $node = $this->node->save($node);
+
+        $this->db->commit();
+
+        return $node['name'];
     }
 }
