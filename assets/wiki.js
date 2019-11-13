@@ -18,6 +18,10 @@ jQuery(function ($) {
     enable_map();
     enable_toolbar();
     enable_sitemap_toggle($);
+
+    $('.formatted a.external').each(function (em) {
+        $(this).attr('target', '_blank');
+    });
 });
 
 
