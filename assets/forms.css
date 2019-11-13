@@ -24,11 +24,12 @@ input[type=number].form-control,
 textarea.form-control {
     border: 1px solid #ccc;
     border-radius: 0px;
-    line-height: 30px;
+    line-height: 28px;
     padding: 0 10px;
     width: 100%;
-    max-width: calc(100% - 22px);
+    max-width: 100%;
     background-color: #f8f8f8;
+    box-sizing: border-box;
 }
 input[type=number].form-control {
     width: 100px;
