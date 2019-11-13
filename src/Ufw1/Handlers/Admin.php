@@ -46,6 +46,14 @@ class Admin extends CommonHandler
 
         $nodes = $this->node->where("`deleted` = 0 AND `type` IN ({$types}) ORDER BY `id` DESC LIMIT 100");
 
+        if (isset($args['type']) and $args['type'] == 'user') {
+            usort($nodes, function ($a, $b) {
+                $_a = mb_strtolower($a['name']);
+                $_b = mb_strtolower($b['name']);
+                return strcmp($_a, $_b);
+            });
+        }
+
         $types = $this->getNodeTypes();
 
         return $this->render($request, 'admin-nodes.twig', [
@@ -511,6 +519,19 @@ class Admin extends CommonHandler
         return $st;
     }
 
+    protected function getNodeTypes()
+    {
+        $st = $this->container->get('settings')['node_forms'] ?? [];
+
+        $types = [];
+        foreach ($st as $k => $v)
+            $types[$k] = $v['title'] ?? $k;
+
+        asort($types);
+
+        return $types;
+    }
+
     /**
      * Returns status of some systems.
      **/
@@ -559,18 +580,5 @@ class Admin extends CommonHandler
         $app->get ('/admin/submit',                     $class . ':onSubmitList');
         $app->get ('/admin/submit/{type}',              $class . ':onSubmit');
         $app->get ('/admin/taskq',                      $class . ':onTaskQ');
-    }
-
-    protected function getNodeTypes()
-    {
-        $st = $this->container->get('settings')['node_forms'] ?? [];
-
-        $types = [];
-        foreach ($st as $k => $v)
-            $types[$k] = $v['title'] ?? $k;
-
-        asort($types);
-
-        return $types;
     }
 }
