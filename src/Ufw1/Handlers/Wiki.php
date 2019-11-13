@@ -42,8 +42,20 @@ class Wiki extends CommonHandler
         if (preg_match('@^File:(\d+)$@', $name, $m))
             return $this->onReadFilePage($request, $name, $m[1]);
 
-        if ($node = $wiki->getPageByName($name)) {
+        $node = $wiki->getPageByName($name);
+
+        // Fake deleted pages.
+        if (empty($node['source']))
+            $node = null;
+
+        if ($node) {
             $res = $wiki->renderPage($node);
+
+            if (!empty($res['redirect'])) {
+                $next = '/wiki?name=' . urlencode($res['redirect']);
+                return $response->withRedirect($next);
+            }
+
             return $this->render($request, 'wiki-page.twig', [
                 'user' => $user,
                 'language' => $res['language'],
@@ -141,6 +153,9 @@ class Wiki extends CommonHandler
         $next = isset($node['url'])
             ? $node['url']
             : "/wiki?name=" . urlencode($name);
+
+        if ($section)
+            $next .= '#' . str_replace(' ', '_', mb_strtolower($section));
 
         return $response->withJSON([
             "redirect" => $next,
@@ -315,6 +330,7 @@ class Wiki extends CommonHandler
 
         // Save the title, trigger the callback.
         if ($id = $request->getParam("id")) {
+            // FIXME: moved to te file node.
             $title = $request->getParam("title");
             $link = $request->getParam("link");
 
@@ -366,6 +382,13 @@ class Wiki extends CommonHandler
 
                         $file = $this->file->add($name, $type, $doc["data"]);
                         $id = $file["id"];
+
+                        if ($this->container->has('thumbnailer')) {
+                            $tn = $this->container->get('thumbnailer');
+                            $file = $tn->updateNode($file);
+                            $this->node->save($file);
+                            $this->taskq('node-s3-upload', ['id' => $id]);
+                        }
 
                         $res["id"] = $id;
                         $res["type"] = "image";
@@ -441,8 +464,14 @@ class Wiki extends CommonHandler
     {
         $since = strftime("%Y-%m-%d %H:%M:%S", time() - 86400 * 30);
 
-        $pages = $this->node->fetch("`type` = 'wiki' AND `updated` >= ? AND `published` = 1", [$since], function ($node) {
+        $pages = $this->node->where("`type` = 'wiki' AND `updated` >= ? AND `published` = 1 ORDER BY `updated` DESC", [$since], function ($node) {
             if (preg_match('@^(File|wiki):@', $node["name"]))
+                return null;
+
+            if (!empty($node['redirect']))
+                return null;
+
+            if (empty($node['source']))
                 return null;
 
             return [
@@ -450,6 +479,8 @@ class Wiki extends CommonHandler
                 "updated" => $node["updated"],
             ];
         });
+
+        $pages = array_filter($pages);
 
         $res = [];
         foreach ($pages as $page) {
@@ -505,57 +536,20 @@ class Wiki extends CommonHandler
     }
 
     /**
-     * Background task: reindex a page.
-     **/
-    public function onReindexPage(Request $request, Response $response, array $args)
-    {
-        if (empty($args["id"])) {
-            $this->logger->warning("tasks: malformed query: path={path}, args={args}.", [
-                "path" => $request->getUri()->getPath(),
-                "args" => $args,
-            ]);
-
-            return "DONE";
-        }
-
-        $id = (int)$args["id"];
-
-        if (!($node = $this->node->get($id))) {
-            $this->logger->warning("wiki: cannot reindex node {id} -- not found.", [
-                "id" => $id,
-            ]);
-
-            return "DONE";
-        }
-
-        // Skip special pages.
-        if (preg_match('@^(wiki|File):@', $node["name"]))
-            return "DONE";
-
-        $this->pageReindex($node);
-
-        return "DONE";
-    }
-
-    /**
      * Update the search index.
      **/
     public function onReindex(Request $request, Response $response, array $args)
     {
         $this->requireAdmin($request);
 
-        $this->db->transact(function ($db) {
-            $db->query("DELETE FROM `search` WHERE `key` LIKE 'wiki:%'");
+        $sel = $this->db->query("SELECT `id` FROM `nodes` WHERE `type` = 'wiki' ORDER BY `updated` DESC");
+        while ($id = $sel->fetchColumn(0)) {
+            $this->taskq('wiki-reindex', [
+                'id' => $id,
+            ]);
+        }
 
-            $sel = $this->db->query("SELECT `id` FROM `nodes` WHERE `type` = 'wiki' AND `published` = 1 ORDER BY `updated` DESC");
-            while ($id = $sel->fetchColumn(0)) {
-                $this->task->add('wiki-reindex', [
-                    'id' => $id,
-                ]);
-            }
-        });
-
-        return $response->withRedirect("/admin/tasks");
+        return $response->withRedirect("/admin/taskq");
     }
 
     /**
@@ -721,6 +715,7 @@ class Wiki extends CommonHandler
         $app->get ('/wiki/index',             $class . ':onIndex');
         $app->get ('/wiki/recent',            $class . ':onRecent');
         $app->get ('/wiki/recent-files.json', $class . ':onRecentFiles');
+        $app->get ('/wiki/reindex',           $class . ':onReindex');
         $app->any ('/wiki/upload',            $class . ':onUpload');
     }
 }
