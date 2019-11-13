@@ -102,7 +102,7 @@ class TaskQ extends CommonHandler
                 $action = $payload["__action"];
                 unset($payload["__action"]);
 
-                $this->logger->debug('taskq: action={0} payload={1}', [$action, $payload]);
+                // $this->logger->debug('taskq: action={0} payload={1}', [$action, $payload]);
 
                 $this->handleTask($action, $payload);
 
@@ -147,8 +147,12 @@ class TaskQ extends CommonHandler
         elseif ($action == 'handle-file-upload')
             return $this->onHandleFileUpload($payload['id']);
 
-        $this->logger->warning("taskq: unhandled task with action={action}.", [
-            "action" => $action,
+        elseif ($action == 'wiki-reindex')
+            return $this->onWikiReindex($payload['id']);
+
+        $this->logger->warning("taskq: unhandled task with action={action}, payload={payload}.", [
+            'action' => $action,
+            'payload' => $payload,
         ]);
     }
 
@@ -236,6 +240,56 @@ class TaskQ extends CommonHandler
         }
 
         $this->container->get('taskq')->add('node-s3-upload', ['id' => $id]);
+    }
+
+    /**
+     * Update search index for a wiki page.
+     *
+     * action: wki-reindex
+     *
+     * @param int $id Node id.
+     **/
+    protected function onWikiReindex($id)
+    {
+        $node = $this->node->get($id);
+        if ($node['type'] != 'wiki')
+            return;
+
+        $this->logger->info('taskq: reindexing wiki page {0}', [$id]);
+
+        $page = $this->container->get('wiki')->renderPage($node);
+
+        if (!empty($page['redirect']) or empty($page['source'])) {
+            $title = $text = $meta = null;
+        }
+
+        else {
+            $html = $page['html'];
+
+            // strip_tags mishandles scripts, and we use them heavily for microdata,
+            // so just strip them off in advance.
+            $html = preg_replace('@<script.*?</script>@', '', $html);
+
+            $html = str_replace("><", "> <", $html);
+            $text = trim(strip_tags($html));
+
+            $name = $page['name'];
+            $title = $page['title'];
+            $snippet = $page['snippet'];  // TODO
+
+            $meta = [
+                'title' => $title,
+                'link' => '/wiki?name=' . urlencode($name),
+                'snippet' => $snippet,
+                'updated' => $node['updated'],
+                'words' => count(preg_split('@\s+@', $text, -1, PREG_SPLIT_NO_EMPTY)),
+                'image' => null,
+            ];
+        }
+
+        $this->fts->reindexDocument("wiki:" . $node["id"], $title, $text, $meta);
+
+        $this->container->get('logger')->debug('wiki: reindexed wiki:{0}, title={1}', [$node['id'], $title]);
     }
 
     /**
