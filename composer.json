@@ -2,7 +2,7 @@
     "name": "umonkey/ufw1",
     "type": "library",
     "description": "slim based website framework for pet projects",
-	"minimum-stability": "stable",
+    "minimum-stability": "stable",
     "authors": [
         {
             "name": "Justin Forest",
@@ -17,14 +17,17 @@
         "twig/twig": "^2.4",
         "league/commonmark": "1.0.0",
         "league/commonmark-ext-table": "^2.1"
-	},
+    },
     "autoload": {
         "psr-4": {
             "Ufw1\\": "src/Ufw1"
         }
     },
-	"bin": ["bin/build-assets"],
-	"scripts": {
-		"post-update-cmd": "Ufw1\\Util::postUpdate"
-	}
+    "bin": [
+        "bin/build-assets",
+        "bin/taskq-runner"
+    ],
+    "scripts": {
+        "post-update-cmd": "Ufw1\\Util::postUpdate"
+    }
 }
