@@ -29,5 +29,8 @@
     ],
     "scripts": {
         "post-update-cmd": "Ufw1\\Util::postUpdate"
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^3.5"
     }
 }
