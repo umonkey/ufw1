@@ -23,5 +23,8 @@
             "Ufw1\\": "src/Ufw1"
         }
     },
-	"bin": ["bin/build-assets"]
+	"bin": ["bin/build-assets"],
+	"scripts": {
+		"post-update-cmd": "Ufw1\\Util::postUpdate"
+	}
 }

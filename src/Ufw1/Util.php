@@ -161,4 +161,17 @@ class Util
             $app->any('/taskq/{id:[0-9]+}/run', '\Ufw1\Handlers\TaskQ:onRun');
         }
     }
+
+	/**
+	 * Perform actions after the package is updated.
+	 **/
+	public static function postUpdate()
+	{
+		if (!file_exists('docs')) {
+			if (file_exists('vendor/umonkey/ufw1/docs')) {
+				symlink('vendor/umonkey/ufw1/docs', 'docs');
+				printf("+dir docs");
+			}
+		}
+	}
 }
