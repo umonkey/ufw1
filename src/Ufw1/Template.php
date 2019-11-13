@@ -26,10 +26,45 @@ class Template
         $loader = new \Twig\Loader\FilesystemLoader([$root, $fallback]);
         $this->twig = new \Twig\Environment($loader);
 
-        $this->twig->addFilter(new \Twig\TwigFilter("markdown", function ($src) {
-            $html = \Ufw1\Common::renderMarkdown($src);
-            return $html;
-        }, array("is_safe" => array("html"))));
+        // Custom date format:
+        // {{ node.created|date('%Y-%m-%d %H:%M:%S') }}
+        $this->twig->addFilter(new \Twig\TwigFilter("date", function ($ts, $fmt) {
+            $ts = $this->parseTimestamp($ts);
+            return strftime($fmt, $ts);
+        }));
+
+        // Human readable date:
+        // 5 января -- за тот же год,
+        // 5 января 2019 -- за другой год.
+        $this->twig->addFilter(new \Twig\TwigFilter("date_human", function ($dt) {
+            $ts = $this->parseTimestamp($dt);
+
+            $year = strftime('%Y', $ts);
+            $month = strftime('%m', $ts);
+            $day = strftime('%d', $ts);
+
+            $months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+            $now = strftime("%Y");
+            if ($year == $now)
+                $date = sprintf("%u %s", $day, $months[$month - 1]);
+            else
+                $date = sprintf("%u %s %u", $day, $months[$month - 1], $year);
+            return $date;
+        }));
+
+        // RFC date:
+        // Wed, 30 Oct 2019 05:01:51 +0000
+        $this->twig->addFilter(new \Twig\TwigFilter("date_rfc", function ($ts) {
+            $ts = $this->parseTimestamp($ts);
+            return date(DATE_RSS, $ts);
+        }));
+
+        // Simple date:
+        // 12.04.1961, 09:07
+        $this->twig->addFilter(new \Twig\TwigFilter("date_simple", function ($ts) {
+            $ts = $this->parseTimestamp($ts);
+            return strftime("%d.%m.%y, %H:%M", $ts);
+        }));
 
         $this->twig->addFilter(new \Twig\TwigFilter("filesize", function ($size) {
             if ($size > 1048576)
@@ -38,43 +73,7 @@ class Template
                 return sprintf("%.02f KB", $size / 1024);
         }));
 
-        $this->twig->addFilter(new \Twig\TwigFilter("date", function ($ts, $fmt) {
-            $ts = $this->parseTimestamp($ts);
-            return strftime($fmt, $ts);
-        }));
-
-        $this->twig->addFilter(new \Twig\TwigFilter("date_rfc", function ($ts) {
-            $ts = $this->parseTimestamp($ts);
-            return date(DATE_RSS, $ts);
-        }));
-
-        $this->twig->addFilter(new \Twig\TwigFilter("date_simple", function ($ts) {
-            $ts = $this->parseTimestamp($ts);
-            return strftime("%d.%m.%y, %H:%M", $ts);
-        }));
-
-        $this->twig->addFilter(new \Twig\TwigFilter("megabytes", function ($size) {
-            return sprintf("%.02f MB", $size / 1048576);
-        }));
-
-        $this->twig->addFilter(new \Twig\TwigFilter("sklo", function ($number, $one, $two, $many) {
-            return \Ufw1\Util::plural($number, $one, $two, $many);
-        }));
-
-        $this->twig->addFilter(new \Twig\TwigFilter("human_date", function ($dt) {
-            if (preg_match('@^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2}) (?<hour>\d{2}):(?<min>\d{2}):(?<sec>\d{2})$@', $dt, $m)) {
-                $months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
-                $now = strftime("%Y");
-                if ($m["year"] == $now)
-                    $date = sprintf("%u %s", $m["day"], $months[$m["month"] - 1]);
-                else
-                    $date = sprintf("%u %s %u", $m["day"], $months[$m["month"] - 1], $m["year"]);
-                return $date;
-            }
-
-            return $dt;
-        }));
-
+        // Link to the specified subfile.
         $this->twig->addFunction(new \Twig\TwigFunction("file_link", function ($node, $version = 'original', $missing = '') {
             if ($node["type"] != "file")
                 return $missing;
@@ -96,6 +95,48 @@ class Template
             }
 
             return $missing;
+        }));
+
+        $this->twig->addFilter(new \Twig\TwigFilter("human_date", function ($dt) {
+            if (preg_match('@^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2}) (?<hour>\d{2}):(?<min>\d{2}):(?<sec>\d{2})$@', $dt, $m)) {
+                $months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+                $now = strftime("%Y");
+                if ($m["year"] == $now)
+                    $date = sprintf("%u %s", $m["day"], $months[$m["month"] - 1]);
+                else
+                    $date = sprintf("%u %s %u", $m["day"], $months[$m["month"] - 1], $m["year"]);
+                return $date;
+            }
+
+            return $dt;
+        }));
+
+        // Convert markdown to html
+        $this->twig->addFilter(new \Twig\TwigFilter("markdown", function ($src) {
+            $html = \Ufw1\Common::renderMarkdown($src);
+            return $html;
+        }, array("is_safe" => array("html"))));
+
+        $this->twig->addFilter(new \Twig\TwigFilter("megabytes", function ($size) {
+            return sprintf("%.02f MB", $size / 1048576);
+        }));
+
+        // Чистительные.
+        // > {{ node.length }} {{ node.length|sklo('байт', 'байта', 'байтов') }}
+        $this->twig->addFilter(new \Twig\TwigFilter("sklo", function ($number, $one, $two, $many) {
+            return \Ufw1\Util::plural($number, $one, $two, $many);
+        }));
+
+        // Типографика.
+        $this->twig->addFilter(new \Twig\TwigFilter("typo", function ($text) {
+            return $this->processTypography($text);
+        }));
+
+        // Uppercase first letter.
+        // "foo bar" => "Foo bar", for wiki.
+        $this->twig->addFilter(new \Twig\TwigFilter("ucfirst", function ($text) {
+            $res = mb_strtoupper(mb_substr($text, 0, 1)) . mb_substr($text, 1);
+            return $res;
         }));
     }
 
@@ -166,5 +207,28 @@ class Template
         if (is_numeric($value))
             return $value;
         return strtotime($value);
+    }
+
+    protected function processTypography($text)
+    {
+        $handler = function ($m) {
+            $text = $m[0];
+
+            // Some typography.
+            $text = preg_replace('@\s+--\s+@', '&nbsp;— ', $text);
+            $text = preg_replace('@\.  @', '.&nbsp; ', $text);
+
+            // Use nbsp with some words.
+            $text = preg_replace('@ (а|В|в|Для|и|из|на|о|от|с)\s+@u', ' \1&nbsp;', $text);
+            $text = preg_replace('@\s+(году|год)([.,])@u', '&nbsp;\1\2', $text);
+
+            return $text;
+        };
+
+        $text = preg_replace_callback('@<p>(.+?)</p>@', $handler, $text);
+        $text = preg_replace_callback('@<td>(.+?)</td>@', $handler, $text);
+        $text = preg_replace_callback('@<li>(.+?)</li>@', $handler, $text);
+
+        return $text;
     }
 }
