@@ -211,23 +211,17 @@ class Template
 
     protected function processTypography($text)
     {
-        $handler = function ($m) {
-            $text = $m[0];
+        $patterns = [
+            '@<p>(.+?)</p>@',
+            '@<td>(.+?)</td>@',
+            '@<li>(.+?)</li>@'
+        ];
 
-            // Some typography.
-            $text = preg_replace('@\s+--\s+@', '&nbsp;— ', $text);
-            $text = preg_replace('@\.  @', '.&nbsp; ', $text);
-
-            // Use nbsp with some words.
-            $text = preg_replace('@ (а|В|в|Для|и|из|на|о|от|с)\s+@u', ' \1&nbsp;', $text);
-            $text = preg_replace('@\s+(году|год)([.,])@u', '&nbsp;\1\2', $text);
-
-            return $text;
-        };
-
-        $text = preg_replace_callback('@<p>(.+?)</p>@', $handler, $text);
-        $text = preg_replace_callback('@<td>(.+?)</td>@', $handler, $text);
-        $text = preg_replace_callback('@<li>(.+?)</li>@', $handler, $text);
+        foreach ($patterns as $pattern) {
+            $text = preg_replace_callback($pattern, function ($m) {
+                return Util::processTypography($text);
+            }, $text);
+        }
 
         return $text;
     }

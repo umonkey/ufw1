@@ -351,18 +351,21 @@ class CommonHandler
     protected function search($query)
     {
         return array_map(function ($em) {
-            if (!($name = $em["meta"]["title"]))
-                $name = substr($em["key"], 5);
-            if (!($link = $em["meta"]["link"]))
-                $link = "/wiki?name=" . urlencode($name);
+            if (!($name = $em['meta']['title']))
+                $name = substr($em['key'], 5);
+            if (!($link = $em['meta']['link']))
+                $link = '/wiki?name=' . urlencode($name);
+
+            $snippet = Util::processTypography($em['meta']['snippet'] ?? '');
+            $snippet = str_replace('&nbsp;', ' ', $snippet);
 
             return [
-                "link" => $link,
-                "title" => $name,
-                "snippet" => @$em["meta"]["snippet"],
-                "updated" => @$em["meta"]["updated"],
-                "image" => @$em["meta"]["image"],
-                "words" => @$em["meta"]["words"],
+                'link' => $link,
+                'title' => $name,
+                'snippet' => $snippet,
+                'updated' => @$em['meta']['updated'],
+                'image' => @$em['meta']['image'],
+                'words' => @$em['meta']['words'],
             ];
         }, $this->fts->search($query));
     }

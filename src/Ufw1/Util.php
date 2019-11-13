@@ -37,6 +37,27 @@ class Util
         return $res;
     }
 
+    /**
+     * Add some stylistical sugar to the text.
+     *
+     * Converts double dashes, adds nbsp after the dot, etc.
+     *
+     * @param  string $text Source text.
+     * @return string       Updated text.
+     **/
+    public static function processTypography($text)
+    {
+        // Some typography.
+        $text = preg_replace('@\s+--\s+@', '&nbsp;— ', $text);
+        $text = preg_replace('@\.  @', '.&nbsp; ', $text);
+
+        // Use nbsp with some words.
+        $text = preg_replace('@ (а|В|в|Для|и|из|на|о|от|с)\s+@u', ' \1&nbsp;', $text);
+        $text = preg_replace('@\s+(году|год)([.,])@u', '&nbsp;\1\2', $text);
+
+        return $text;
+    }
+
     public static function hyphenate($text, $len = 10)
     {
         $text = preg_replace_callback('@[а-я]+@ui', function ($m) use ($len) {
