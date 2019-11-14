@@ -273,6 +273,12 @@ class Wiki extends CommonHandler
         $file = $this->file->add($name, $type, $body);
         $fid = $file["id"];
 
+        if ($this->container->has('thumbnailer')) {
+            $tn = $this->container->get('thumbnailer');
+            $file = $tn->updateNode($file);
+            $file = $this->node->save($file);
+        }
+
         $this->taskq('node-s3-upload', [
             'id' => (int)$fid,
         ]);
