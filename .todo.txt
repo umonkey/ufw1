@@ -6,3 +6,5 @@ LESS compiler: https://github.com/leafo/lessphp
 Включая create-project-cmd скрипт для создания папок и миграций, симлинков на документацию.
 
 Админка: кричать при возможности модификации скиптов.  Видимо тест по крону.
+
+https://scrutinizer-ci.com/docs/tools/php/php-scrutinizer/
