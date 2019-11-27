@@ -110,7 +110,7 @@ class FileFactory
 
             $logger->info("files: file {id} saved as {name}", [
                 "id" => $node["id"],
-                "name" => $node["fname"],
+                "name" => $node['files']['original']['path'],
             ]);
         }
 
