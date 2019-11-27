@@ -18,7 +18,7 @@
 
     <h2>Настройки</h2>
 
-    <table class='grid'>
+    <table class='table grid'>
         <tbody>
             <tr>
                 <td>Пинг:</td>
@@ -35,10 +35,10 @@
     {% if tasks %}
         <p>Есть невыполненные фоновые задачи.</p>
 
-        <table class="table grid users">
+        <table class="table grid taskq">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th class='rowid'>#</th>
                     <th>age</th>
                     <th>action</th>
                     <th class="number">attempts</th>
@@ -48,7 +48,7 @@
             <tbody>
                 {% for t in tasks %}
                     <tr>
-                        <td class="number">{{ t.id }}</td>
+                        <td class="rowid"><a href='/admin/taskq/{{ t.id }}'>{{ t.id }}</a></td>
                         <td class="number">{{ t.age }}</td>
                         <td>{{ t.action }}</td>
                         <td class="number">{{ t.attempts  }}</td>
