@@ -27,10 +27,10 @@ textarea.form-control {
     line-height: 28px;
     padding: 0 10px;
     width: 100%;
-    max-width: 100%;
+    max-width: calc(100% - 22px);
     background-color: #f8f8f8;
-    box-sizing: border-box;
 }
+input.form-control.short,
 input[type=number].form-control {
     width: 100px;
 }
