@@ -49,7 +49,7 @@
                 <a class='btn btn-default btn-icon' href='/admin/nodes/{{ node.id }}/delete{% if request.get.back %}?back={{ request.get.back }}{% endif %}' title='Удалить объект'><i class="fas fa-ban"></i></a>
             {% endif %}
             <a class='btn btn-default btn-icon' href='/admin/nodes/{{ node.id }}/edit-raw{% if request.get.back %}?back={{ request.get.back }}{% endif %}' title='Редактировать сырец'><i class="fas fa-cog"></i></a>
-            или <a href='/admin/nodes'>вернуться ко списку документов</a>
+            или <a href='{% if request.get.back %}{{ request.get.back }}{% else %}/admin/nodes{% endif %}'>вернуться назад</a>
         </div>
 
         <div class='msgbox'></div>
