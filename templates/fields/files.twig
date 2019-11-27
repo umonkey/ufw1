@@ -1,0 +1,9 @@
+<div class='form-group'>
+    <label>{{ field.label }}</label>
+    <div class='thumbnails'>
+        <a class="thumbnail pick" href="#" title="Добавить файл"><i class="fas fa-cloud-upload-alt"></i></a>
+    </div>
+    {% if field.help %}
+        <p class='help-block'>{{ field.help|raw }}</p>
+    {% endif %}
+</div>

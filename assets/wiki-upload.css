@@ -1,14 +1,16 @@
 /**
  * Оформление формы загрузки файла.
  **/
-form#dlg-upload .recent {
+form#dlg-upload .recent,
+form.filepicker .recent {
     height: 85px;
     margin: 5px 0 0;
     white-space: nowrap;
     overflow-x: scroll;
     overflow-y: hidden;
 }
-form#dlg-upload .recent a {
+form#dlg-upload .recent a,
+form.filepicker .recent a {
     display: inline-block;
     vertical-align: top;
     line-height: 0;
@@ -17,7 +19,8 @@ form#dlg-upload .recent a {
     height: 75px;
     background-color: #fff;
 }
-form#dlg-upload .recent img {
+form#dlg-upload .recent img,
+form.filepicker .recent img {
     width: 75px;
     height: 75px;
     margin: 0;
