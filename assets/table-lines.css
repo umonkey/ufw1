@@ -35,8 +35,12 @@ table.compact {
 }
 
 
-table.lines th,
-table.lines td {
-    border-bottom: 1px solid #ddd;
+table.lines thead th,
+table.lines tbody td {
+    border-bottom: 1px solid #eee;
     font-weight: normal;
+}
+table.lines thead th {
+    font-size: 14px;
+    border-bottom: 1px solid #ddd;
 }
