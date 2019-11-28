@@ -18,6 +18,9 @@
         "league/commonmark": "1.0.0",
         "league/commonmark-ext-table": "^2.1"
     },
+	"suggest": {
+		"vlucas/phpdotenv": "Move credentials away from src/settings.php"
+	},
     "autoload": {
         "psr-4": {
             "Ufw1\\": "src/Ufw1"
