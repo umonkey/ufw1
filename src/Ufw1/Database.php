@@ -77,6 +77,10 @@ class Database {
             $this->conn->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
             $this->conn->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
 
+            if (0 === strpos($this->dsn['name'], 'mysql:')) {
+                $this->conn->query('SET NAMES utf8');
+            }
+
             // Perform initialization stuff, like SET NAMES utf8.
             if (!empty($this->dsn["bootstrap"])) {
                 foreach ($this->dsn["bootstrap"] as $query) {
