@@ -63,9 +63,11 @@ class Wiki
      **/
     public function canReadPages(array $user = null)
     {
-        $roles = $this->container->get('settings')['wiki']['reader_roles'] ?? [];
-        if (empty($roles))
-            return true;
+        $roles = $this->container->get('settings')['wiki']['reader_roles'] ?? null;
+        if (empty($roles)) {
+            $this->container->get('logger')->warning('wiki: reader_roles array not set.');
+            return false;
+        }
 
         $role = $user['role'] ?? 'nobody';
         if (is_array($roles) and in_array($role, $roles))
@@ -76,9 +78,11 @@ class Wiki
 
     public function canEditPages(array $user = null)
     {
-        $roles = $this->container->get('settings')['wiki']['editor_roles'];
-        if (empty($roles))
-            return true;
+        $roles = $this->container->get('settings')['wiki']['editor_roles'] ?? null;
+        if (empty($roles)) {
+            $this->container->get('logger')->warning('wiki: editor_roles array not set.');
+            return false;
+        }
 
         $role = $user['role'] ?? 'nobody';
         if (is_array($roles) and in_array($role, $roles))
