@@ -25,7 +25,7 @@ class CommonHandler
             case "file":
                 return $this->container->get("file");
             case "fts":
-                return new \Ufw1\Search($this->db, $this->logger);
+                return $this->container->get('fts');
             case "logger":
                 return $this->container->get("logger");
             case "node":
@@ -290,6 +290,7 @@ class CommonHandler
         $data = array_merge($defaults, $data);
 
         $data["request"] = [
+            "base" => $request->getUri()->getBaseUrl(),
             "host" => $request->getUri()->getHost(),
             "path" => $request->getUri()->getPath(),
             "uri" => strval($request->getUri()),

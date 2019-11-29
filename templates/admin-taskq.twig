@@ -16,20 +16,8 @@
 
     <p class='lead'>Фоновые задачи выполняются после выдачи ответа пользователю, чтобы не заставлять его ждать.&nbsp; Это отправка почты, изменение размеров картинок и прочие длительные операции.</p>
 
-    <h2>Настройки</h2>
-
-    <table class='table grid'>
-        <tbody>
-            <tr>
-                <td>Пинг:</td>
-                <td><code><a href='{{ settings.ping_url }}' target='_blank'>{{ settings.ping_url }}</a></code></td>
-            </tr>
-            <tr>
-                <td>Обработчик:</td>
-                <td><code>{{ settings.exec_pattern }}</code></td>
-            </tr>
-        </tbody>
-    </table>
+    <h2>Действия</h2>
+    <p><a class='btn btn-defaul' href='{{ settings.server }}/ping.php?url={{ request.base }}/taskq/list&amp;back={{ request.uri }}'>Послать пинг</a> <a class='btn btn-default' href='{{ settings.server }}/index.php?action=recent' target='_blank'>Монитор</a></p>
 
     <h2>Состояние очереди</h2>
     {% if tasks %}

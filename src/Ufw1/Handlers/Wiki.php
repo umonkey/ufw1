@@ -550,7 +550,7 @@ class Wiki extends CommonHandler
 
         $sel = $this->db->query("SELECT `id` FROM `nodes` WHERE `type` = 'wiki' ORDER BY `updated` DESC");
         while ($id = $sel->fetchColumn(0)) {
-            $this->taskq('wiki-reindex', [
+            $this->container->get('taskq')->add('fts.reindexNode', [
                 'id' => $id,
             ]);
         }
@@ -675,34 +675,6 @@ class Wiki extends CommonHandler
         }
 
         return  "# {$name}\n\n**{$name}** is ....";
-    }
-
-    /**
-     * Update page in the fulltext search index.
-     **/
-    protected function pageReindex(array $node)
-    {
-        $page = $this->pageProcess($node);
-        $text = $this->pageGetText($page);
-
-        $name = $page["name"];
-        $title = $page["title"];
-        $snippet = $this->pageGetSnippet($page);
-
-        $meta = [
-            "title" => $title,
-            "link" => "/wiki?name=" . urlencode($name),
-            "snippet" => $snippet,
-            "updated" => $node["updated"],
-            "words" => count(preg_split('@\s+@', $text, -1, PREG_SPLIT_NO_EMPTY)),
-        ];
-
-        if ($page["image"])
-            $meta["image"] = $page["image"];
-
-        $this->fts->reindexDocument("wiki:" . $node["id"], $title, $text, $meta);
-
-        $this->container->get('logger')->debug('wiki: reindexed wiki:{0}, title={1}', [$node['id'], $title]);
     }
 
     /**

@@ -13,15 +13,19 @@ namespace Ufw1;
 
 class Search
 {
+    protected $container;
+
     protected $db;
+
     protected $logger;
 
     static private $stopWords = ["а", "и", "о", "об", "в", "на", "под", "из"];
 
-    public function __construct($database, $logger)
+    public function __construct($c)
     {
-        $this->db = $database;
-        $this->logger = $logger;
+        $this->container = $c;
+        $this->db = $c->get('database');
+        $this->logger = $c->get('logger');
     }
 
     public function search($query, $limit = 100)
@@ -63,24 +67,31 @@ class Search
         switch ($this->db->getConnectionType()) {
             case "mysql":
                 // https://dev.mysql.com/doc/refman/5.5/en/fulltext-boolean.html
-                $query = "+" . str_replace(" ", " +", $query);
-                $sql = "SELECT `key`, `title`, `meta`, MATCH(`title`) AGAINST (:query IN BOOLEAN MODE) * 10 AS `trel`, MATCH(`body`) AGAINST (:query IN BOOLEAN MODE) AS `brel` FROM `search` WHERE `key` NOT LIKE 'page:File:%' HAVING `trel` > 0 OR `brel` > 0 ORDER BY `trel` DESC, `brel` DESC LIMIT {$limit}";
-                $params = [
-                    ":query" => $query,
-                ];
+
+                $_q = $query . '*';
+                $rows1 = $this->db->fetch("SELECT `key`, `title`, `meta`, MATCH(`title`) AGAINST (:query IN BOOLEAN MODE) * 10 AS `trel` FROM `search` HAVING `trel` > 0 ORDER BY `trel` DESC LIMIT {$limit}", [':query' => $_q]);
+
+                $_q = "+" . str_replace(" ", " +", $this->normalizeText($query) . '*');
+                $rows2 = $this->db->fetch("SELECT `key`, `title`, `meta`, MATCH(`title`) AGAINST (:query IN BOOLEAN MODE) * 10 AS `trel`, MATCH(`body`) AGAINST (:query IN BOOLEAN MODE) AS `brel` FROM `search` HAVING `trel` > 0 OR `brel` > 0 ORDER BY `trel` DESC, `brel` DESC LIMIT {$limit}", [':query' => $_q]);
+
                 break;
+
             case "sqlite":
-                $sql = "SELECT `key`, `title`, `meta` FROM `search` WHERE `search` MATCH ? OR `search` MATCH ? ORDER BY bm25(`search`, 0, 0, 50) LIMIT {$limit}";
-                $params = [$query, $query2];
-            break;
+                $rows1 = $this->db->fetch("SELECT `key`, `title`, `meta` FROM `search` WHERE `search` MATCH ? OR `search` MATCH ? ORDER BY bm25(`search`, 0, 0, 50) LIMIT {$limit}", [$query, $query2]);
+                $rows2 = [];
+                break;
         }
 
-        $rows = $this->db->fetch($sql, $params, function ($em) {
+        $rows = array_merge($rows1, $rows2);
+
+        $rows = array_slice($rows, 0, 10);
+
+        $rows = array_map(function ($em) {
             return [
                 "key" => $em["key"],
                 "meta" => unserialize($em["meta"]),
             ];
-        });
+        }, $rows);
 
         return $rows;
     }
@@ -114,6 +125,60 @@ class Search
                 "title" => $title,
             ]);
         }
+    }
+
+    /**
+     * Reindex a single node.
+     *
+     * @param array $args Node spec, in 'id'.
+     **/
+    public function reindexNode(array $args)
+    {
+        $node = $this->container->get('node')->get($args['id']);
+
+        // TODO: only configured types.
+
+        if ($node['type'] == 'wiki') {
+            return $this->reindexWikiNode($node);
+        } else {
+            $this->logger->debug("search: don't know how to reindex node of type {0}", [$node['type']]);
+        }
+    }
+
+    protected function reindexWikiNode(array $node)
+    {
+        $page = $this->container->get('wiki')->renderPage($node);
+
+        if (!empty($page['redirect']) or empty($page['source'])) {
+            $title = $text = null;
+            $meta = [];
+        }
+
+        else {
+            $html = $page['html'];
+
+            // strip_tags mishandles scripts, and we use them heavily for microdata,
+            // so just strip them off in advance.
+            $html = preg_replace('@<script.*?</script>@', '', $html);
+
+            $html = str_replace("><", "> <", $html);
+            $text = trim(strip_tags($html));
+
+            $name = $page['name'];
+            $title = $page['title'];
+            $snippet = $page['snippet'];  // TODO
+
+            $meta = [
+                'title' => $title,
+                'link' => '/wiki?name=' . urlencode($name),
+                'snippet' => $snippet,
+                'updated' => $node['updated'],
+                'words' => count(preg_split('@\s+@', $text, -1, PREG_SPLIT_NO_EMPTY)),
+                'image' => null,
+            ];
+        }
+
+        $this->reindexDocument("node:" . $node["id"], $title, $text, $meta);
     }
 
     public function reindexAll(array $items)

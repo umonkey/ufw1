@@ -100,57 +100,42 @@ class Util
 
     public static function containerSetup(&$container)
     {
-        $container["logger"] = function ($c) {
-            $settings = (array)$c->get("settings")["logger"];
-            $logger = new \Ufw1\Logger($settings);
-            return $logger;
+        $container['database'] = function ($c) {
+            return new \Ufw1\Database($c->get('settings')['dsn']);
         };
 
-        $container["database"] = function ($c) {
-            return new \Ufw1\Database($c->get("settings")["dsn"]);
-        };
-
-        $container["errorHandler"] = function ($c) {
+        $container['errorHandler'] = function ($c) {
             return function ($request, $response, $e) use ($c) {
                 if (class_exists('\App\Handlers\Error'))
                     $h = new \App\Handlers\Error($c);
                 else
                     $h = new \Ufw1\Handlers\Error($c);
-                return $h($request, $response, ["exception" => $e]);
+                return $h($request, $response, ['exception' => $e]);
             };
         };
 
-        $container["notFoundHandler"] = function ($c) {
+        $container['file'] = function ($c) {
+            return new \Ufw1\FileFactory($c);
+        };
+
+        $container['fts'] = function ($c) {
+            return new \Ufw1\Search($c);
+        };
+
+        $container['logger'] = function ($c) {
+            $settings = (array)$c->get('settings')['logger'];
+            $logger = new \Ufw1\Logger($settings);
+            return $logger;
+        };
+
+        $container['notFoundHandler'] = function ($c) {
             return function ($request, $response) use ($c) {
                 throw new \Ufw1\Errors\NotFound;
             };
         };
 
-        $container["node"] = function ($c) {
+        $container['node'] = function ($c) {
             return new \Ufw1\NodeFactory($c);
-        };
-
-        $container["file"] = function ($c) {
-            return new \Ufw1\FileFactory($c);
-        };
-
-        $container["template"] = function ($c) {
-            $settings = $c->get("settings")["templates"];
-            $tpl = new \Ufw1\Template($c);
-            return $tpl;
-        };
-
-        $container["thumbnailer"] = function ($c) {
-            if (class_exists('\Imagickx'))
-                $t = new \Ufw1\Thumbnailer2($c);
-            else
-                $t = new \Ufw1\Thumbnailer($c);
-            return $t;
-        };
-
-        $container['taskq'] = function ($c) {
-            $tq = new \Ufw1\TaskQ($c);
-            return $tq;
         };
 
         $container['S3'] = function ($c) {
@@ -158,8 +143,27 @@ class Util
             return $tq;
         };
 
+        $container['taskq'] = function ($c) {
+            $tq = new \Ufw1\TaskQ($c);
+            return $tq;
+        };
+
         $container['telega'] = function ($c) {
             $t = new \Ufw1\Telega($c);
+            return $t;
+        };
+
+        $container['template'] = function ($c) {
+            $settings = $c->get('settings')['templates'];
+            $tpl = new \Ufw1\Template($c);
+            return $tpl;
+        };
+
+        $container['thumbnailer'] = function ($c) {
+            if (class_exists('\Imagickx'))
+                $t = new \Ufw1\Thumbnailer2($c);
+            else
+                $t = new \Ufw1\Thumbnailer($c);
             return $t;
         };
 
@@ -183,16 +187,16 @@ class Util
         }
     }
 
-	/**
-	 * Perform actions after the package is updated.
-	 **/
-	public static function postUpdate()
-	{
-		if (!file_exists('docs')) {
-			if (file_exists('vendor/umonkey/ufw1/docs')) {
-				symlink('vendor/umonkey/ufw1/docs', 'docs');
-				printf("+dir docs");
-			}
-		}
-	}
+    /**
+     * Perform actions after the package is updated.
+     **/
+    public static function postUpdate()
+    {
+        if (!file_exists('docs')) {
+            if (file_exists('vendor/umonkey/ufw1/docs')) {
+                symlink('vendor/umonkey/ufw1/docs', 'docs');
+                printf("+dir docs");
+            }
+        }
+    }
 }

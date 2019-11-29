@@ -102,9 +102,24 @@ class TaskQ extends CommonHandler
                 $action = $payload["__action"];
                 unset($payload["__action"]);
 
-                // $this->logger->debug('taskq: action={0} payload={1}', [$action, $payload]);
+                try {
+                    $this->handleTask($action, $payload);
+                } catch (\Throwable $e) {
+                    $this->logger->error('taskq: error handling action={action}: {exception}', [
+                        'action' => $action,
+                        'exception' => [
+                            'class' => get_class($e),
+                            'message' => $e->getMessage(),
+                            'file' => $e->getFile(),
+                            'line' => $e->getLine(),
+                            'stack' => $e->getTraceAsString(),
+                        ],
+                    ]);
 
-                $this->handleTask($action, $payload);
+                    $response->getBody()->write('Error: ' . $e->getMessage());
+
+                    return $response->withStatus(500);
+                }
 
                 $this->db->query("DELETE FROM `taskq` WHERE `id` = ?", [$id]);
             } else {
@@ -122,10 +137,6 @@ class TaskQ extends CommonHandler
             return $response->withJSON([
                 "message" => "Done.",
             ]);
-        } catch (\Exception $e) {
-            return $response->withJSON([
-                "message" => sprintf("%s: %s", get_class($e), $e->getMessage()),
-            ]);
         } catch (\Throwable $e) {
             return $response->withJSON([
                 "message" => sprintf("%s: %s", get_class($e), $e->getMessage()),
@@ -135,6 +146,23 @@ class TaskQ extends CommonHandler
 
     protected function handleTask($action, array $payload)
     {
+        $parts = explode('.', $action);
+        if (count($parts) == 2) {
+            if ($this->container->has($parts[0])) {
+                $obj = $this->container->get($parts[0]);
+                if (method_exists($obj, $parts[1])) {
+                    $this->logger->info('taskq: calling {0}', [$action]);
+                    return call_user_func([$obj, $parts[1]], $payload);
+                } else {
+                    $this->logger->warning('taskq: dependency method not found, action={0}', [$action]);
+                    return;
+                }
+            } else {
+                $this->logger->warning('taskq: dependency not found, action={0}', [$action]);
+                return;
+            }
+        }
+
         if ($action == "node-s3-upload")
             return $this->onNodeS3Upload($payload["id"]);
 
@@ -146,9 +174,6 @@ class TaskQ extends CommonHandler
 
         elseif ($action == 'handle-file-upload')
             return $this->onHandleFileUpload($payload['id']);
-
-        elseif ($action == 'wiki-reindex')
-            return $this->onWikiReindex($payload['id']);
 
         $this->logger->warning("taskq: unhandled task with action={action}, payload={payload}.", [
             'action' => $action,
@@ -240,56 +265,6 @@ class TaskQ extends CommonHandler
         }
 
         $this->container->get('taskq')->add('node-s3-upload', ['id' => $id]);
-    }
-
-    /**
-     * Update search index for a wiki page.
-     *
-     * action: wki-reindex
-     *
-     * @param int $id Node id.
-     **/
-    protected function onWikiReindex($id)
-    {
-        $node = $this->node->get($id);
-        if ($node['type'] != 'wiki')
-            return;
-
-        $this->logger->info('taskq: reindexing wiki page {0}', [$id]);
-
-        $page = $this->container->get('wiki')->renderPage($node);
-
-        if (!empty($page['redirect']) or empty($page['source'])) {
-            $title = $text = $meta = null;
-        }
-
-        else {
-            $html = $page['html'];
-
-            // strip_tags mishandles scripts, and we use them heavily for microdata,
-            // so just strip them off in advance.
-            $html = preg_replace('@<script.*?</script>@', '', $html);
-
-            $html = str_replace("><", "> <", $html);
-            $text = trim(strip_tags($html));
-
-            $name = $page['name'];
-            $title = $page['title'];
-            $snippet = $page['snippet'];  // TODO
-
-            $meta = [
-                'title' => $title,
-                'link' => '/wiki?name=' . urlencode($name),
-                'snippet' => $snippet,
-                'updated' => $node['updated'],
-                'words' => count(preg_split('@\s+@', $text, -1, PREG_SPLIT_NO_EMPTY)),
-                'image' => null,
-            ];
-        }
-
-        $this->fts->reindexDocument("wiki:" . $node["id"], $title, $text, $meta);
-
-        $this->container->get('logger')->debug('wiki: reindexed wiki:{0}, title={1}', [$node['id'], $title]);
     }
 
     /**
