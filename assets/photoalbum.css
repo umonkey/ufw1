@@ -1,0 +1,43 @@
+.photoalbum {
+    min-height: 160px;
+    white-space: nowrap;
+    opacity: 0;  /* removed by script */
+}
+.photoalbum .icon {
+    display: inline-block;
+    vertical-align: top;
+    line-height: 150px;
+    font-size: 20px;
+    cursor: pointer;
+    width: 30px;
+    text-align: center;
+}
+.photoalbum a.image {
+    margin-right: 5px;
+}
+.photoalbum .overflow {
+    display: none;
+}
+
+.photoalbum .showless {
+    display: none;
+}
+
+/**
+ * Open album.
+ * Hides the more button, shows the less button,
+ * displays hidden items and enables wrapping.
+ **/
+.photoalbum.open {
+    overflow: visible;
+    white-space: normal;
+}
+.photoalbum.open .overflow {
+    display: inline-block;
+}
+.photoalbum.open .showmore {
+    display: none;
+}
+.photoalbum.open .showless {
+    display: inline-block;
+}
