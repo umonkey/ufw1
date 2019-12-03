@@ -18,7 +18,7 @@
 $settings = [/* ... */];
 
 $_env = $_ENV['ENVIRONMENT'] ?? 'devel';
-$_private = __DIR__ . "/../.env-{$env}.php";
+$_private = __DIR__ . "/../.env-{$_env}.php";
 
 if (is_readable($_private)) {
 	include $_private;
