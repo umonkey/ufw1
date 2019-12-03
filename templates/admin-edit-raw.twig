@@ -30,7 +30,7 @@
         <div class='form-actions'>
             <button class='btn btn-primary'>Сохранить изменения</button>
             <a class='btn btn-default btn-icon' href='/admin/nodes/{{ node.id }}/edit{% if request.get.back %}?back={{ request.get.back }}{% endif %}' title='Редактировать сырец'><i class="fas fa-pen"></i></a>
-            или <a href='/admin/nodes'>вернуться ко списку документов</a>
+            или <a href='{% if request.get.back %}{{ request.get.back }}{% else %}/admin/nodes{% endif %}'>вернуться назад</a>
         </div>
 
         <div class='msgbox'></div>
