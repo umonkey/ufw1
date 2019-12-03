@@ -17,16 +17,25 @@
     cursor: pointer;
     font-family: inherit;
 }
+.btn:hover {
+    background-color: #ccc;
+}
 .btn-primary {
     background-color: #428bca;
     color: #fff;
     border-color: #357ebd;
 }
-.btn:hover {
-    background-color: #ccc;
-}
 .btn-primary:hover {
     background-color: #357ebd;
+}
+.btn-danger {
+    background-color: #dc3545;
+    color: #fff;
+    border-color: #dc3545;
+}
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
 }
 .btn-icon {
     width: 30px;
