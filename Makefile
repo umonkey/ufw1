@@ -5,8 +5,8 @@ help:
 	@echo "make test      -- test syntax with phpcs"
 
 release:
-	hg push default
-	hg push github
+	-hg push default
+	-hg push github
 
 test: test-syntax
 
