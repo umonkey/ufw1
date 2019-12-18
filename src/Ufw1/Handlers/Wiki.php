@@ -62,10 +62,15 @@ class Wiki extends CommonHandler
                 return $response->withRedirect($next);
             }
 
+            if (!($author = $res['author'])) {
+                $res['author'] = $this->container->get('settings')['wiki']['default_author'] ?: null;
+            }
+
             return $this->render($request, 'wiki-page.twig', [
                 'user' => $user,
                 'language' => $res['language'],
                 'page' => $res,
+                'node' => $node,
                 'edit_link' => $canEdit ? '/wiki/edit?name=' . urlencode($name) : null,
                 'jsdata' => json_encode([
                     'wiki_page' => $name,
