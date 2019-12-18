@@ -31,7 +31,7 @@
     {% endif %}
 {% endblock %}
 
-{% block page_title %}{% if page.name == "Введение" %}Гид по Себежу{% else %}{{ page.title }} — {% if page.language == "en" %}Sebezh Guide{% else %}гид по Себежу{% endif %}{% endif %}{% endblock %}
+{% block page_title %}{{ page.title }}{% endblock %}
 
 {% block page_header %}
     <div class="page-header">
@@ -40,15 +40,7 @@
 {% endblock %}
 
 {% block page_contents %}
-    {% if edit_link %}
-        {% if page_age == 0 %}
-            <div class="wikimeta">Страница была изменена сегодня; вы тоже можете <a href="{{ edit_link }}">редактировать её</a>.</div>
-        {% elseif page_age == 1 %}
-            <div class="wikimeta">Страница была изменена вчера; вы тоже можете <a href="{{ edit_link }}">редактировать её</a>.</div>
-        {% else %}
-            <div class="wikimeta">Страница была изменена {{ page_age }} {{ page_age|sklo("день", "дня", "дней") }} назад; вы тоже можете <a href="{{ edit_link }}">редактировать её</a>.</div>
-        {% endif %}
-    {% endif %}
+    <div class='wikimeta'>{{ node.updated|date('%d.%m.%Y') }}, <a href='/wiki?name={{ page.author }}'>{{ page.author }}</a>{% if edit_link %} &middot; <a href='{{ edit_link }}'>редактировать</a>{% endif %}</div>
 
     <div class="formatted" itemprop="articleBody">
         {% if page.en %}
@@ -60,7 +52,7 @@
         {% if "wiki:" in page.name %}
             <pre>{{ page.text }}</pre>
         {% else %}
-            {{ page.html|raw }}
+            {{ page.html|typo|raw }}
         {% endif %}
     </div>
 
