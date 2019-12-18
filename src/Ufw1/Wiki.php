@@ -203,6 +203,25 @@ class Wiki
         return md5(mb_strtolower(trim($name)));
     }
 
+    /**
+     * Convert wiki page name to a link.
+     *
+     * Example:
+     * >> Hello World#foobar
+     * << /wiki?name=Hello+World#foobar
+     *
+     * @param  string $link Page name, with section optionally.
+     * @return string       Link to the page.
+     **/
+    protected function getWikiLink($link)
+    {
+        $parts = explode('#', $link);
+        $parts[0] = urlencode($parts[0]);
+        $link = implode('#', $parts);
+        $link = '/wiki?name=' . $link;
+        return $link;
+    }
+
     protected function processPhotoAlbums($source)
     {
         $out = [];
@@ -249,7 +268,7 @@ class Wiki
      **/
     protected function processWikiLinks($source)
     {
-        $interwiki = $this->container->get('settings')['interwiki'] ?? [];
+        $interwiki = $this->container->get('settings')['interwiki'] ?: [];
 
         $source = preg_replace_callback('@\[\[([^]]+)\]\]@', function ($m) use ($interwiki) {
             // Embed images later.
@@ -285,16 +304,18 @@ class Wiki
             if ($tmp = $this->processInterwiki($link, $interwiki)) {
                 $link = $tmp;
                 $cls = 'external';
-            } elseif (!($tmp = $this->getPageByName($link))) {
+            } elseif ($tmp = $this->getPageByName($link)) {
+                if (!empty($tmp['url'])) {
+                    $link = $tmp['url'];
+                } else {
+                    $link = $this->getWikiLink($link);
+                }
+            } else {
                 $cls = "wiki broken";
                 $title = "Нет такой страницы";
-            }
-
-            if ($cls != 'external') {
-                $parts = explode('#', $link);
-                $parts[0] = urlencode($parts[0]);
-                $link = implode('#', $parts);
-                $link = '/wiki?name=' . $link;
+                if ($cls != 'external') {
+                    $link = $this->getWikiLink($link);
+                }
             }
 
             $html = sprintf("<a href='%s' class='%s' title='%s'>%s</a>", $link, $cls, htmlspecialchars($title), htmlspecialchars($label));
