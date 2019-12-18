@@ -181,6 +181,7 @@ class Wiki
         }
 
         $source = $this->processPhotoAlbums($source);
+        $source = $this->processMaps($source);
         $source = $this->processWikiLinks($source);
         $source = $this->processImages($source);
 
@@ -220,6 +221,72 @@ class Wiki
         $link = implode('#', $parts);
         $link = '/wiki?name=' . $link;
         return $link;
+    }
+
+    protected function parseMapItems($source)
+    {
+        $items = [];
+        $last = [];
+
+        $lines = explode("\n", $source);
+        foreach ($lines as $line) {
+            $parts = explode(':', $line, 2);
+            if (count($parts) == 2) {
+                if ($parts[0][0] == '-') {
+                    if (!empty($last['ll'])) {
+                        $items[] = $last;
+                    }
+                    $last = [];
+                    $parts[0] = substr($parts[0], 1);
+                }
+
+                $k = trim($parts[0]);
+                $v = trim($parts[1]);
+
+                if ($k == 'll') {
+                    if (2 == count($parts = explode(',', $v, 2))) {
+                        $v = [floatval($parts[0]), floatval($parts[1])];
+                    } else {
+                        continue;
+                    }
+                }
+
+                $last[$k] = $v;
+            }
+        }
+
+        if (!empty($last['ll'])) {
+            $items[] = $last;
+        }
+
+        $items = array_map(function (array $em) {
+            $html = '<p>' . $em['title'] . '</p>';
+            if (!empty($em['image'])) {
+                $html .= "<div><img src='{$em['image']}' alt=''/></div>";
+            }
+
+            $em['html'] = $html;
+            return $em;
+        }, $items);
+
+        return $items;
+    }
+
+    /**
+     * Рендеринг карт.
+     **/
+    protected function processMaps($source)
+    {
+        $idx = 0;
+
+        $source = preg_replace_callback('@```map(.+?)```@ms', function (array $m) use (&$idx) {
+            $idx++;
+            $items = $this->parseMapItems($m[1]);
+            $json = json_encode($items);
+            return sprintf("<div id='map_%u' class='map' data-items='%s'><p>Карта загружается...</p></div>", $idx, $json);
+        }, $source);
+
+        return $source;
     }
 
     protected function processPhotoAlbums($source)
