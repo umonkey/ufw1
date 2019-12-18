@@ -21,20 +21,26 @@ class Wiki extends CommonHandler
     {
         $name = $request->getQueryParam("name");
 
+        if (empty($name)) {
+            $st = $this->container->get('settings')['wiki']['homePage'] ?: 'Welcome';
+            $next = '/wiki?name=' . urlencode($st);
+            return $response->withRedirect($next);
+        }
+
+        return $this->showPageByName($request, $response, $name);
+    }
+
+    protected function showPageByName($request, $response, $name)
+    {
         $wiki = $this->container->get('wiki');
 
         $user = $this->getUser($request);
         if (!$wiki->canReadPages($user)) {
-            if ($user)
-                throw new \Ufw1\Errors\Forbidden;
-            else
-                throw new \Ufw1\Errors\Unauthorized;
-        }
-
-        if (empty($name)) {
-            $st = $this->container->get('settings')['wiki']['homePage'] ?? 'Welcome';
-            $next = '/wiki?name=' . urlencode($st);
-            return $response->withRedirect($next);
+            if ($user) {
+                $this->forbidden();
+            } else {
+                $this->unauthorized();
+            }
         }
 
         $canEdit = $wiki->canEditPages($user);
@@ -106,8 +112,13 @@ class Wiki extends CommonHandler
         $wiki = $this->container->get('wiki');
 
         $user = $this->getUser($request);
-        if (!$wiki->canEditPages($user))
-            $this->forbidden();
+        if (!$wiki->canEditPages($user)) {
+            if ($user) {
+                $this->forbidden();
+            } else {
+                $this->unauthorized();
+            }
+        }
 
         $source = $wiki->getPageSource($pageName, $sectionName);
 
