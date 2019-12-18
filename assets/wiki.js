@@ -139,7 +139,7 @@ function enable_map()
         });
     };
 
-    $(".map").each(function () {
+    $(".xmap").each(function () {
       var div = $(this);
       if (!div.attr("id")) {
           var id = "map_" + Math.round(Math.random() * 999999);
