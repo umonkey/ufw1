@@ -121,6 +121,20 @@ class Template
             return sprintf("%.02f MB", $size / 1048576);
         }));
 
+        $this->twig->addFilter(new \Twig\TwigFilter("phone", function ($value) {
+            $value = preg_replace('@[^0-9]+@', '', $value);
+
+            if ($value[0] == '7') {
+                $phone = '+7 (' . substr($value, 1, 3);
+                $phone .= ') ' . substr($value, 4, 3);
+                $phone .= '-' . substr($value, 7, 2);
+                $phone .= '-' . substr($value, 9, 2);
+                $value = $phone;
+            }
+
+            return $value;
+        }));
+
         $this->twig->addFilter(new \Twig\TwigFilter("price", function ($value) {
             return number_format($value, 0, ',', ' ');
         }));
