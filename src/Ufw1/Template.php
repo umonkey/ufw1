@@ -121,6 +121,19 @@ class Template
             return sprintf("%.02f MB", $size / 1048576);
         }));
 
+        $this->twig->addFilter(new \Twig\TwigFilter("price", function ($value) {
+            return number_format($value, 0, ',', ' ');
+        }));
+
+        // Короткое имя.
+        // > Иван Иванов => Инва И.
+        // > {{ node.length }} {{ node.length|sklo('байт', 'байта', 'байтов') }}
+        $this->twig->addFilter(new \Twig\TwigFilter("short_name", function ($name) {
+            $parts = explode(' ', $name, 2);
+            $name = $parts[0] . ' ' . mb_substr($parts[1], 0, 1) . '.';
+            return $name;
+        }));
+
         // Чистительные.
         // > {{ node.length }} {{ node.length|sklo('байт', 'байта', 'байтов') }}
         $this->twig->addFilter(new \Twig\TwigFilter("sklo", function ($number, $one, $two, $many) {
