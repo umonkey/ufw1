@@ -260,9 +260,18 @@ class Wiki
         }
 
         $items = array_map(function (array $em) {
-            $html = '<p>' . $em['title'] . '</p>';
+            if (!empty($em['link'])) {
+                $html = sprintf('<p><a href="%s">%s</a></p>', $em['link'], $em['title']);
+            } else {
+                $html = '<p>' . $em['title'] . '</p>';
+            }
+
+            if (!empty($em['description'])) {
+                $html .= '<p>' . $em['description'] . '</p>';
+            }
+
             if (!empty($em['image'])) {
-                $html .= "<div><img src='{$em['image']}' alt=''/></div>";
+                $html .= "<div><img src=\"{$em['image']}\" alt=\"\"/></div>";
             }
 
             $em['html'] = $html;
