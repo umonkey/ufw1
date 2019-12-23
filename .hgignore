@@ -1,3 +1,4 @@
 ^vendor$
 ^u|h$
 ^data$
+^\.phpunit\.result\.cache$

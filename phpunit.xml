@@ -1,0 +1,10 @@
+<phpunit bootstrap="src/bootstrap.php">
+    <testsuites>
+        <testsuite name="SlimSkeleton">
+            <directory suffix='Tests.php'>tests</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name='ENVIRONMENT' value='test' force='true'/>
+    </php>
+</phpunit>
