@@ -10,7 +10,7 @@ class Util
         $html = preg_replace('@\s+</([a-z0-9]+)>@', '</\1>', $html);
 
         // Clean up.
-        $all = "html|head|body|header|section|main|footer|aside|nav|div|p|ul|ol|li|input|select|option|label|textarea|button|meta|title|h1|h2|h3|h4|h5|script|style|link|table|thead|tfoot|tbody|tr|th|td|img|form";
+        $all = "html|head|body|header|section|main|footer|aside|nav|div|p|ul|ol|li|input|select|option|label|textarea|button|meta|title|h1|h2|h3|h4|h5|script|style|link|table|thead|tfoot|tbody|tr|th|td|img|form|source|picture";
         $html = preg_replace($re = '@\s*<(' . $all . '|!--)([^>]*>)\s*@', '<\1\2', $html);
         $html = preg_replace('@\s*</(' . $all . ')>\s*@ms', '</\1>', $html);
 
