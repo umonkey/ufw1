@@ -8,3 +8,5 @@ LESS compiler: https://github.com/leafo/lessphp
 Админка: кричать при возможности модификации скиптов.  Видимо тест по крону.
 
 https://scrutinizer-ci.com/docs/tools/php/php-scrutinizer/
+
+Попробовать подключить https://inertiajs.com/
