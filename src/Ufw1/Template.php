@@ -21,9 +21,9 @@ class Template
             ? $settings["defaults"]
             : [];
 
-        $root = $settings["template_path"];
-        $fallback = __DIR__ . '/../../templates';
-        $loader = new \Twig\Loader\FilesystemLoader([$root, $fallback]);
+        $templates = $settings["template_path"];
+        $loader = new \Twig\Loader\FilesystemLoader($templates);
+
         $this->twig = new \Twig\Environment($loader);
 
         // Custom date format:
