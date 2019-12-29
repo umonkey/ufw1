@@ -1,0 +1,3 @@
+2019-12-29:
+- CSS/JS compressor now needs a source map paths as arguments, can process
+  multiple with ona call.

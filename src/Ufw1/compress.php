@@ -2,11 +2,21 @@
 
 class Compiler
 {
+    /**
+     * @var string
+     **/
+    protected $mapPath;
+
+    /**
+     * @var array
+     **/
     protected $map;
 
-    public function __construct(array $map)
+    public function __construct($src)
     {
-        $this->map = $map;
+        $this->mapPath = $src;
+
+        $this->map = include $src;
     }
 
     public function compile()
@@ -50,12 +60,12 @@ class Compiler
         $res = array();
 
         foreach ($patterns as $pattern) {
-            $files = glob($pattern);
-            sort($files);
+            $files = $this->unroll($pattern);
 
             foreach ($files as $src) {
-                if (!is_readable($src))
+                if (!is_readable($src)) {
                     throw new RuntimeException("file {$src} not readable");
+                }
 
                 $data = file_get_contents($src);
 
@@ -74,8 +84,7 @@ class Compiler
         $res = array();
 
         foreach ($patterns as $pattern) {
-            $files = glob($pattern);
-            sort($files);
+            $files = $this->unroll($pattern);
 
             foreach ($files as $src) {
                 if (!is_readable($src))
@@ -148,6 +157,33 @@ class Compiler
     protected function log($message)
     {
         printf("assets: %s\n", trim($message));
+    }
+
+    protected function isPattern($str)
+    {
+        if (false !== strpos($str, '*')) {
+            return true;
+        }
+
+        if (false !== strpos($str, '?')) {
+            return true;
+        }
+    }
+
+    protected function unroll($pattern)
+    {
+        if (!in_array($pattern[0], ['.', '/'])) {
+            $pattern = dirname($this->mapPath) . '/' . $pattern;
+        }
+
+        if ($this->isPattern($pattern)) {
+            $files = glob($pattern);
+            sort($files);
+        } else {
+            $files = [$pattern];
+        }
+
+        return $files;
     }
 }
 

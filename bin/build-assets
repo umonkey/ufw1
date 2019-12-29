@@ -7,11 +7,6 @@ requireAutoloader();
 
 require __DIR__ . '/../src/Ufw1/compress.php';
 
-$map = include 'src/assets.php';
-$compiler = new \Compiler($map);
-$compiler->compile();
-$compiler->compile_min();
-
 
 function requireAutoloader()
 {
@@ -27,4 +22,18 @@ function requireAutoloader()
             break;
         }
     }
+}
+
+if (count($argv) == 1) {
+    printf("CSS and JavaScript compressor.\n");
+    printf("Usage: %s source_maps...\n", basename($argv[0]));
+    exit(1);
+}
+
+$sources = array_slice($argv, 1);
+
+foreach ($sources as $src) {
+    $compiler = new \Compiler($src);
+    $compiler->compile();
+    $compiler->compile_min();
 }
