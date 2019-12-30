@@ -21,9 +21,11 @@ class S3
             throw new \RuntimeException("S3 not configured, at all");
 
         $keys = ['bucket', 'bucket_region', 'acl', 'secret_key', 'access_key', 'endpoint'];
-        foreach ($keys as $key)
-            if (empty($config["S3"][$key]))
-            throw new \RuntimeException("S3 not configured: {$key} not set");
+        foreach ($keys as $key) {
+            if (empty($config["S3"][$key])) {
+                throw new \RuntimeException("S3 not configured: {$key} not set");
+            }
+        }
 
         $this->config = array_merge([
             "service" => "s3",
@@ -73,8 +75,9 @@ class S3
             "data" => $data,
         ]);
 
-        if (@$data["Code"] == "AccessDenied")
+        if (@$data["Code"] == "AccessDenied") {
             throw new \Ufw1\Errors\S3AccessDenied;
+        }
 
         throw new \RuntimeException("Cloud storage error: " . $data["Message"]);
     }
