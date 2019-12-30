@@ -3,6 +3,7 @@
 - Added default register.twig template.
 - TaskQ errors are now reported with code 500.
 - Wiki setting homePage renamed as home_page.
+- Pass template strings from the templates[strings][$language] array.
 
 2019-12-29:
 - CSS/JS compressor now needs a source map paths as arguments, can process

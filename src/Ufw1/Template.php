@@ -209,17 +209,14 @@ class Template
         return [$props, $text];
     }
 
+    /**
+     * Adds default strings, read from the settings.
+     **/
     protected function addDefaults(array $data)
     {
-        $fn = $_SERVER["DOCUMENT_ROOT"] . "/settings.php";
-        if (file_exists($fn)) {
-            $settings = include $fn;
-            $lang = $settings["default_language"];
-            $defaults = $settings["template_{$lang}"];
-
-            $data = array_merge($defaults, $data);
-        }
-
+        $lang = $data['language'] ?? 'en';
+        $strings = $this->container->get('settings')['templates']['strings'][$lang] ?? [];
+        $data['strings'] = $strings;
         return $data;
     }
 
