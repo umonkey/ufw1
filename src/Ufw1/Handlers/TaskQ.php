@@ -140,7 +140,7 @@ class TaskQ extends CommonHandler
         } catch (\Throwable $e) {
             return $response->withJSON([
                 "message" => sprintf("%s: %s", get_class($e), $e->getMessage()),
-            ]);
+            ])->withStatus(500);
         }
     }
 
