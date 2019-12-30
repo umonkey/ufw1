@@ -46,7 +46,11 @@ class Wiki
 
         $node = $this->notifyEdits($node, $user);
 
-        $this->container->get('taskq')->add('wiki-reindex', [$node['id']]);
+        if ($this->container->has('fts')) {
+            $this->container->get('fts')->reindexNode([
+                'id' => $node['id'],
+            ]);
+        }
 
         return $node;
     }
