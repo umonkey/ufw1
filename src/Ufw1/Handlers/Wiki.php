@@ -22,7 +22,7 @@ class Wiki extends CommonHandler
         $name = $request->getQueryParam("name");
 
         if (empty($name)) {
-            $st = $this->container->get('settings')['wiki']['homePage'] ?: 'Welcome';
+            $st = $this->container->get('settings')['wiki']['home_page'] ?: 'Welcome';
             $next = '/wiki?name=' . urlencode($st);
             return $response->withRedirect($next);
         }
@@ -62,7 +62,7 @@ class Wiki extends CommonHandler
                 return $response->withRedirect($next);
             }
 
-            if (!($author = $res['author'])) {
+            if (!($author = $res['author'] ?? null)) {
                 $res['author'] = $this->container->get('settings')['wiki']['default_author'] ?: null;
             }
 

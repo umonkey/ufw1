@@ -2,6 +2,7 @@
 - Added migrations for missing tables search, search_log, odict.
 - Added default register.twig template.
 - TaskQ errors are now reported with code 500.
+- Wiki setting homePage renamed as home_page.
 
 2019-12-29:
 - CSS/JS compressor now needs a source map paths as arguments, can process
