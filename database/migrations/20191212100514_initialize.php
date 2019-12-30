@@ -38,39 +38,32 @@ class Initialize extends AbstractMigration
              ->addIndex(['added'])
              ->save();
 
-        $this->table('categories', ['signed' => false])
+        $this->table('nodes', ['signed' => false])
              ->addColumn('parent', 'integer', ['signed' => false])
-             ->addColumn('name', 'string', ['null' => false])
+             ->addColumn('lb', 'integer', ['null' => false, 'signed' => false])
+             ->addColumn('rb', 'integer', ['null' => false, 'signed' => false])
+             ->addColumn('type', 'string', ['null' => false])
+             ->addColumn('created', 'datetime', ['null' => false])
+             ->addColumn('updated', 'datetime', ['null' => false])
+             ->addColumn('key', 'string')
+             ->addColumn('published', 'boolean', ['null' => false, 'default' => 1])
+             ->addColumn('deleted', 'boolean', ['null' => false, 'default' => 0])
+             ->addColumn('more', 'blob')
+             ->addIndex(['parent'])
+             ->addIndex(['lb'], ['unique' => true])
+             ->addIndex(['rb'], ['unique' => true])
+             ->addIndex(['type'])
+             ->addIndex(['created'])
+             ->addIndex(['updated'])
+             ->addIndex(['published'])
+             ->addIndex(['deleted'])
              ->save();
 
-        $this->table('nodes', ['signed' => false])
-            ->addColumn('parent', 'integer', ['signed' => false])
-            ->addColumn('lb', 'integer', ['null' => false, 'signed' => false])
-            ->addColumn('rb', 'integer', ['null' => false, 'signed' => false])
-            ->addColumn('type', 'string', ['null' => false])
-            ->addColumn('created', 'datetime', ['null' => false])
-            ->addColumn('updated', 'datetime', ['null' => false])
-            ->addColumn('key', 'string')
-            ->addColumn('published', 'boolean', ['null' => false, 'default' => 1])
-            ->addColumn('deleted', 'boolean', ['null' => false, 'default' => 0])
-            ->addColumn('more', 'blob')
-            ->addIndex(['parent'])
-            ->addIndex(['lb'], ['unique' => true])
-            ->addIndex(['rb'], ['unique' => true])
-            ->addIndex(['type'])
-            ->addIndex(['created'])
-            ->addIndex(['updated'])
-            ->addIndex(['published'])
-            ->addIndex(['deleted'])
-            ->save();
-
-        $this->table('nodes_picture_idx', ['id' => false])
+        $this->table('nodes_file_idx', ['id' => false])
              ->addColumn('id', 'integer', ['null' => false, 'signed' => false])
-             ->addColumn('author', 'integer', ['null' => false, 'signed' => false])
-             ->addColumn('status', 'integer', ['null' => false, 'signed' => false])
+             ->addColumn('kind', 'string')
              ->addForeignKey('id', 'nodes', 'id', ['delete' => 'CASCADE'])
-             ->addForeignKey('author', 'nodes', 'id', ['delete' => 'SET_NULL'])
-             ->addIndex(['status'])
+             ->addIndex(['kind'])
              ->save();
 
         $this->table('nodes_user_idx', ['id' => false])
@@ -80,26 +73,11 @@ class Initialize extends AbstractMigration
              ->addIndex(['email'])
              ->save();
 
-        $this->table('payout', ['id' => false])
-             ->addColumn('user_id', 'integer', ['null' => false, 'signed' => false])
-             ->addColumn('date', 'datetime', ['null' => false])
-             ->addColumn('amount', 'integer', ['null' => false, 'signed' => false])
-             ->addForeignKey('user_id', 'nodes', 'id', ['delete' => 'CASCADE'])
-             ->addIndex(['date'])
-             ->save();
-
-        $this->table('sales', ['id' => false])
-             ->addColumn('order_id', 'integer', ['null' => false, 'signed' => false])
-             ->addColumn('product_id', 'integer', ['null' => false, 'signed' => false])
-             ->addColumn('author_id', 'integer', ['null' => false, 'signed' => false])
-             ->addColumn('date', 'datetime', ['null' => false])
-             ->addColumn('qty', 'integer', ['null' => false, 'signed' => false])
-             ->addColumn('price', 'integer', ['null' => false, 'signed' => false])
-             ->addColumn('cancelled', 'boolean', ['null' => false, 'default' => '0'])
-             ->addForeignKey('author_id', 'nodes', 'id', ['delete' => 'CASCADE'])
-             ->addIndex(['order_id'])
-             ->addIndex(['product_id'])
-             ->addIndex(['date'])
+        $this->table('nodes_wiki_idx', ['id' => false])
+             ->addColumn('id', 'integer', ['null' => false, 'signed' => false])
+             ->addColumn('url', 'string')
+             ->addForeignKey('id', 'nodes', 'id', ['delete' => 'CASCADE'])
+             ->addIndex(['url'])
              ->save();
 
         $this->table('sessions', ['id' => false])
@@ -122,12 +100,10 @@ class Initialize extends AbstractMigration
     public function down()
     {
         $this->table('cache')->drop()->save();
-        $this->table('categories')->drop()->save();
         $this->table('nodes')->drop()->save();
-        $this->table('nodes_picture_idx')->drop()->save();
+        $this->table('nodes_file_idx')->drop()->save();
         $this->table('nodes_user_idx')->drop()->save();
-        $this->table('payout')->drop()->save();
-        $this->table('sales')->drop()->save();
+        $this->table('nodes_wiki_idx')->drop()->save();
         $this->table('sessions')->drop()->save();
         $this->table('taskq')->drop()->save();
     }
