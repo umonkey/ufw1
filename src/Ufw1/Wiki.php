@@ -377,8 +377,7 @@ class Wiki
             $cls = "wiki good";
             $title = $link;
 
-            if ($tmp = $this->processInterwiki($link, $interwiki)) {
-                $link = $tmp;
+            if ($this->processInterwiki($link, $label, $interwiki)) {
                 $cls = 'external';
             } elseif ($tmp = $this->getPageByName($link)) {
                 if (!empty($tmp['url'])) {
@@ -402,11 +401,27 @@ class Wiki
         return $source;
     }
 
-    protected function processInterwiki($link, array $interwiki)
+    /**
+     * Process the interwiki link.
+     *
+     * If the link matches a configured pattern -- apply that pattern.
+     *
+     * @param  string& $link      Linked page.
+     * @param  string& $label     Link text, can be modified.
+     * @param  array   $interwiki Interwiki patterns.
+     * @return bool               True, if the link was processed.
+     **/
+    protected function processInterwiki(&$link, &$label, array $interwiki)
     {
         foreach ($interwiki as $re => $format) {
             if (preg_match($re, $link, $m)) {
-                return sprintf($format, $m[1]);
+                if ($link == $label) {
+                    $label = $m[1];
+                }
+
+                $link = sprintf($format, $m[1]);
+
+                return true;
             }
         }
 
