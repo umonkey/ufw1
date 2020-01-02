@@ -532,7 +532,7 @@ class Wiki extends CommonHandler
      **/
     public function onRecentFiles(Request $request, Response $response, array $args)
     {
-        $files = $this->node->where("`type` = 'file' AND `published` = 1 AND `deleted` = 0 AND `id` IN (SELECT `id` FROM `nodes_file_idx` WHERE `kind` = 'photo') ORDER BY `created` DESC LIMIT 50");
+        $files = $this->node->where("`type` = 'file' AND `published` = 1 AND `deleted` = 0 ORDER BY `created` DESC LIMIT 50");
 
         $files = array_map(function ($node) {
             $res = [
