@@ -1,11 +1,6 @@
 {% extends "base.twig" %}
 
 {% block more_head %}
-    {% if edit_link %}
-        <link rel="edit" title="Редактировать страницу" href="/wiki/edit?name={{ page.name|url_encode }}"/>
-        <link rel="alternate" type="application/x-wiki" title="Редактировать страницу" href="/wiki/edit?name={{ page.name|url_encode }}"/>
-    {% endif %}
-
     <meta property="og:url" content="https://{{ host }}/wiki?name={{ page.name|url_encode }}"/>
     <meta property="og:type" content="article"/>
     <meta property="og:title" content="{{ page.title }}"/>
