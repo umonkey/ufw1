@@ -368,3 +368,21 @@ jQuery(function ($) {
         $(this).append("<span class='wiki-section-edit'> [ <a href='" + link + "'>редактировать</a> ]</span>");
     });
 });
+
+
+window.editor_insert = function (text)
+{
+    var ta = $("textarea.wiki")[0];
+
+    var v = ta.value,
+        s = ta.selectionStart,
+        e = ta.selectionEnd;
+
+    var ntext = v.substring(0, s) + text + v.substring(e);
+    ta.value = ntext;
+    ta.selectionStart = e + text.length;
+    ta.selectionEnd = e + text.length;
+
+    $("#block, .dialog").hide();
+    $("textarea.wiki").focus();
+}
