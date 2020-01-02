@@ -27,8 +27,9 @@ textarea.form-control {
     line-height: 28px;
     padding: 0 10px;
     width: 100%;
-    max-width: calc(100% - 22px);
+    max-width: 100%;
     background-color: #f8f8f8;
+    box-sizing: border-box;
 }
 input.form-control.short,
 input[type=number].form-control {
@@ -38,8 +39,6 @@ input[type=text].form-control.wide {
     width: 100%;
 }
 textarea.form-control {
-    min-width: calc(100% - 22px);
-    max-width: calc(100% - 22px);
     min-height: 50px;
 }
 textarea.code {
