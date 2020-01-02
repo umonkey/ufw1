@@ -203,7 +203,7 @@ class Wiki
         return $res;
     }
 
-    protected function getPageKey($name)
+    public function getPageKey($name)
     {
         return md5(mb_strtolower(trim($name)));
     }
