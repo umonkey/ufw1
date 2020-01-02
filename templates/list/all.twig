@@ -20,7 +20,7 @@
     <tbody>
         {% for n in nodes %}
             <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
-                <td><a href="/admin/nodes/{{ n.id }}/edit">{% if n.name %}{{ n.name }}{% elseif n.title %}{{ n.title }}{% else %}(без названия){% endif %}</a></td>
+                <td><a href="/admin/nodes/{{ n.id }}/edit?back={{ request.uri }}">{% if n.name %}{{ n.name }}{% elseif n.title %}{{ n.title }}{% else %}(без названия){% endif %}</a></td>
                 <td><a href='/admin/nodes/{{ n.type }}'>{{ (types[n.type] ?? n.type)|lower }}</a></td>
                 <td class='check'>{% if n.id != user.id %}<input class='published' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.published %} checked{% endif %}/>{% endif %}</td>
                 <td class='check'>{% if n.id != user.id %}<input class='deleted' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.deleted %} checked{% endif %}/>{% endif %}</td>

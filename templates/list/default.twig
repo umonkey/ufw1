@@ -1,6 +1,6 @@
 <p>Показан список документов типа {{ selected_type }}; <a href='/admin/nodes'>показать все документы</a>?</p>
 
-<table class="table lines nodes">
+<table class="table lines nodes hover">
     <thead>
         <tr>
             <th class='rowid'>#</th>
@@ -14,7 +14,7 @@
         {% for n in nodes %}
             <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
                 <td class="rowid">{{ n.id }}</td>
-                <td><a href="/admin/nodes/{{ n.id }}/edit">{{ n.name }}</a></td>
+                <td><a href="/admin/nodes/{{ n.id }}/edit?back={{ request.uri }}">{{ n.name }}</a></td>
                 <td class='check'>{% if n.id != user.id %}<input class='published' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.published %} checked{% endif %}/>{% endif %}</td>
                 <td class='check'>{% if n.id != user.id %}<input class='deleted' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.deleted %} checked{% endif %}/>{% endif %}</td>
                 <td>{{ n.created|date_simple }}</td>
