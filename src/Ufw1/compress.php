@@ -172,7 +172,9 @@ class Compiler
 
     protected function unroll($pattern)
     {
-        if (!in_array($pattern[0], ['.', '/'])) {
+        if ($pattern[0] == '/') {
+            $pattern = substr($pattern, 1);
+        } else {
             $pattern = dirname($this->mapPath) . '/' . $pattern;
         }
 
