@@ -44,7 +44,7 @@ class Admin extends CommonHandler
             return "'{$em}'";
         }, $types));
 
-        $nodes = $this->node->where("`deleted` = 0 AND `type` IN ({$types}) ORDER BY `id` DESC LIMIT 100");
+        $nodes = $this->node->where("`deleted` = 0 AND `type` IN ({$types}) ORDER BY `created` DESC LIMIT 1000");
 
         if (isset($args['type']) and $args['type'] == 'user') {
             usort($nodes, function ($a, $b) {
