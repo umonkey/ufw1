@@ -2,7 +2,12 @@
  * Adds the upload file button.
  **/
 jQuery(function ($) {
-    $(".wiki_buttons").append('<li><a id="wiki_btn_upload" class="btn btn-default" href="/wiki/files" target="_blank" title="Загрузить фото"><i class="fa fa-image"></i></a></li>');
+    var init = function () {
+        $(".wiki_buttons").append('<li><a id="wiki_btn_upload" class="btn btn-default" href="/wiki/files" target="_blank" title="Загрузить фото"><i class="fa fa-image"></i></a></li>');
+    };
+
+    init();
+    $(document).on('ufw:reload', init);
 
     $(document).on("click", "#wiki_btn_upload", function (e) {
         e.preventDefault();
