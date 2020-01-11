@@ -97,6 +97,13 @@ jQuery(function ($) {
             return;
         }
 
+        // White list pattern.
+        var pattern = window.spa_link_pattern || new RegExp("^/wiki\\?name=.*");
+        if (!link.match(pattern)) {
+            console.log('spa: link not whitelisted', link);
+            return;
+        }
+
         // Update current history entry to save scroll position.
         window.history.replaceState({
             link: window.location.href,

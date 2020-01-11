@@ -1,5 +1,6 @@
 2020-01-11:
 - Shortener template added.
+- SPA: white list for links (only wiki by default).
 
 2019-12-30:
 - Added migrations for missing tables search, search_log, odict.
