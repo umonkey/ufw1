@@ -1,3 +1,6 @@
+2020-01-11:
+- Shortener template added.
+
 2019-12-30:
 - Added migrations for missing tables search, search_log, odict.
 - Added default register.twig template.
