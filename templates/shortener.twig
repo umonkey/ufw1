@@ -1,0 +1,20 @@
+{% extends "base.twig" %}
+
+{% block page_title %}Сокращение ссылки{% endblock %}
+
+{% block page_h1 %}Сокращение ссылки{% endblock %}
+
+{% block page_contents %}
+    <div class='form-group'>
+        <label>Длинная ссылка:</label>
+        <input class='form-control' type='text' name='src' value='{{ src }}' readonly/>
+    </div>
+
+    <div class='form-group'>
+        <label>Сокращённая ссылка:</label>
+        <div class='combine'>
+            <input class='form-control' type='text' name='dst' value='{{ dst }}' readonly/>
+            <button class='btn btn-default btn-icon copy' type='button'><i class='fas fa-copy'></i></button>
+        </div>
+    </div>
+{% endblock %}
