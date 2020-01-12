@@ -9,6 +9,7 @@
 <table class="table lines hover nodes">
     <thead>
         <tr>
+            <th/>
             <th class='wide'>Название</th>
             <th>Тип</th>
             <th><i title='Документ виден на сайте' class="fas fa-eye"></i></th>
@@ -20,11 +21,12 @@
     <tbody>
         {% for n in nodes %}
             <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
+                <td class='rowid'>{{ n.id }}</td>
                 <td><a href="/admin/nodes/{{ n.id }}/edit?back={{ request.uri }}">{% if n.name %}{{ n.name }}{% elseif n.title %}{{ n.title }}{% else %}(без названия){% endif %}</a></td>
                 <td><a href='/admin/nodes/{{ n.type }}'>{{ (types[n.type] ?? n.type)|lower }}</a></td>
                 <td class='check'>{% if n.id != user.id %}<input class='published' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.published %} checked{% endif %}/>{% endif %}</td>
                 <td class='check'>{% if n.id != user.id %}<input class='deleted' type='checkbox' name='id' value='{{ n.id }}' autocomplete='off'{% if n.deleted %} checked{% endif %}/>{% endif %}</td>
-                <td class='nowrap'>{{ n.created|date_simple }}</td>
+                <td class='nowrap'>{{ n.created|date('%d.%m.%Y') }}</td>
                 <td class='extlink'><a href='/node/{{ n.id }}' target='_blank'><i class="fas fa-sign-out-alt"></i></a></td>
             </tr>
         {% endfor %}
