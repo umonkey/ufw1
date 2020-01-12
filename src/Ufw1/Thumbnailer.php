@@ -76,10 +76,20 @@ class Thumbnailer
                 $img = $this->scaleImage($img, $options);
 
                 $logger->debug('thumbnailer: getting image blob');
-                $type = $node['files']['original']['type'];
-                if ($type == 'image/png') {
+
+                $format = $options['format'] ?? null;
+
+                if ($format == 'webp') {
+                    $res = $this->getImageWebP($img);
+                    $type = 'image/webp';
+                }
+
+                elseif ($node['files']['original']['type'] == 'image/png') {
                     $res = $this->getImagePNG($img);
-                } else {
+                    $type = 'image/png';
+                }
+
+                else {
                     $res = $this->getImageJPEG($img);
                     $type = 'image/jpeg';
                 }
@@ -89,7 +99,6 @@ class Thumbnailer
                 $logger->debug('thumbnailer: destroying the image');
                 $this->destroyImage($img);
 
-                $logger->debug('thumbnailer: saving the image');
                 $path = $this->container->get('file')->fsput($res);
 
                 $node["files"][$key] = [
@@ -99,7 +108,6 @@ class Thumbnailer
                     "path" => $path,
                     "width" => $w,
                     "height" => $h,
-                    "url" => "/node/{$node['id']}/download/{$key}",
                 ];
 
                 $logger->debug('thumbnailer: done with {0}', [$key]);
@@ -111,7 +119,7 @@ class Thumbnailer
         }
 
         if ($updateCount)
-            $logger->debug('thumbnailer: node {0} updated, files={1}', [$node['id'], $node['files']]);
+            $logger->debug('thumbnailer: node {0} updated, files={1}', [$node['id'] ?? null, $node['files']]);
 
         return $node;
     }
@@ -164,6 +172,14 @@ class Thumbnailer
     {
         ob_start();
         imagejpeg($img, null, 85);
+        $res = ob_get_clean();
+        return $res;
+    }
+
+    protected function getImageWebP($img)
+    {
+        ob_start();
+        imagewebp($img, null);
         $res = ob_get_clean();
         return $res;
     }

@@ -36,6 +36,13 @@ class Thumbnailer2 extends Thumbnailer
         return $img->getImageBlob();
     }
 
+    protected function getWebP($img)
+    {
+        // https://www.gauntface.com/blog/2014/09/02/webp-support-with-imagemagick-and-php
+        $img->setImageFormat('webp');
+        return $img->getImageBlob();
+    }
+
     protected function getImageSize($img)
     {
         $geo = $img->getImageGeometry();

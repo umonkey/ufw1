@@ -1,6 +1,7 @@
 2020-01-12:
 - Fixed some notices.
 - Fixed S3 console link in the admin UI.
+- Thumbnailer: support for WebP.
 
 2020-01-11:
 - Shortener template added.
