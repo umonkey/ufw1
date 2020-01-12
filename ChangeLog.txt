@@ -1,3 +1,6 @@
+2020-01-12:
+- Fixed some notices.
+
 2020-01-11:
 - Shortener template added.
 - SPA: white list for links (only wiki by default).

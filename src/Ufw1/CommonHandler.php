@@ -439,7 +439,7 @@ class CommonHandler
         }
 
         $headers = $request->getHeaders();
-        if (@$headers["HTTP_IF_NONE_MATCH"][0] == $etag) {
+        if (($headers["HTTP_IF_NONE_MATCH"][0] ?? null) == $etag) {
             return $response->withStatus(304)
                 ->withHeader("ETag", $etag)
                 ->withHeader("Cache-Control", "public, max-age=31536000");
