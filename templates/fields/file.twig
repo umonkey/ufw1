@@ -1,0 +1,7 @@
+<div class='form-group'>
+    <label>{{ field.label }}</label>
+    <input class='form-control' type='file' name='node[{{ key }}]' autocomplete='off'/>
+    {% if field.help %}
+        <p class='help-block'>{{ field.help|raw }}</p>
+    {% endif %}
+</div>
