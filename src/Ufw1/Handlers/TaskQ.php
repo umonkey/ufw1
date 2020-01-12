@@ -163,9 +163,6 @@ class TaskQ extends CommonHandler
             }
         }
 
-        if ($action == "node-s3-upload")
-            return $this->onNodeS3Upload($payload["id"]);
-
         elseif ($action == 'update-node-thumbnail')
             return $this->onUpdateNodeThumbnail($payload['id']);
 
@@ -187,49 +184,6 @@ class TaskQ extends CommonHandler
         return $settings;
     }
 
-    /**
-     * Upload node files to S3, if configured.
-     *
-     * action: node-s3-upload
-     *
-     * @param int $id Node id.
-     **/
-    protected function onNodeS3Upload($id)
-    {
-        try {
-            $node = $this->node->get($id);
-
-            if (empty($node)) {
-                $this->logger->error("upload-s3: node {id} does not exist.", [
-                    "id" => $id,
-                ]);
-
-                return;
-            }
-
-            if ($node["type"] != "file") {
-                $this->logger->error("upload-s3: node {id} is {type}, not a file.", [
-                    "id" => $id,
-                    "type" => $node["type"],
-                ]);
-            }
-
-            $s3 = $this->container->get("S3");
-
-            $node = $s3->uploadNodeFiles($node);
-            $this->node->save($node);
-
-            $this->logger->info("upload-s3: node {id} sent to S3.", [
-                "id" => $id,
-            ]);
-        } catch (\Exception $e) {
-            $this->logger->error('s3: error uploading node {id}: {message}', [
-                'id' => $id,
-                'message' => $e->getMessage(),
-            ]);
-        }
-    }
-
     protected function onUpdateNodeThumbnail($id)
     {
         if (!($node = $this->node->get($id))) {
@@ -241,9 +195,7 @@ class TaskQ extends CommonHandler
         $node = $tn->updateNode($node);
         $node = $this->node->save($node);
 
-        $this->container->get('taskq')->add('node-s3-upload', [
-            'id' => $node['id'],
-        ]);
+        $this->container->get('S3')->autoUploadNode($node);
     }
 
     protected function onTelega($message)
@@ -264,7 +216,7 @@ class TaskQ extends CommonHandler
             $node = $this->node->save($node);
         }
 
-        $this->container->get('taskq')->add('node-s3-upload', ['id' => $id]);
+        $this->container->get('S3')->autoUploadNode($node);
     }
 
     /**

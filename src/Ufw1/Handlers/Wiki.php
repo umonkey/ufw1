@@ -295,9 +295,7 @@ class Wiki extends CommonHandler
             $file = $this->node->save($file);
         }
 
-        $this->taskq('node-s3-upload', [
-            'id' => (int)$fid,
-        ]);
+        $this->container->get('S3')->autoUploadNode($file);
 
         return "[[image:{$fid}]]";
     }
@@ -409,7 +407,6 @@ class Wiki extends CommonHandler
                             $tn = $this->container->get('thumbnailer');
                             $file = $tn->updateNode($file);
                             $this->node->save($file);
-                            $this->taskq('node-s3-upload', ['id' => $id]);
                         }
 
                         $res["id"] = $id;
@@ -711,5 +708,11 @@ class Wiki extends CommonHandler
         $app->get ('/wiki/recent-files.json', $class . ':onRecentFiles');
         $app->get ('/wiki/reindex',           $class . ':onReindex');
         $app->any ('/wiki/upload',            $class . ':onUpload');
+    }
+
+    private function isS3AutoUploadEnabled()
+    {
+        $st = $this->container->get('settings');
+        return $st['S3']['auto_upload'] ?? false;
     }
 }

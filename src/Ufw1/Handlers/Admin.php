@@ -34,6 +34,50 @@ class Admin extends CommonHandler
 
         $types = array_keys($st);
 
+        $types = array_filter($types, function ($em) {
+            return !in_array($em, ['file', 'user']);
+        });
+
+        if (empty($types)) {
+            $this->forbidden();
+        }
+
+        $types = implode(', ', array_map(function ($em) {
+            return "'{$em}'";
+        }, $types));
+
+        $nodes = $this->node->where("`deleted` = 0 AND `type` IN ({$types}) ORDER BY `created` DESC LIMIT 1000");
+
+        if (isset($args['type']) and $args['type'] == 'user') {
+            usort($nodes, function ($a, $b) {
+                $_a = mb_strtolower($a['name']);
+                $_b = mb_strtolower($b['name']);
+                return strcmp($_a, $_b);
+            });
+        }
+
+        $types = $this->getNodeTypes();
+
+        return $this->render($request, 'admin-nodes.twig', [
+            'user' => $user,
+            'nodes' => $nodes,
+            'types' => $types,
+            'selected_type' => $args['type'] ?? null,
+        ]);
+    }
+
+    public function onNodeListOne(Request $request, Response $response, array $args)
+    {
+        $user = $this->requireAdmin($request);
+
+        $st = $this->container->get('settings')['node_forms'] ?? null;
+        if (empty($st)) {
+            $this->logger->warning('admin: node_types not configured.');
+            $this->unavailable();
+        }
+
+        $types = array_keys($st);
+
         if (isset($args['type']))
             $types = in_array($args['type'], $types) ? [$args['type']] : [];
 
@@ -163,8 +207,9 @@ class Admin extends CommonHandler
 
         $node = $this->node->save($node);
 
-        if ($node['type'] == 'file')
+        if ($node['type'] == 'file') {
             $this->taskq->add('update-node-thumbnail', ['id' => $node['id']]);
+        }
 
         if (empty($next))
             $next = "/admin/nodes/{$node['type']}?edited={$node['id']}";
@@ -376,44 +421,23 @@ class Admin extends CommonHandler
     }
 
     /**
-     * Upload new files to the S3 cloud, via taskq.
+     * Schedule uploading of new files to the S3 cloud, via taskq.
+     *
+     * Does not actually upload anything, so uses a transaction to handle large
+     * number of nodes quicker.
      **/
     public function onScheduleS3(Request $request, Response $response, array $args)
     {
         $this->requireAdmin($request);
 
+        $this->db->beginTransaction();
+
         $nodes = $this->node->where('`type` = \'file\' AND `deleted` = 0 ORDER BY `updated`');
         foreach ($nodes as $node) {
-            $save = false;
-
-            if (empty($node['files']['original'])) {
-                $node['files']['original'] = [
-                    'type' => $node['mime_type'],
-                    'length' => $node['length'],
-                    'storage' => 'local',
-                    'url' => "/node/{$node['id']}/download/original",
-                    'path' => $node['fname'],
-                ];
-
-                $save = true;
-            }
-
-            $count = count($node['files']);
-
-            if ($this->container->has('thumbnailer')) {
-                $tn = $this->container->get('thumbnailer');
-                $node = $tn->updateNode($node);
-                if (count($node['files']) != $count)
-                    $save = true;
-            }
-
-            if ($save)
-                $node = $this->node->save($node);
-
-            $this->taskq->add('node-s3-upload', [
-                'id' => $node['id'],
-            ]);
+            $this->container->get('S3')->autoUploadNode($node, true);
         }
+
+        $this->db->commit();
 
         return $response->withJSON([
             'message' => 'Запланирована фоновая выгрузка.',
@@ -559,26 +583,48 @@ class Admin extends CommonHandler
         return $res;
     }
 
+    public function onUploadS3(Request $request, Response $response, array $args)
+    {
+        $id = $args['id'];
+        $node = $this->node->get($id);
+
+        if (empty($node)) {
+            $this->notfound();
+        } elseif ($node['type'] != 'file') {
+            $this->notfound();
+        }
+
+        $this->container->get('taskq')->add('S3.uploadNodeTask', [
+            'id' => $id,
+            'force' => true,
+        ]);
+
+        return $response->withJSON([
+            'message' => 'Upload scheduled.',
+        ]);
+    }
+
     public static function setupRoutes(&$app)
     {
         $class = get_called_class();
 
-        $app->get ('/admin',                            $class . ':onDashboard');
-        $app->get ('/admin/database',                   $class . ':onDatabaseStatus');
-        $app->get ('/admin/nodes',                      $class . ':onNodeList');
-        $app->get ('/admin/nodes/{type}',               $class . ':onNodeList');
-        $app->post('/admin/nodes/delete',               $class . ':onDeleteNode');
-        $app->post('/admin/nodes/save',                 $class . ':onSaveNode');
-        $app->post('/admin/nodes/publish',              $class . ':onPublishNode');
-        $app->get ('/admin/nodes/{id:[0-9]+}/edit',     $class . ':onEditNode');
-        $app->get ('/admin/nodes/{id:[0-9]+}/edit-raw', $class . ':onEditRawNode');
-        $app->get ('/admin/nodes/{id:[0-9]+}/dump',     $class . ':onDumpNode');
-        $app->post('/admin/nodes/{id:[0-9]+}/sudo',     $class . ':onSudo');
-        $app->get ('/admin/s3',                         $class . ':onS3');
-        $app->post('/admin/s3',                         $class . ':onScheduleS3');
-        $app->any ('/admin/session',                    $class . ':onEditSession');
-        $app->get ('/admin/submit',                     $class . ':onSubmitList');
-        $app->get ('/admin/submit/{type}',              $class . ':onSubmit');
-        $app->get ('/admin/taskq',                      $class . ':onTaskQ');
+        $app->get ('/admin',                             $class . ':onDashboard');
+        $app->get ('/admin/database',                    $class . ':onDatabaseStatus');
+        $app->get ('/admin/nodes',                       $class . ':onNodeList');
+        $app->get ('/admin/nodes/{type}',                $class . ':onNodeListOne');
+        $app->post('/admin/nodes/delete',                $class . ':onDeleteNode');
+        $app->post('/admin/nodes/save',                  $class . ':onSaveNode');
+        $app->post('/admin/nodes/publish',               $class . ':onPublishNode');
+        $app->get ('/admin/nodes/{id:[0-9]+}/edit',      $class . ':onEditNode');
+        $app->get ('/admin/nodes/{id:[0-9]+}/edit-raw',  $class . ':onEditRawNode');
+        $app->get ('/admin/nodes/{id:[0-9]+}/dump',      $class . ':onDumpNode');
+        $app->post('/admin/nodes/{id:[0-9]+}/sudo',      $class . ':onSudo');
+        $app->post('/admin/nodes/{id:[0-9]+}/upload-s3', $class . ':onUploadS3');
+        $app->get ('/admin/s3',                          $class . ':onS3');
+        $app->post('/admin/s3',                          $class . ':onScheduleS3');
+        $app->any ('/admin/session',                     $class . ':onEditSession');
+        $app->get ('/admin/submit',                      $class . ':onSubmitList');
+        $app->get ('/admin/submit/{type}',               $class . ':onSubmit');
+        $app->get ('/admin/taskq',                       $class . ':onTaskQ');
     }
 }

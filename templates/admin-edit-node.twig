@@ -48,7 +48,8 @@
             {% if false %}
                 <a class='btn btn-default btn-icon' href='/admin/nodes/{{ node.id }}/delete{% if request.get.back %}?back={{ request.get.back }}{% endif %}' title='Удалить объект'><i class="fas fa-ban"></i></a>
             {% endif %}
-            <a class='btn btn-default btn-icon' href='/admin/nodes/{{ node.id }}/edit-raw{% if request.get.back %}?back={{ request.get.back }}{% endif %}' title='Редактировать сырец'><i class="fas fa-cog"></i></a>
+            <a class='btn btn-default btn-icon' href='/admin/nodes/{{ node.id }}/edit-raw{% if request.get.back %}?back={{ request.get.back }}{% endif %}' title='Редактировать сырец'><i class="fas fa-cog"></i></a>{#
+            #}{% if node.type == 'file' %}<a class='btn btn-default btn-icon async post' href='/admin/nodes/{{ node.id }}/upload-s3' title='Выгрузить в S3'><i class="fas fa-cloud-upload-alt"></i></a>{% endif %}
             или <a href='{% if request.get.back %}{{ request.get.back }}{% else %}/admin/nodes{% endif %}'>вернуться назад</a>
         </div>
 

@@ -26,7 +26,7 @@
     {% endif %}
 {% endblock %}
 
-{% block page_title %}{{ page.title }}{% endblock %}
+{% block page_title %}{{ page.title }}{% if strings.site_name %} — {{ strings.site_name }}{% endif %}{% endblock %}
 
 {% block page_header %}
     <div class="page-header">
@@ -35,7 +35,7 @@
 {% endblock %}
 
 {% block page_contents %}
-    <div class='wikimeta'>{{ node.updated|date('%d.%m.%Y') }}, <a href='/wiki?name={{ page.author }}'>{{ page.author }}</a>{% if edit_link %} &middot; <a href='{{ edit_link }}'>редактировать</a>{% endif %}</div>
+    <div class='wikimeta'>{{ node.created|date('%d.%m.%Y') }}, <a href='/wiki?name={{ page.author }}'>{{ page.author }}</a>{% if edit_link %} &middot; <a href='{{ edit_link }}'>редактировать</a>{% endif %}</div>
 
     <div class="formatted" itemprop="articleBody">
         {% if page.en %}

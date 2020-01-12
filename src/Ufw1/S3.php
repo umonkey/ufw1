@@ -54,32 +54,36 @@ class S3
         $xml = new \SimpleXMLIterator($res[1]);
         $data = json_decode(json_encode($xml), true);
 
-        if (array_key_exists("Contents", $data)) {
-            $contents = $data['Contents'];
-            if (isset($contents['Key']))
-                $contents = [$contents];
+        if (!empty($data['Code'])) {
+            $this->logger->error('S3 error: {data}', [
+                'data' => $data,
+            ]);
 
-            $files = array_map(function ($em) use ($endpoint, $bucket) {
-                return [
-                    "name" => $em["Key"],
-                    "size" => $em["Size"],
-                    "date" => $em["LastModified"],
-                    "url" => $em["Key"][-1] == "/" ? null : "https://{$endpoint}/{$bucket}/{$em["Key"]}",
-                ];
-            }, $contents);
-
-            return $files;
+            if ($data["Code"] == "AccessDenied") {
+                throw new \Ufw1\Errors\S3AccessDenied;
+            } else {
+                throw new \RuntimeException("Cloud storage error: " . $data["Message"]);
+            }
         }
 
-        $this->logger->warning("S3 getFileList failed: {data}", [
-            "data" => $data,
-        ]);
-
-        if (@$data["Code"] == "AccessDenied") {
-            throw new \Ufw1\Errors\S3AccessDenied;
+        if (empty($data['Contents'])) {
+            return [];
         }
 
-        throw new \RuntimeException("Cloud storage error: " . $data["Message"]);
+        $contents = $data['Contents'];
+        if (isset($contents['Key']))
+            $contents = [$contents];
+
+        $files = array_map(function ($em) use ($endpoint, $bucket) {
+            return [
+                "name" => $em["Key"],
+                "size" => $em["Size"],
+                "date" => $em["LastModified"],
+                "url" => $em["Key"][-1] == "/" ? null : "https://{$endpoint}/{$bucket}/{$em["Key"]}",
+            ];
+        }, $contents);
+
+        return $files;
     }
 
     /**
@@ -543,11 +547,59 @@ class S3
             }
         }
 
-        foreach ($unlink as $src) {
-            unlink($src);
-            $this->logger->info('s3: deleted local file {0}', [$src]);
+        if (!empty($unlink)) {
+            $this->container->get('node')->save($node);
+
+            $this->container->get('taskq')->add('S3.unlinkFilesTask', [
+                'files' => $unlink,
+            ]);
         }
 
         return $node;
+    }
+
+    public function unlinkFilesTask(array $payload)
+    {
+        if (!empty($payload['files'])) {
+            foreach ($payload['files'] as $src) {
+                unlink($src);
+                $this->logger->info('s3: deleted local file {0}', [$src]);
+            }
+        }
+    }
+
+    /**
+     * Upload a node by id.
+     *
+     * This is a taskq handler.
+     **/
+    public function uploadNodeTask(array $payload)
+    {
+        $id = $payload['id'];
+
+        $force = $payload['force'] ?? false;
+        if (!$force) {
+            $st = $this->container->get('settings')['S3']['auto_upload'];
+        }
+
+        $node = $this->container->get('node')->get($id);
+        if (!empty($node)) {
+            $this->uploadNodeFiles($node);
+        }
+    }
+
+    public function autoUploadNode(array $node, $force = false)
+    {
+        $auto = $this->container->get('settings')['S3']['auto_upload'] ?? false;
+
+        if ($auto or $force) {
+            $this->container->get('taskq')->add('S3.uploadNodeTask', [
+                'id' => $node['id'],
+            ]);
+        } else {
+            $this->container->get('logger')->info('S3: refusing to auto-upload node {id}: disabled.', [
+                'id' => $node['id'],
+            ]);
+        }
     }
 };
