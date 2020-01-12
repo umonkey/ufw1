@@ -23,7 +23,7 @@
                 <tbody>
                     <tr>
                         <th>Сервер</th>
-                        <td>{{ config.endpoint }}{% if config.endpoint == "s3.amazonaws.com" %} — <a href="https://s3.console.aws.amazon.com/s3/buckets/{{ config.bucket }}/?region={{ config.bucket_region }}" target="_blank">консоль</a>{% elseif config.endpoint == "storage.yandexcloud.net" %} — <a href="https://console.cloud.yandex.ru/" target="_blank">консоль</a>{% endif %}</td>
+                        <td>{{ config.endpoint }}{% if config.console %} — <a href="{{ config.console }}" target="_blank">консоль</a>{% endif %}</td>
                     </tr>
                     <tr>
                         <th>Регион</th>
