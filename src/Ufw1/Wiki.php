@@ -35,6 +35,8 @@ class Wiki
             $source = trim($source);
         }
 
+        $source = $this->fixSectionSpaces($source);
+
         $node['name'] = $name;
         $node['key'] = $this->getPageKey($name);
         $node['source'] = $source;
@@ -743,5 +745,42 @@ class Wiki
         }
 
         return null;
+    }
+
+    /**
+     * Fix section spaces.
+     *
+     * Makes sure that sections are separated by double blank lines.
+     *
+     * @param  string $source Page source.
+     * @return string         Updated source.
+     **/
+    protected function fixSectionSpaces($source)
+    {
+        $dst = [];
+
+        $src = explode("\n", $source);
+        foreach ($src as $line) {
+            $line = rtrim($line);
+
+            if (preg_match('@^#{2,}\s+@', $line)) {
+                while (!empty($dst)) {
+                    if (($tmp = array_pop($dst)) != "") {
+                        $dst[] = $tmp;
+                        $dst[] = "";
+                        $dst[] = "";
+                        break;
+                    }
+                }
+
+                $dst[] = $line;
+            } else {
+                $dst[] = $line;
+            }
+        }
+
+        $source = implode("\n", $dst);
+
+        return $source;
     }
 }
