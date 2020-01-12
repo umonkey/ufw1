@@ -57,29 +57,20 @@ class FileFactory
 
         $hash = md5($body);
 
+        $now = strftime("%Y-%m-%d %H:%M:%S");
+
         if ($old = $nodes->getByKey($hash) and $old['deleted'] == 0) {
-            $logger->info("files: file {id} reused from {name}", [
+            $logger->info("files: file {id} reused.", [
                 "id" => $old["id"],
-                "name" => $old["fname"],
             ]);
 
             $node = $old;
         } else {
-            $kind = "other";
-            if (0 === strpos($type, "image/"))
-                $kind = "photo";
-            elseif (0 === strpos($type, "video/"))
-                $kind = "video";
-
-            $now = strftime("%Y-%m-%d %H:%M:%S");
-
-            $fname = $this->fsput($body);
-
             $node = array_merge($props, [
                 "type" => "file",
                 "key" => $hash,
                 "name" => $name,
-                "kind" => $kind,
+                "kind" => 'other',
                 "mime_type" => $type,
                 "length" => strlen($body),
                 "created" => $now,
@@ -88,33 +79,53 @@ class FileFactory
                 "published" => 1,
                 "files" => [],
             ]);
+        }
 
-            $node["files"]["original"] = [
-                "type" => $type,
-                "length" => strlen($body),
-                "storage" => "local",
-                "path" => $fname,
-            ];
+        if ($this->shouldReplaceOriginal($node)) {
+            $fname = $this->fsput($body);
+
+            $node['mime_type'] = $type;
+            $node['kind'] = $this->getKindByType($type);
+            $node['length'] = strlen($body);
+            $node['updated'] = $now;
+
+            $node['files'] = ['original' => [
+                'type' => $type,
+                'length' => strlen($body),
+                'storage' => 'local',
+                'path' => $fname,
+            ]];
 
             if (isset($props['width']))
                 $node['files']['original']['width'] = $props['width'];
             if (isset($props['height']))
                 $node['files']['original']['height'] = $props['height'];
 
-            // Need an id to build the link.
-            $node = $nodes->save($node);
-
-            $node['files']['original']['url'] = "/node/{$node['id']}/download/original";
-
-            $node = $nodes->save($node);
-
-            $logger->info("files: file {id} saved as {name}", [
-                "id" => $node["id"],
-                "name" => $node['files']['original']['path'],
-            ]);
+            $nodes->save($node);
         }
 
         return $node;
+    }
+
+    private function shouldReplaceOriginal(array $node)
+    {
+        if (empty($node['id'])) {
+            return true;
+        }
+
+        return true;
+    }
+
+    private function getKindByType($type)
+    {
+        $kind = "other";
+
+        if (0 === strpos($type, "image/"))
+            $kind = "photo";
+        elseif (0 === strpos($type, "video/"))
+            $kind = "video";
+
+        return $kind;
     }
 
     protected function fix(array $node)

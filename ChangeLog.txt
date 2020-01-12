@@ -3,6 +3,7 @@
 - Fixed S3 console link in the admin UI.
 - Thumbnailer: support for WebP.
 - Wiki: embed YouTube, better file handling (figure).
+- FileFactory: save new nodes in one go.
 
 2020-01-11:
 - Shortener template added.
