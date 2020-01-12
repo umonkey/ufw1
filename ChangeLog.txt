@@ -2,6 +2,7 @@
 - Fixed some notices.
 - Fixed S3 console link in the admin UI.
 - Thumbnailer: support for WebP.
+- Wiki: embed YouTube, better file handling (figure).
 
 2020-01-11:
 - Shortener template added.

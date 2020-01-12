@@ -150,8 +150,9 @@ class Wiki
      **/
     public function renderPage(array $node)
     {
-        if ($node['type'] != 'wiki')
+        if ($node['type'] != 'wiki') {
             throw new \RuntimeException('not a wiki page');
+        }
 
         $res = [
             "name" => $node["name"],
@@ -161,6 +162,7 @@ class Wiki
             "summary" => null,
             "language" => "ru",
             "source" => $node["source"],
+            "created" => $node['created'],
         ];
 
         $source = "";
@@ -188,6 +190,7 @@ class Wiki
         $source = $this->processMaps($source);
         $source = $this->processWikiLinks($source);
         $source = $this->processImages($source);
+        $source = $this->processYouTube($source);
 
         $html = \Ufw1\Common::renderMarkdown($source);
         $html = \Ufw1\Common::renderTOC($html);
@@ -438,85 +441,134 @@ class Wiki
 
         $html = preg_replace_callback('@\[\[image:([^]]+)\]\]@', function ($m) use ($nodes, &$res) {
             $parts = explode(":", $m[1]);
-            $fileId = array_shift($parts);
+            $props = $this->parseImageProps(array_slice($parts, 1));
 
-            $info = $this->container->get('file')->get($fileId);
+            if (!($file = $this->container->get('file')->get($parts[0]))) {
+                return "<!-- file {$parts[0]} does not exist -->";
+            } elseif ($file['type'] != 'file') {
+                return "<!-- node {$parts[0]} is not a file -->";
+            } elseif (0 !== strpos($file["mime_type"], "image/")) {
+                return "<!-- file {$parts[0]} is not an image -->";
+            }
 
-            if (empty($info) or $info["type"] != "file")
+            list($w, $h) = $this->getImageSize($file);
+            if (!$w or !$h) {
                 return "<!-- file {$fileId} does not exist -->";
-            elseif (0 !== strpos($info["mime_type"], "image/"))
-                return "<!-- file {$fileId} is not an image -->";
+            }
+
+            $rate = $w / $h;
 
             $className = "image";
             $iw = "auto";
             $ih = "auto";
 
-            list($w, $h) = $this->getImageSize($fileId);
-
-            if (!$w or !$h)
-                return "<!-- file {$fileId} does not exist -->";
-
-            $rate = $w / $h;
-
-            foreach ($parts as $part) {
-                if (preg_match('@^width=(\d+)$@', $part, $m)) {
-                    $iw = $m[1] . "px";
-                    $ih = round($m[1] / $rate) . "px";
-                }
-
-                elseif (preg_match('@^height=(\d+)$@', $part, $m)) {
-                    $ih = $m[1] . "px";
-                    $iw = round($m[1] * $rate) . "px";
-                }
-
-                else {
-                    $className .= " " . $part;
-                }
+            if (isset($props['width']) and isset($props['height'])) {
+                $iw = $props['width'] . 'px';
+                $ih = $props['height'] . 'px';
             }
 
-            if ($iw == "auto" and $ih == "auto") {
-                $ih = "150px";
-                $iw = round(150 * $rate) . "px";
+            elseif (isset($props['width'])) {
+                $iw = $props['width'] . 'px';
+                $ih = round($props['width'] / $rate) . 'px';
             }
 
-            if (isset($info['files']['medium']['url']))
-                $small = $info['files']['medium']['url'];
-            else
-                $small = "/node/{$fileId}/download/small";
+            elseif (isset($props['height'])) {
+                $ih = $props['height'] . 'px';
+                $iw = round($props['height'] * $rate) . 'px';
+            }
 
-            if (isset($info['files']['original']['url']))
-                $large = $info['files']['original']['url'];
-            else
-                $large = "/i/photos/{$fileId}.jpg";
+            else {
+                $ih = '150px';
+                $iw = round(150 * $rate) . 'px';
+            }
 
-            $page = "/wiki?name=File:{$fileId}";
+            $imageSmall = $file['files']['medium']['url'] ?? "/node/{$file['id']}/download/medium";
+            $imageLarge = $file['files']['original']['url'] ?? "/node/{$file['id']}/download/original";
+            $imageLink = "/node/{$file['id']}";
+            $imageTitle = $file['title'] ?? $file['name'];
+
+            if ($props['class'] == 'large') {
+                $imageLarge = $file['files']['large']['url'] ?? "/node/{$file['id']}/download/large";
+
+                $caption = $file['caption'] ?? $imageTitle;
+                if (substr($caption, -4) == '.jpg') {
+                    $caption = null;
+                } elseif (substr($caption, -4) == '.png') {
+                    $caption = null;
+                }
+
+                $html = "<figure>";
+                $html .= "<a href='/node/{$file['id']}'>";
+                $html .= "<img src='{$imageLarge}' alt='{$imageTitle}'/>";
+                $html .= "</a>";
+                if (!empty($caption)) {
+                    $html .= "<figcaption>{$caption}</figcaption>";
+                }
+                $html .= "</figure>";
+            }
+
+            else {
+                $html = "<a class='image {$props['class']}' href='{$imageLink}' data-src='{$imageLarge}' data-fancybox='gallery' title='{$imageTitle}'>";
+                $html .= "<img src='{$imageSmall}' style='width: {$iw}; height: {$ih}' alt='{$imageTitle}'/>";
+                $html .= "</a>";
+            }
 
             $res["images"][] = [
-                "src" => $large,
+                "src" => $imageLarge,
                 "width" => $w,
                 "height" => $h,
             ];
 
-            $title = $info['title'] ?? $info['name'];
-
             // TODO: add lazy loading
-
-            $html = "<a class='{$className}' href='{$page}' data-src='{$large}' data-fancybox='gallery' title='{$title}'>";
-            $html .= "<img src='{$small}' style='width: {$iw}; height: {$ih}' alt='{$title}'/>";
-            $html .= "</a>";
 
             $html .= "<script type='application/ld+json'>" . json_encode([
                 "@context" => "http://schema.org",
                 "@type" => "ImageObject",
-                "contentUrl" => $large,
-                "name" => $title,
-                "thumbnail" => $small,
+                "contentUrl" => $imageLarge,
+                "name" => $imageTitle,
+                "thumbnail" => $imageLarge,
             ]) . "</script>";
 
             return $html;
         }, $html);
 
         return $html;
+    }
+
+    private function parseImageProps(array $parts)
+    {
+        $props = [
+            'class' => null,
+        ];
+
+        foreach ($parts as $part) {
+            if (false !== strpos($part, '=')) {
+                list($k, $v) = explode('=', $part, 2);
+                $props[$k] = $v;
+            } else {
+                $props['class'] = $part;
+            }
+        }
+
+        return $props;
+    }
+
+    /**
+     * Embed YouTube links.
+     **/
+    protected function processYouTube($html)
+    {
+        $lines = explode("\n", $html);
+
+        $lines = array_map(function ($line) {
+            if (preg_match('@^https://youtu\.be/([^ ]+)$@', $line, $m)) {
+                $line = "<iframe width='560' height='315' src='https://www.youtube.com/embed/{$m[1]}' frameborder='0' allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe>";
+            }
+
+            return $line;
+        }, $lines);
+
+        return implode("\n", $lines);
     }
 
     protected function processHeader($html, array &$res)
@@ -638,12 +690,10 @@ class Wiki
         return $node;
     }
 
-    protected function getImageSize($fileId)
+    protected function getImageSize(array $file)
     {
         $files = $this->container->get('file');
         $logger = $this->container->get('logger');
-
-        $file = $files->get($fileId);
 
         if ($file) {
             // We just need the proportions, so get the first one we have.
