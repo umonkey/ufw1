@@ -236,9 +236,9 @@ class Template
     protected function processTypography($text)
     {
         $patterns = [
-            '@<p>(.+?)</p>@',
-            '@<td>(.+?)</td>@',
-            '@<li>(.+?)</li>@'
+            '@<p>(.+?)</p>@ms',
+            '@<td>(.+?)</td>@ms',
+            '@<li>(.+?)</li>@ms'
         ];
 
         foreach ($patterns as $pattern) {
