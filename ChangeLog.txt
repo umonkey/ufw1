@@ -1,3 +1,6 @@
+2020-01-15:
+- Fixed filepicker callback.
+
 2020-01-12:
 - Fixed some notices.
 - Fixed S3 console link in the admin UI.

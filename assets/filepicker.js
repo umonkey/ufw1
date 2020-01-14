@@ -65,9 +65,9 @@ jQuery(function ($) {
         e.preventDefault();
         $('#block, form.filepicker').hide();
 
-        ufw_filepicker_callback({
+        ufw_filepicker_callback([{
             'id': $(this).data('id'),
             'image': $(this).data('thumbnail')
-        });
+        }]);
     });
 });
