@@ -9,4 +9,4 @@ LESS compiler: https://github.com/leafo/lessphp
 
 https://scrutinizer-ci.com/docs/tools/php/php-scrutinizer/
 
-Попробовать подключить https://inertiajs.com/
+- [ ] SPA: link rel=edit is not updated.
