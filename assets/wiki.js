@@ -1,5 +1,5 @@
 window.wiki_insert_text = function (text) {
-    var ta = $("textarea.wiki")[0],
+    var ta = $("textarea")[0],
         tv = ta.value,
         ss = ta.selectionStart,
         se = ta.selectionEnd,
@@ -45,7 +45,7 @@ jQuery(function ($) {
 
 window.editor_insert = function (text)
 {
-    var ta = $("textarea.wiki")[0];
+    var ta = $("textarea")[0];
 
     var v = ta.value,
         s = ta.selectionStart,
@@ -57,5 +57,5 @@ window.editor_insert = function (text)
     ta.selectionEnd = e + text.length;
 
     $("#block, .dialog").hide();
-    $("textarea.wiki").focus();
+    $("textarea").focus();
 }

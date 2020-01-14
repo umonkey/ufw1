@@ -2,6 +2,7 @@
 - Fixed filepicker callback.
 - Fixed typography for multiline paragraphs.
 - Textarea field now supports buttons.
+- Fixed editor_insert for non-wiki editors.
 
 2020-01-12:
 - Fixed some notices.
