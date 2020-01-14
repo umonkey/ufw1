@@ -1,6 +1,13 @@
-<div class='form-group'>
+<div class='form-group fg-{{ key }}'>
     <label>{{ field.label }}</label>
     <textarea class='form-control{% if field.class %} {{ field.class }}{% endif %}' name='node[{{ key }}]'{% if field.required %} required{% endif %}{% if field.rows %} rows='{{ field.rows }}'{% endif %}>{{ node[key] }}</textarea>
+    {% if field.buttons %}
+        <div class='edit-buttons'>
+            {% for btn, icon in field.buttons %}
+                <button type='button' class='btn btn-default btn-icon {{ btn }}'><i class="{{ icon }}"></i></button>
+            {% endfor %}
+        </div>
+    {% endif %}
     {% if field.help %}
         <p class='help-block'>{{ field.help|raw }}</p>
     {% endif %}

@@ -1,6 +1,7 @@
 2020-01-15:
 - Fixed filepicker callback.
 - Fixed typography for multiline paragraphs.
+- Textarea field now supports buttons.
 
 2020-01-12:
 - Fixed some notices.
