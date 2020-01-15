@@ -110,6 +110,7 @@ class Common
 
         $environment = \League\CommonMark\Environment::createCommonMarkEnvironment();
         $environment->addExtension(new \League\CommonMark\Ext\Table\TableExtension);
+        $environment->addExtension(new \League\CommonMark\Ext\TaskList\TaskListExtension);
 
         $dp = new \League\CommonMark\DocParser($environment);
         $re = new \League\CommonMark\HtmlRenderer($environment);

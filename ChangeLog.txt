@@ -1,3 +1,6 @@
+2020-01-16:
+- Wiki: TaskList extension for Markdown.
+
 2020-01-15:
 - Fixed filepicker callback.
 - Fixed typography for multiline paragraphs.
