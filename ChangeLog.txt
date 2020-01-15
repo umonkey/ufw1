@@ -1,5 +1,6 @@
 2020-01-16:
 - Wiki: TaskList extension for Markdown.
+- Fixed saving new files.
 
 2020-01-15:
 - Fixed filepicker callback.

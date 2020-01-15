@@ -100,9 +100,9 @@ class FileFactory
                 $node['files']['original']['width'] = $props['width'];
             if (isset($props['height']))
                 $node['files']['original']['height'] = $props['height'];
-
-            $nodes->save($node);
         }
+
+        $node = $nodes->save($node);
 
         return $node;
     }
