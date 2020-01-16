@@ -35,8 +35,6 @@ class Wiki
             $source = trim($source);
         }
 
-        $source = $this->fixSectionSpaces($source);
-
         $node['name'] = $name;
         $node['key'] = $this->getPageKey($name);
         $node['source'] = $source;
@@ -152,9 +150,8 @@ class Wiki
      **/
     public function renderPage(array $node)
     {
-        if ($node['type'] != 'wiki') {
+        if ($node['type'] != 'wiki')
             throw new \RuntimeException('not a wiki page');
-        }
 
         $res = [
             "name" => $node["name"],
@@ -164,7 +161,6 @@ class Wiki
             "summary" => null,
             "language" => "ru",
             "source" => $node["source"],
-            "created" => $node['created'],
         ];
 
         $source = "";
@@ -192,7 +188,6 @@ class Wiki
         $source = $this->processMaps($source);
         $source = $this->processWikiLinks($source);
         $source = $this->processImages($source);
-        $source = $this->processYouTube($source);
 
         $html = \Ufw1\Common::renderMarkdown($source);
         $html = \Ufw1\Common::renderTOC($html);
@@ -443,92 +438,60 @@ class Wiki
 
         $html = preg_replace_callback('@\[\[image:([^]]+)\]\]@', function ($m) use ($nodes, &$res) {
             $parts = explode(":", $m[1]);
-            $props = $this->parseImageProps(array_slice($parts, 1));
+            $fileId = array_shift($parts);
 
-            if (!($file = $this->container->get('file')->get($parts[0]))) {
-                return "<!-- file {$parts[0]} does not exist -->";
-            } elseif ($file['type'] != 'file') {
-                return "<!-- node {$parts[0]} is not a file -->";
-            } elseif (0 !== strpos($file["mime_type"], "image/")) {
-                return "<!-- file {$parts[0]} is not an image -->";
-            }
-
-            list($w, $h) = $this->getImageSize($file);
-            if (!$w or !$h) {
-                return "<!-- file {$fileId} does not exist -->";
-            }
-
-            $rate = $w / $h;
+            $info = $this->getFileInfo($fileId);
 
             $className = "image";
             $iw = "auto";
             $ih = "auto";
 
-            if (isset($props['width']) and isset($props['height'])) {
-                $iw = $props['width'] . 'px';
-                $ih = $props['height'] . 'px';
-            }
+            $w = $info['width'];
+            $h = $info['height'];
 
-            elseif (isset($props['width'])) {
-                $iw = $props['width'] . 'px';
-                $ih = round($props['width'] / $rate) . 'px';
-            }
+            $rate = $w / $h;
 
-            elseif (isset($props['height'])) {
-                $ih = $props['height'] . 'px';
-                $iw = round($props['height'] * $rate) . 'px';
-            }
-
-            else {
-                $ih = '150px';
-                $iw = round(150 * $rate) . 'px';
-            }
-
-            $imageSmall = $file['files']['medium']['url'] ?? "/node/{$file['id']}/download/medium";
-            $imageLarge = $file['files']['original']['url'] ?? "/node/{$file['id']}/download/original";
-            $imageLink = "/node/{$file['id']}";
-            $imageTitle = $file['title'] ?? $file['name'];
-
-            if ($props['class'] == 'large') {
-                $imageLarge = $file['files']['large']['url'] ?? "/node/{$file['id']}/download/large";
-
-                $caption = $file['caption'] ?? $imageTitle;
-                if (substr($caption, -4) == '.jpg') {
-                    $caption = null;
-                } elseif (substr($caption, -4) == '.png') {
-                    $caption = null;
+            foreach ($parts as $part) {
+                if (preg_match('@^width=(\d+)$@', $part, $m)) {
+                    $iw = $m[1] . "px";
+                    $ih = round($m[1] / $rate) . "px";
                 }
 
-                $html = "<figure>";
-                $html .= "<a href='/node/{$file['id']}'>";
-                $html .= "<img src='{$imageLarge}' alt='{$imageTitle}'/>";
-                $html .= "</a>";
-                if (!empty($caption)) {
-                    $html .= "<figcaption>{$caption}</figcaption>";
+                elseif (preg_match('@^height=(\d+)$@', $part, $m)) {
+                    $ih = $m[1] . "px";
+                    $iw = round($m[1] * $rate) . "px";
                 }
-                $html .= "</figure>";
+
+                else {
+                    $className .= " " . $part;
+                }
             }
 
-            else {
-                $html = "<a class='image {$props['class']}' href='{$imageLink}' data-src='{$imageLarge}' data-fancybox='gallery' title='{$imageTitle}'>";
-                $html .= "<img src='{$imageSmall}' style='width: {$iw}; height: {$ih}' alt='{$imageTitle}'/>";
-                $html .= "</a>";
+            if ($iw == "auto" and $ih == "auto") {
+                $ih = "150px";
+                $iw = round(150 * $rate) . "px";
             }
 
             $res["images"][] = [
-                "src" => $imageLarge,
-                "width" => $w,
-                "height" => $h,
+                "src" => $info['large'],
+                "width" => $info['width'],
+                "height" => $info['height'],
             ];
 
+            $title = $info['title'] ?? $info['name'];
+
             // TODO: add lazy loading
+
+            $html = "<a class='{$className}' href='{$info['link']}' data-src='{$info['large']}' data-fancybox='gallery' title='{$title}'>";
+            $html .= "<img src='{$info['small']}' style='width: {$iw}; height: {$ih}' alt='{$title}'/>";
+            $html .= "</a>";
 
             $html .= "<script type='application/ld+json'>" . json_encode([
                 "@context" => "http://schema.org",
                 "@type" => "ImageObject",
-                "contentUrl" => $imageLarge,
-                "name" => $imageTitle,
-                "thumbnail" => $imageLarge,
+                "contentUrl" => $info['large'],
+                "name" => $title,
+                "thumbnail" => $info['small'],
             ]) . "</script>";
 
             return $html;
@@ -537,40 +500,24 @@ class Wiki
         return $html;
     }
 
-    private function parseImageProps(array $parts)
+    protected function getFileInfo($id)
     {
-        $props = [
-            'class' => null,
+        $res = [
+            'small' => '/images/placeholder.png',
+            'large' => '/images/placeholder.png',
+            'link' => "/wiki?name=File:{$id}",
+            'width' => 600,
+            'height' => 600,
+            'name' => 'placeholder',
+            'title' => 'Image not found',
         ];
 
-        foreach ($parts as $part) {
-            if (false !== strpos($part, '=')) {
-                list($k, $v) = explode('=', $part, 2);
-                $props[$k] = $v;
-            } else {
-                $props['class'] = $part;
-            }
+        $file = $this->container->get('file')->get($id);
+        if (!empty($file['files'])) {
+            debug($file);
         }
 
-        return $props;
-    }
-
-    /**
-     * Embed YouTube links.
-     **/
-    protected function processYouTube($html)
-    {
-        $lines = explode("\n", $html);
-
-        $lines = array_map(function ($line) {
-            if (preg_match('@^https://youtu\.be/([^ ]+)$@', $line, $m)) {
-                $line = "<iframe width='560' height='315' src='https://www.youtube.com/embed/{$m[1]}' frameborder='0' allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe>";
-            }
-
-            return $line;
-        }, $lines);
-
-        return implode("\n", $lines);
+        return $res;
     }
 
     protected function processHeader($html, array &$res)
@@ -692,12 +639,14 @@ class Wiki
         return $node;
     }
 
-    protected function getImageSize(array $file)
+    protected function getImageSize($fileId)
     {
         $files = $this->container->get('file');
         $logger = $this->container->get('logger');
 
-        if ($file) {
+        $file = $files->get($fileId);
+
+        if (!empty($file['files'])) {
             // We just need the proportions, so get the first one we have.
             foreach ($file['files'] as $k => $v) {
                 if (isset($v['width']) and isset($v['height'])) {
@@ -745,42 +694,5 @@ class Wiki
         }
 
         return null;
-    }
-
-    /**
-     * Fix section spaces.
-     *
-     * Makes sure that sections are separated by double blank lines.
-     *
-     * @param  string $source Page source.
-     * @return string         Updated source.
-     **/
-    protected function fixSectionSpaces($source)
-    {
-        $dst = [];
-
-        $src = explode("\n", $source);
-        foreach ($src as $line) {
-            $line = rtrim($line);
-
-            if (preg_match('@^#{2,}\s+@', $line)) {
-                while (!empty($dst)) {
-                    if (($tmp = array_pop($dst)) != "") {
-                        $dst[] = $tmp;
-                        $dst[] = "";
-                        $dst[] = "";
-                        break;
-                    }
-                }
-
-                $dst[] = $line;
-            } else {
-                $dst[] = $line;
-            }
-        }
-
-        $source = implode("\n", $dst);
-
-        return $source;
     }
 }
