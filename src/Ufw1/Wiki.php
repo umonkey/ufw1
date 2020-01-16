@@ -35,6 +35,8 @@ class Wiki
             $source = trim($source);
         }
 
+        $source = $this->fixSectionSpaces($source);
+
         $node['name'] = $name;
         $node['key'] = $this->getPageKey($name);
         $node['source'] = $source;
@@ -45,6 +47,8 @@ class Wiki
             $node = array_merge($node, $props);
 
         $node = $this->notifyEdits($node, $user);
+
+        $node = $this->container->get('node')->save($node);
 
         if ($this->container->has('fts')) {
             $this->container->get('fts')->reindexNode([
@@ -150,8 +154,9 @@ class Wiki
      **/
     public function renderPage(array $node)
     {
-        if ($node['type'] != 'wiki')
+        if ($node['type'] != 'wiki') {
             throw new \RuntimeException('not a wiki page');
+        }
 
         $res = [
             "name" => $node["name"],
@@ -161,6 +166,7 @@ class Wiki
             "summary" => null,
             "language" => "ru",
             "source" => $node["source"],
+            "created" => $node['created'],
         ];
 
         $source = "";
@@ -188,6 +194,7 @@ class Wiki
         $source = $this->processMaps($source);
         $source = $this->processWikiLinks($source);
         $source = $this->processImages($source);
+        $source = $this->processYouTube($source);
 
         $html = \Ufw1\Common::renderMarkdown($source);
         $html = \Ufw1\Common::renderTOC($html);
@@ -520,6 +527,24 @@ class Wiki
         return $res;
     }
 
+    /**
+     * Embed YouTube links.
+     **/
+    protected function processYouTube($html)
+    {
+        $lines = explode("\n", $html);
+
+        $lines = array_map(function ($line) {
+            if (preg_match('@^https://youtu\.be/([^ ]+)$@', $line, $m)) {
+                $line = "<iframe width='560' height='315' src='https://www.youtube.com/embed/{$m[1]}' frameborder='0' allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe>";
+            }
+
+            return $line;
+        }, $lines);
+
+        return implode("\n", $lines);
+    }
+
     protected function processHeader($html, array &$res)
     {
         $html = preg_replace_callback('@<h1>(.+)</h1>@', function ($m) use (&$res) {
@@ -694,5 +719,42 @@ class Wiki
         }
 
         return null;
+    }
+
+    /**
+     * Fix section spaces.
+     *
+     * Makes sure that sections are separated by double blank lines.
+     *
+     * @param  string $source Page source.
+     * @return string         Updated source.
+     **/
+    protected function fixSectionSpaces($source)
+    {
+        $dst = [];
+
+        $src = explode("\n", $source);
+        foreach ($src as $line) {
+            $line = rtrim($line);
+
+            if (preg_match('@^#{2,}\s+@', $line)) {
+                while (!empty($dst)) {
+                    if (($tmp = array_pop($dst)) != "") {
+                        $dst[] = $tmp;
+                        $dst[] = "";
+                        $dst[] = "";
+                        break;
+                    }
+                }
+
+                $dst[] = $line;
+            } else {
+                $dst[] = $line;
+            }
+        }
+
+        $source = implode("\n", $dst);
+
+        return $source;
     }
 }
