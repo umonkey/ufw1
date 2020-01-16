@@ -520,8 +520,26 @@ class Wiki
         ];
 
         $file = $this->container->get('file')->get($id);
-        if (!empty($file['files'])) {
-            debug($file);
+
+        if ($f = $file['files']['large'] ?? null) {
+            if ($f['storage'] == 'local') {
+                $res['large'] = "/node/{$id}/download/large";
+            } else {
+                $res['large'] = $f['url'];
+            }
+
+            if ($f['width'] and $f['height']) {
+                $res['width'] = $f['width'];
+                $res['height'] = $f['height'];
+            }
+        }
+
+        if ($f = $file['files']['small'] ?? null) {
+            if ($f['storage'] == 'local') {
+                $res['small'] = "/node/{$id}/download/small";
+            } else {
+                $res['small'] = $f['url'];
+            }
         }
 
         return $res;
