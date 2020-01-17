@@ -74,6 +74,8 @@ class Wiki extends CommonHandler
                 'edit_link' => $canEdit ? '/wiki/edit?name=' . urlencode($name) : null,
                 'jsdata' => json_encode([
                     'wiki_page' => $name,
+                    'disqus_id' => $res['disqus_id'] ?? null,
+                    'disqus_url' => $res['disqus_url'] ?? null,
                 ]),
             ]);
         } else {
@@ -166,7 +168,7 @@ class Wiki extends CommonHandler
             ]);
         }
 
-        $next = isset($node['url'])
+        $next = isset($node['_url'])
             ? $node['url']
             : "/wiki?name=" . urlencode($name);
 
