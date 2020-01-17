@@ -31,11 +31,16 @@
 {% block page_header %}
     <div class="page-header">
         <h1 itemprop="name">{{ page.title }}</h1>
+        {% if page.subtitle %}
+            <p class='lead'>{{ page.subtitle }}</p>
+        {% endif %}
     </div>
 {% endblock %}
 
 {% block page_contents %}
-    <div class='wikimeta'>{{ node.created|date('%d.%m.%Y') }}, <a href='/wiki?name={{ page.author }}'>{{ page.author }}</a>{% if edit_link %} &middot; <a href='{{ edit_link }}'>редактировать</a>{% endif %}</div>
+    {% if page.meta != 'off' %}
+        <div class='wikimeta'>{{ node.created|date('%d.%m.%Y') }}, <a href='/wiki?name={{ page.author }}'>{{ page.author }}</a>{% if edit_link %} &middot; <a href='{{ edit_link }}'>редактировать</a>{% endif %}</div>
+    {% endif %}
 
     <div class="formatted" itemprop="articleBody">
         {% if page.en %}
@@ -51,5 +56,7 @@
         {% endif %}
     </div>
 
-    <div id="disqus_thread"></div>
+    {% if page.comments != 'off' %}
+        <div id="disqus_thread"></div>
+    {% endif %}
 {% endblock %}
