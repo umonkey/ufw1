@@ -526,11 +526,14 @@ class Wiki
                  : $f['url'];
 
             switch ($k) {
+                case 'large':
+                    $res['width'] = $f['width'];
+                    $res['height'] = $f['height'];
                 case 'small':
                 case 'small_webp':
-                case 'large':
                 case 'large_webp':
                     $res[$k] = $url;
+                    break;
             }
         }
 
