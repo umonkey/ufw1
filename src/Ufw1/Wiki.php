@@ -365,16 +365,6 @@ class Wiki
             // Embed maps later.
             if (0 === strpos($m[1], "map:")) {
                 return $m[0];
-
-                /*
-                $parts = explode(":", $m[1]);
-
-                $id = mt_rand(1111, 9999);
-                $tag = $parts[1];
-
-                $html = "<div id='map_{$id}' class='map' data-src='/map/points.json?tag=" . $tag . "'></div>";
-                return $html;
-                */
             }
 
             $link = $m[1];
@@ -391,7 +381,7 @@ class Wiki
             if ($this->processInterwiki($link, $label, $interwiki)) {
                 $cls = 'external';
             } elseif ($tmp = $this->getPageByName($link)) {
-                if (!empty($tmp['url'])) {
+                if (false and !empty($tmp['url'])) {
                     $link = $tmp['url'];
                 } else {
                     $link = $this->getWikiLink($link);
@@ -449,7 +439,7 @@ class Wiki
 
             $info = $this->getFileInfo($fileId);
 
-            $className = "image";
+            $className = 'image';
             $iw = "auto";
             $ih = "auto";
 
@@ -474,7 +464,13 @@ class Wiki
                 }
             }
 
-            if ($iw == "auto" and $ih == "auto") {
+            if ($className == 'image large') {
+                $info['small'] = $info['large'];
+                $info['small_webp'] = $info['large_webp'] ?? null;
+                $info['link'] = null;
+            }
+
+            elseif ($iw == "auto" and $ih == "auto") {
                 $ih = "150px";
                 $iw = round(150 * $rate) . "px";
             }
@@ -487,11 +483,8 @@ class Wiki
 
             $title = $info['title'] ?? $info['name'];
 
-            // TODO: add lazy loading
-
-            $html = "<a class='{$className}' href='{$info['link']}' data-src='{$info['large']}' data-fancybox='gallery' title='{$title}'>";
-            $html .= "<img src='{$info['small']}' style='width: {$iw}; height: {$ih}' alt='{$title}'/>";
-            $html .= "</a>";
+            $info['class'] = $className;
+            $html = $this->renderFigure($info);
 
             $html .= "<script type='application/ld+json'>" . json_encode([
                 "@context" => "http://schema.org",
@@ -517,28 +510,27 @@ class Wiki
             'height' => 600,
             'name' => 'placeholder',
             'title' => 'Image not found',
+            'caption' => null,
         ];
 
         $file = $this->container->get('file')->get($id);
 
-        if ($f = $file['files']['large'] ?? null) {
-            if ($f['storage'] == 'local') {
-                $res['large'] = "/node/{$id}/download/large";
-            } else {
-                $res['large'] = $f['url'];
-            }
-
-            if ($f['width'] and $f['height']) {
-                $res['width'] = $f['width'];
-                $res['height'] = $f['height'];
-            }
+        if (!empty($file)) {
+            $res['title'] = $file['title'] ?? $file['name'];
+            $res['caption'] = $file['caption'] ?? null;
         }
 
-        if ($f = $file['files']['small'] ?? null) {
-            if ($f['storage'] == 'local') {
-                $res['small'] = "/node/{$id}/download/small";
-            } else {
-                $res['small'] = $f['url'];
+        foreach ($file['files'] as $k => $f) {
+            $url = $f['storage'] == 'local'
+                 ? "/node/{$id}/download/{$k}"
+                 : $f['url'];
+
+            switch ($k) {
+                case 'small':
+                case 'small_webp':
+                case 'large':
+                case 'large_webp':
+                    $res[$k] = $url;
             }
         }
 
@@ -774,5 +766,34 @@ class Wiki
         $source = implode("\n", $dst);
 
         return $source;
+    }
+
+    protected function renderFigure(array $info)
+    {
+        // TODO: add lazy loading.
+        // Have a 8x8 version of image in the node,
+        // embed it here with base64.
+
+        $ratio = number_format($info['height'] / $info['width'] * 100, 2);
+
+        $html = "<picture style='padding-top: {$ratio}%'>";
+        if (!empty($info['small_webp'])) {
+            $html .= "<source type='image/webp' srcset='{$info['small_webp']}'/>";
+        }
+        $html .= "<source type='image/jpeg' srcset='{$info['small']}'/>";
+        $html .= "<img src='{$info['small']}' alt='{$info['title']}'/>";
+        $html .= "</picture>";
+
+        if (!empty($info['link'])) {
+            $html = "<a href='{$info['link']}' data-src='{$info['large']}' data-fancybox='gallery' title='{$title}'>{$html}</a>";
+        }
+
+        if (!empty($info['caption'])) {
+            $html .= "<figcaption>{$info['caption']}</figcaption>";
+        }
+
+        $html = "<figure class='{$info['class']}'>{$html}</figure>";
+
+        return $html;
     }
 }
