@@ -38,13 +38,15 @@ class Wiki
         $source = $this->fixSectionSpaces($source);
 
         $node['name'] = $name;
-        $node['key'] = $this->getPageKey($name);
         $node['source'] = $source;
+
+        if ($props = $this->extractNodeProperties($source)) {
+            $node = array_merge($node, $props);
+        }
+
         $node['deleted'] = 0;
         $node['published'] = 1;
-
-        if ($props = $this->extractNodeProperties($source))
-            $node = array_merge($node, $props);
+        $node['key'] = $this->getPageKey($node['name']);
 
         $node = $this->notifyEdits($node, $user);
 
@@ -537,6 +539,13 @@ class Wiki
             }
         }
 
+        if (empty($res['height'])) {
+            $res['small'] = '/images/placeholder.png';
+            $res['large'] = '/images/placeholder.png';
+            $res['width'] = 600;
+            $res['height'] = 600;
+        }
+
         return $res;
     }
 
@@ -641,6 +650,10 @@ class Wiki
     protected function extractNodeProperties($source)
     {
         $props = [];
+
+        if (preg_match('@^# (.+)$@m', $source, $m)) {
+            $props['title'] = trim($m[1]);
+        }
 
         $lines = $source ? explode("\n", $source) : [];
         foreach ($lines as $line) {
@@ -779,7 +792,7 @@ class Wiki
 
         $ratio = number_format($info['height'] / $info['width'] * 100, 2);
 
-        $html = "<picture style='padding-top: {$ratio}%'>";
+        $html = "<picture data-ratio='{$ratio}'>";
         if (!empty($info['small_webp'])) {
             $html .= "<source type='image/webp' srcset='{$info['small_webp']}'/>";
         }
@@ -788,7 +801,7 @@ class Wiki
         $html .= "</picture>";
 
         if (!empty($info['link'])) {
-            $html = "<a href='{$info['link']}' data-src='{$info['large']}' data-fancybox='gallery' title='{$title}'>{$html}</a>";
+            $html = "<a href='{$info['link']}' data-src='{$info['large']}' data-fancybox='gallery' title='{$info['title']}'>{$html}</a>";
         }
 
         if (!empty($info['caption'])) {
