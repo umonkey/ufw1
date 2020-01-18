@@ -48,7 +48,7 @@ class Template
             if ($year == $now)
                 $date = sprintf("%u %s", $day, $months[$month - 1]);
             else
-                $date = sprintf("%u %s %u", $day, $months[$month - 1], $year);
+                $date = sprintf("%u %s %u года", $day, $months[$month - 1], $year);
             return $date;
         }));
 
