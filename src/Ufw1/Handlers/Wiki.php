@@ -170,7 +170,7 @@ class Wiki extends CommonHandler
 
         $next = isset($node['_url'])
             ? $node['url']
-            : "/wiki?name=" . urlencode($name);
+            : "/wiki?name=" . urlencode($node['name']);
 
         if ($section)
             $next .= '#' . str_replace(' ', '_', mb_strtolower($section));

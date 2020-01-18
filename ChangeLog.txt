@@ -2,6 +2,7 @@
 - Wiki: pass disqus ids to the template.
 - Wiki: comments and meta can be turned off.
 - Wiki: embedding images with webp, aspect ratio.
+- Wiki: can now rename page with the 'name' property.
 
 2020-01-16:
 - Wiki: display placeholders for missing images.
