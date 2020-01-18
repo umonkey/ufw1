@@ -57,7 +57,16 @@ jQuery(function ($) {
             dataType: 'html',
             type: 'GET'
         }).done(function (res) {
-            var d = $('<div>').append($.parseHTML(res)).find(SELECTOR);
+            var d = $('<div>').append($.parseHTML(res));
+
+            var edit = d.find('link[rel=edit]');
+            if (edit.length > 0) {
+                var link = edit.attr('href');
+                $(document).find('link[rel=edit]:first').attr('href', link);
+                console.log('Updated edit link with ' + link);
+            }
+
+            d = d.find(SELECTOR);
 
             if (d.length == 0) {
                 console.log('ERROR: no contents, falling back to page reload');

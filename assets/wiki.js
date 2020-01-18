@@ -29,17 +29,24 @@ jQuery(function ($) {
  * Edit page sections.
  **/
 jQuery(function ($) {
-    var link = $("link[rel=edit]:first");
-    if (link.length == 0)
-        return;
+    var update = function () {
+        var link = $("link[rel=edit]:first");
+        if (link.length == 0) {
+            console.log('no edit links');
+            return;
+        }
 
-    var base = link.attr("href");
+        var base = link.attr("href");
 
-    $(".formatted h1, .formatted h2, .formatted h3, .formatted h4, .formatted h5").each(function () {
-        var text = $(this).text();
-        var link = base + "&section=" + encodeURI(text);
-        $(this).append("<span class='wiki-section-edit'> [ <a href='" + link + "'>редактировать</a> ]</span>");
-    });
+        $(".formatted h1, .formatted h2, .formatted h3, .formatted h4, .formatted h5").each(function () {
+            var text = $(this).text();
+            var link = base + "&section=" + encodeURI(text);
+            $(this).append("<span class='wiki-section-edit'> [ <a href='" + link + "'>редактировать</a> ]</span>");
+        });
+    };
+
+    update();
+    $(document).on('ufw:reload', update);
 });
 
 
