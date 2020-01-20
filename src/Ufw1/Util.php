@@ -2,6 +2,8 @@
 
 namespace Ufw1;
 
+use Psr\Container\ContainerInterface;
+
 class Util
 {
     public static function cleanHtml($html)
@@ -171,6 +173,61 @@ class Util
             $t = new \Ufw1\Wiki($c);
             return $t;
         };
+    }
+
+    public static function installAccount($app)
+    {
+        Handlers\Account::setupRoutes($app);
+    }
+
+    public static function installAdmin($app)
+    {
+        Handlers\Admin::setupRoutes($app);
+    }
+
+    public static function installErrorHandler($container)
+    {
+        $container['errorHandler'] = function ($c) {
+            return function ($request, $response, $e) use ($c) {
+                $h = new Handlers\Error($c);
+                return $h($request, $response, ['exception' => $e]);
+            };
+        };
+    }
+
+    public static function installFiles($app)
+    {
+        Handlers\Files::setupRoutes($app);
+    }
+
+    public static function installSearch($app)
+    {
+        $app->get('/search',         '\Ufw1\Handlers\Search:onGet');
+        $app->get('/search.xml',     '\Ufw1\Handlers\Search:onGetXML');
+        $app->get('/search/suggest', '\Ufw1\Handlers\Search:onSuggest');
+    }
+
+    public static function installTaskQ($app)
+    {
+        $class = Handlers\TaskQ::class;
+
+        $app->get('/taskq/list',            $class . ':onList');
+        $app->any('/taskq/{id:[0-9]+}/run', $class . ':onRun');
+    }
+
+    public static function installWiki($app)
+    {
+        $class = Handlers\Wiki::class;
+
+        $app->get ('/wiki',                   $class . ':onRead');
+        $app->get ('/wiki/edit',              $class . ':onEdit');
+        $app->post('/wiki/edit',              $class . ':onSave');
+        $app->post('/wiki/embed-clipboard',   $class . ':onEmbedClipboard');
+        $app->get ('/wiki/index',             $class . ':onIndex');
+        $app->get ('/wiki/recent',            $class . ':onRecent');
+        $app->get ('/wiki/recent-files.json', $class . ':onRecentFiles');
+        $app->get ('/wiki/reindex',           $class . ':onReindex');
+        $app->any ('/wiki/upload',            $class . ':onUpload');
     }
 
     /**
