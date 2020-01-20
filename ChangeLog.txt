@@ -1,3 +1,6 @@
+2020-01-20:
+- Added base controller class.
+
 2020-01-18:
 - SPA: copy link[rel=edit].
 - SPA: add wiki section edit links properly.
