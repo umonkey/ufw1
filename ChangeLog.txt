@@ -1,6 +1,7 @@
 2020-01-20:
 - Added base controller class.
 - Added service base class.
+- Moved some classes to Services.
 
 2020-01-18:
 - SPA: copy link[rel=edit].

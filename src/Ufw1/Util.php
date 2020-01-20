@@ -103,31 +103,26 @@ class Util
     public static function containerSetup(&$container)
     {
         $container['database'] = function ($c) {
-            return new \Ufw1\Database($c->get('settings')['dsn']);
+            return new Services\Database($c);
         };
 
         $container['errorHandler'] = function ($c) {
             return function ($request, $response, $e) use ($c) {
-                if (class_exists('\App\Handlers\Error'))
-                    $h = new \App\Handlers\Error($c);
-                else
-                    $h = new \Ufw1\Handlers\Error($c);
+                $h = new \Ufw1\Handlers\Error($c);
                 return $h($request, $response, ['exception' => $e]);
             };
         };
 
         $container['file'] = function ($c) {
-            return new \Ufw1\FileFactory($c);
+            return new Services\FileFactory($c);
         };
 
         $container['fts'] = function ($c) {
-            return new \Ufw1\Search($c);
+            return new Services\Search($c);
         };
 
         $container['logger'] = function ($c) {
-            $settings = (array)$c->get('settings')['logger'];
-            $logger = new \Ufw1\Logger($settings);
-            return $logger;
+            return new Services\Logger($c);
         };
 
         $container['notFoundHandler'] = function ($c) {
@@ -137,40 +132,38 @@ class Util
         };
 
         $container['node'] = function ($c) {
-            return new \Ufw1\NodeFactory($c);
+            return new Services\NodeFactory($c);
         };
 
         $container['S3'] = function ($c) {
-            $tq = new \Ufw1\S3($c);
-            return $tq;
+            return new Services\S3($c);
+        };
+
+        $container['stemmer'] = function ($c) {
+            return new Services\Stemmer($c);
         };
 
         $container['taskq'] = function ($c) {
-            $tq = new \Ufw1\TaskQ($c);
-            return $tq;
+            return new Services\TaskQueue($c);
         };
 
         $container['telega'] = function ($c) {
-            $t = new \Ufw1\Telega($c);
-            return $t;
+            return new Services\Telega($c);
         };
 
         $container['template'] = function ($c) {
-            $settings = $c->get('settings')['templates'];
-            $tpl = new \Ufw1\Template($c);
-            return $tpl;
+            return new Services\Template($c);
         };
 
         $container['thumbnailer'] = function ($c) {
             if (class_exists('\Imagickx'))
-                $t = new \Ufw1\Thumbnailer2($c);
+                return new Services\Thumbnailer2($c);
             else
-                $t = new \Ufw1\Thumbnailer($c);
-            return $t;
+                return new Services\Thumbnailer($c);
         };
 
         $container['wiki'] = function ($c) {
-            $t = new \Ufw1\Wiki($c);
+            $t = new Services\Wiki($c);
             return $t;
         };
     }
