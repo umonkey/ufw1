@@ -161,7 +161,7 @@ class Wiki extends \Ufw1\Service
             "summary" => null,
             "language" => "ru",
             "source" => $node["source"],
-            "created" => $node['created'],
+            "created" => $node['created'] ?? null,
         ];
 
         $source = "";
