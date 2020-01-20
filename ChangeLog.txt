@@ -2,6 +2,7 @@
 - Added base controller class.
 - Added service base class.
 - Moved some classes to Services.
+- Deleted old schema files.
 
 2020-01-18:
 - SPA: copy link[rel=edit].
