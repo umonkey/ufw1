@@ -20,7 +20,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Ufw1\\": "src/Ufw1"
+            "Ufw1\\": "src"
         }
     },
     "bin": [
