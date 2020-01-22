@@ -19,3 +19,14 @@ Custom services are configured in [config/services.php][2], standard services ar
 [3]: src/Util.php
 [4]: docs/HOWTO-database.md
 [5]: src/Services/Database.php
+
+
+## Folder structure
+
+- `bin`: maintenance scripts.
+- `config`: various settings.  File names are sound, comments explain details.
+- `docs`: documentation on some components.
+- `src`: all source files.
+- `templates`: built in Twig templates, can be used as fallback in real applications.
+- `tests`: phpunit files.
+- `vendor`: third party components.
