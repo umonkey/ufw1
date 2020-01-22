@@ -131,11 +131,12 @@ class Admin extends CommonHandler
     /**
      * Display node edit form.
      **/
-    public function onEditNode(Request $request, Response $response, array $args)
+    public function onEditNode(Request $request, Response $response, array $args): Response
     {
         $user = $this->requireAdmin($request);
 
-        $id = $args['id'];
+        $id = (int)$args['id'];
+
         if (!($node = $this->node->get($id))) {
             $this->notfound();
         }
@@ -158,11 +159,12 @@ class Admin extends CommonHandler
     /**
      * Edit raw node contents, in JSON.
      **/
-    public function onEditRawNode(Request $request, Response $response, array $args)
+    public function onEditRawNode(Request $request, Response $response, array $args): Response
     {
         $user = $this->requireAdmin($request);
 
-        $id = $args['id'];
+        $id = (int)$args['id'];
+
         if (!($node = $this->node->get($id))) {
             $this->notfound();
         }
@@ -180,7 +182,7 @@ class Admin extends CommonHandler
     /**
      * Save changes to a node.
      **/
-    public function onSaveNode(Request $request, Response $response, array $args)
+    public function onSaveNode(Request $request, Response $response, array $args): Response
     {
         $this->db->beginTransaction();
 
@@ -190,7 +192,7 @@ class Admin extends CommonHandler
         $next = $request->getParam('next');
 
         if (isset($form['id'])) {
-            $node = $this->node->get($form['id']);
+            $node = $this->node->get((int)$form['id']);
         } elseif (isset($form['type'])) {
             $node = [
                 'type' => $form['type'],
