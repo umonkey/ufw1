@@ -521,6 +521,7 @@ class Wiki extends \Ufw1\Service
                 case 'large':
                     $res['width'] = $f['width'];
                     $res['height'] = $f['height'];
+                    // continue...
                 case 'small':
                 case 'small_webp':
                 case 'large_webp':

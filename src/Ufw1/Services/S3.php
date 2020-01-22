@@ -626,4 +626,4 @@ class S3 extends \Ufw1\Service
             ]);
         }
     }
-};
+}

@@ -46,4 +46,4 @@ class TaskQueueService extends \Ufw1\Service
 
         return $id;
     }
-};
+}

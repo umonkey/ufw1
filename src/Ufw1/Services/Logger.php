@@ -6,9 +6,9 @@
 
 namespace Ufw1\Services;
 
-use \Psr\Log\LoggerInterface;
-use \Psr\Log\InvalidArgumentException;
-use \Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\InvalidArgumentException;
+use Psr\Container\ContainerInterface;
 
 class Logger extends \Ufw1\Service implements LoggerInterface
 {
@@ -160,4 +160,4 @@ class Logger extends \Ufw1\Service implements LoggerInterface
         fflush($fp);
         */
     }
-};
+}

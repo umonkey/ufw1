@@ -15,21 +15,25 @@ namespace Ufw1\Services;
 
 class Stemmer extends \Ufw1\Service
 {
-    const VOWEL = 'аеёиоуыэюя';
-    const REGEX_PERFECTIVE_GERUNDS1 = '(в|вши|вшись)$';
-    const REGEX_PERFECTIVE_GERUNDS2 = '(ив|ивши|ившись|ыв|ывши|ывшись)$';
-    const REGEX_ADJECTIVE = '(ее|ие|ые|ое|ими|ыми|ей|ий|ый|ой|ем|им|ым|ом|его|ого|ему|ому|их|ых|ую|юю|ая|яя|ою|ею)$';
-    const REGEX_PARTICIPLE1 = '(ем|нн|вш|ющ|щ)';
-    const REGEX_PARTICIPLE2 = '(ивш|ывш|ующ)';
-    const REGEX_REFLEXIVES = '(ся|сь)$';
-    const REGEX_VERB1 = '(ла|на|ете|йте|ли|й|л|ем|н|ло|но|ет|ют|ны|ть|ешь|нно)$';
-    const REGEX_VERB2 = '(ила|ыла|ена|ейте|уйте|ите|или|ыли|ей|уй|ил|ыл|им|ым|ен|ило|ыло|ено|ят|ует|уют|ит|ыт|ены|ить|ыть|ишь|ую|ю)$';
-    const REGEX_NOUN = '(а|ев|ов|ие|ье|е|ьё|иями|ями|ами|еи|ии|и|ией|ей|ой|ий|й|иям|ям|ием|ем|ам|ом|о|у|ах|иях|ях|ы|ь|ию|ью|ю|ия|ья|я)$';
-    const REGEX_SUPERLATIVE = '(ейш|ейше)$';
-    const REGEX_DERIVATIONAL = '(ост|ость)$';
-    const REGEX_I = 'и$';
-    const REGEX_NN = 'нн$';
-    const REGEX_SOFT_SIGN = 'ь$';
+    public const VOWEL = 'аеёиоуыэюя';
+    public const REGEX_PERFECTIVE_GERUNDS1 = '(в|вши|вшись)$';
+    public const REGEX_PERFECTIVE_GERUNDS2 = '(ив|ивши|ившись|ыв|ывши|ывшись)$';
+    public const REGEX_ADJECTIVE =
+        '(ее|ие|ые|ое|ими|ыми|ей|ий|ый|ой|ем|им|ым|ом|его|ого|ему|ому|их|ых|ую|юю|ая|яя|ою|ею)$';
+    public const REGEX_PARTICIPLE1 = '(ем|нн|вш|ющ|щ)';
+    public const REGEX_PARTICIPLE2 = '(ивш|ывш|ующ)';
+    public const REGEX_REFLEXIVES = '(ся|сь)$';
+    public const REGEX_VERB1 = '(ла|на|ете|йте|ли|й|л|ем|н|ло|но|ет|ют|ны|ть|ешь|нно)$';
+    public const REGEX_VERB2 =
+        '(ила|ыла|ена|ейте|уйте|ите|или|ыли|ей|уй|ил|ыл|им|ым|ен|ило|ыло|ено|ят|ует|уют|ит|ыт|ены|ить|ыть|ишь|ую|ю)$';
+    public const REGEX_NOUN =
+        '(а|ев|ов|ие|ье|е|ьё|иями|ями|ами|еи|ии|и|ией|ей|ой|ий|й|иям|ям|ием'
+        . '|ем|ам|ом|о|у|ах|иях|ях|ы|ь|ию|ью|ю|ия|ья|я)$';
+    public const REGEX_SUPERLATIVE = '(ейш|ейше)$';
+    public const REGEX_DERIVATIONAL = '(ост|ость)$';
+    public const REGEX_I = 'и$';
+    public const REGEX_NN = 'нн$';
+    public const REGEX_SOFT_SIGN = 'ь$';
 
     /**
      * @param string $word
@@ -48,7 +52,8 @@ class Stemmer extends \Ufw1\Service
             // Иначе, удаляем окончание REFLEXIVE (если оно существует).
             self::removeEndings($word, self::REGEX_REFLEXIVES, $rv);
 
-            // Затем в следующем порядке пробуем удалить окончания: ADJECTIVAL, VERB, NOUN. Как только одно из них найдено – шаг завершается.
+            // Затем в следующем порядке пробуем удалить окончания: ADJECTIVAL, VERB, NOUN.
+            // Как только одно из них найдено – шаг завершается.
             if (
                 !(self::removeEndings(
                     $word,
@@ -77,7 +82,8 @@ class Stemmer extends \Ufw1\Service
             $word .= 'н';
         }
 
-        // 2. Если слово оканчивается на SUPERLATIVE – удаляем его и снова удаляем последнюю букву, если слово оканчивается на нн.
+        // 2. Если слово оканчивается на SUPERLATIVE – удаляем его
+        // и снова удаляем последнюю букву, если слово оканчивается на нн.
         self::removeEndings($word, self::REGEX_SUPERLATIVE, $rv);
 
         // 3. Если слово оканчивается на ь – удаляем его.

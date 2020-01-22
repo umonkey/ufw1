@@ -2,9 +2,9 @@
 
 namespace Ufw1\Services;
 
-use \Slim\Http\Response;
-use \Psr\Container\ContainerInterface;
-use \Ufw1\Util;
+use Psr\Container\ContainerInterface;
+use Slim\Http\Response;
+use Ufw1\Util;
 
 class Template extends \Ufw1\Service
 {
