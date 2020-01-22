@@ -16,6 +16,7 @@ Custom services are configured in [config/services.php][2], standard services ar
 |-----|-------|-------------|
 | `db` | [Database][5] | Raw database access.  Wraps around PDO.  Has no query builder or anything, designed to use with SQL.  Has some fetch, insert and update helpers, transactional block.  Detailed docs are [here][4]. |
 | `logger` | [Logger][6] | Simple file logger, implements [PSR-3][8].  Files can have date based names.  Details [here][7]. |
+| `node` | [NodeFactory][9] | Document storage.  Stores documents as "nodes", in the `nodes` table, Drupal style.  Nodes are of various types, have indexes etc.  Detailed docs are [here][10]. |
 
 ## Folder structure
 
@@ -36,3 +37,5 @@ Custom services are configured in [config/services.php][2], standard services ar
 [6]: src/Services/Logger.php
 [7]: docs/HOWTO-logger.md
 [8]: https://www.php-fig.org/psr/psr-3/
+[9]: src/Services/NodeFactory.php
+[10]: docs/HOWTO-nodes.php

@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Uniform document storage.
+ **/
+
 declare(strict_types=1);
 
 namespace Ufw1\Services;
