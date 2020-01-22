@@ -9,11 +9,15 @@
  * using $this->db.
  **/
 
+declare(strict_types=1);
+
 namespace Ufw1\Services;
 
+use PDO;
+use PDOStatement;
 use Psr\Container\ContainerInterface;
 
-class Database extends \Ufw1\Service
+class Database
 {
     /**
      * Data source name (connection information).
@@ -37,15 +41,13 @@ class Database extends \Ufw1\Service
      * process, when exception handling might not yet have been configured.  We'll connect later,
      * in a lazy manner.
      *
-     * @param Container $container We extract settings from this.
+     * @param array $dsn Connection parameters.
      **/
-    public function __construct(ContainerInterface $container)
+    public function __construct(array $dsn)
     {
-        parent::__construct($container);
-
         $this->conn = null;
 
-        $this->dsn = $this->settings['dsn'];
+        $this->dsn = $dsn;
     }
 
     public function transact($callback)
@@ -62,13 +64,13 @@ class Database extends \Ufw1\Service
         }
     }
 
-    public function getThumbnail($name, $type)
+    public function getThumbnail(string $name, string $type): ?array
     {
         $rows = $this->fetch("SELECT * FROM `thumbnails` WHERE `name` = ? AND `type` = ?", [$name, $type]);
         return $rows ? $rows[0] : null;
     }
 
-    public function saveThumbnail($name, $type, $body)
+    public function saveThumbnail(string $name, string $type, string $body): void
     {
         $this->query("INSERT INTO `thumbnails` (`name`, `type`, `body`, `hash`) VALUES (?, ?, ?, ?)", [$name, $type, $body, md5($body)]);
     }
@@ -78,16 +80,17 @@ class Database extends \Ufw1\Service
      *
      * @return PDO Database connection.
      **/
-    protected function connect()
+    protected function connect(): PDO
     {
         if (is_null($this->conn)) {
             if (!is_array($this->dsn)) {
                 throw new \RuntimeException("database not configured");
             }
-            $this->conn = new \PDO($this->dsn["name"], $this->dsn["user"] ?? null, $this->dsn["password"] ?? null);
-            $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-            $this->conn->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
-            $this->conn->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+
+            $this->conn = new PDO($this->dsn["name"], $this->dsn["user"] ?? null, $this->dsn["password"] ?? null);
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+            $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+            $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
             if (0 === strpos($this->dsn['name'], 'mysql:')) {
                 $this->conn->query('SET NAMES utf8');
@@ -104,22 +107,22 @@ class Database extends \Ufw1\Service
         return $this->conn;
     }
 
-    public function beginTransaction()
+    public function beginTransaction(): void
     {
         $this->connect()->beginTransaction();
     }
 
-    public function commit()
+    public function commit(): void
     {
         $this->connect()->commit();
     }
 
-    public function rollback()
+    public function rollback(): void
     {
         $this->connect()->rollback();
     }
 
-    public function fetch($query, array $params = array(), $callback = null)
+    public function fetch(string $query, array $params = array(), $callback = null): array
     {
         $db = $this->connect();
         $sth = $db->prepare($query);
@@ -134,7 +137,7 @@ class Database extends \Ufw1\Service
         return $res;
     }
 
-    public function fetchkv($query, array $params = [])
+    public function fetchkv(string $query, array $params = []): array
     {
         $rows = $this->fetch($query, $params);
 
@@ -147,15 +150,15 @@ class Database extends \Ufw1\Service
         return $res;
     }
 
-    public function fetchOne($query, array $params = array())
+    public function fetchOne(string $query, array $params = array()): array
     {
         $db = $this->connect();
         $sth = $db->prepare($query);
         $sth->execute($params);
-        return $sth->fetch(\PDO::FETCH_ASSOC);
+        return $sth->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function fetchcell($query, array $params = array())
+    public function fetchcell(string $query, array $params = array()): mixed
     {
         $db = $this->connect();
         $sth = $db->prepare($query);
@@ -164,7 +167,7 @@ class Database extends \Ufw1\Service
         return $sth->fetchColumn(0);
     }
 
-    public function query($query, array $params = [])
+    public function query(string $query, array $params = []): PDOStatement
     {
         try {
             $db = $this->connect();
@@ -194,18 +197,18 @@ class Database extends \Ufw1\Service
         }
     }
 
-    public function prepare($query)
+    public function prepare(string $query): PDOStatement
     {
         return $this->connect()->prepare($query);
     }
 
-    public function getConnectionType()
+    public function getConnectionType(): string
     {
         $this->connect();
-        return $this->conn->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        return $this->conn->getAttribute(PDO::ATTR_DRIVER_NAME);
     }
 
-    public function insert($tableName, array $fields)
+    public function insert(string $tableName, array $fields): ?int
     {
         $_fields = [];
         $_marks = [];
@@ -226,7 +229,7 @@ class Database extends \Ufw1\Service
         return $this->conn->lastInsertId();
     }
 
-    public function update($tableName, array $fields, array $where)
+    public function update(string $tableName, array $fields, array $where): int
     {
         $_set = [];
         $_where = [];
@@ -250,13 +253,13 @@ class Database extends \Ufw1\Service
         return $sth->rowCount();
     }
 
-    public function cacheSet($key, $value)
+    public function cacheSet(string $key, string $value): void
     {
         $now = time();
         $this->query("REPLACE INTO `cache` (`key`, `added`, `value`) VALUES (?, ?, ?)", [$key, $now, $value]);
     }
 
-    public function cacheGet($key)
+    public function cacheGet(string $key): string
     {
         return $this->fetchCell("SELECT `value` FROM `cache` WHERE `key` = ?", [$key]);
     }
@@ -266,7 +269,7 @@ class Database extends \Ufw1\Service
      *
      * @return array Table info.
      **/
-    public function getStats()
+    public function getStats(): array
     {
         switch ($this->getConnectionType()) {
             case "sqlite":

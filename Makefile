@@ -19,6 +19,7 @@ sql:
 test: test-syntax
 
 test-syntax:
+	find src -type f -name '*.php' -exec php -l {} \;
 	vendor/bin/phpcs --standard=PSR12 --ignore='database/migrations,src/compress.php' --exclude=Generic.Files.LineLength src
 
 phpcbf:

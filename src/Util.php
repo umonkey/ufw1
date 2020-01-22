@@ -109,7 +109,8 @@ class Util
     public static function containerSetup(ContainerInterface $container): void
     {
         $container['database'] = function ($c) {
-            return new Services\Database($c);
+            $dsn = $c->get('settings')['dsn'];
+            return new Services\Database($dsn);
         };
 
         $container['file'] = function ($c) {
