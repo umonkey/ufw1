@@ -19,8 +19,14 @@ class NodeFactory
      **/
     protected $logger;
 
-    public function __construct(Database $database, LoggerInterface $logger)
+    /**
+     * @var array
+     **/
+    protected $settings;
+
+    public function __construct(array $settings, Database $database, LoggerInterface $logger)
     {
+        $this->settings = $settings;
         $this->database = $database;
         $this->logger = $logger;
     }
@@ -129,7 +135,7 @@ class NodeFactory
             return;
         }
 
-        $st = $this->settings['node_history'] ?? [];
+        $st = $this->settings['history'] ?? [];
         if (empty($st['types'])) {
             return;
         }
@@ -223,8 +229,8 @@ class NodeFactory
         $logger = $this->logger;
 
         $type = $node["type"];
-        if (!empty($settings["nodes_idx"][$type])) {
-            $fields = $settings["nodes_idx"][$type];
+        if (!empty($settings["indexes"][$type])) {
+            $fields = $settings["indexes"][$type];
 
             if (!is_array($fields)) {
                 $logger->warning("node: nodes_idx for type {type} is not an array.", [

@@ -135,7 +135,8 @@ class Util
         $container['node'] = function ($c) {
             $db = $c->get('db');
             $logger = $c->get('logger');
-            return new Services\NodeFactory($db, $logger);
+            $settings = $c->get('settings')['node'];
+            return new Services\NodeFactory($settings, $db, $logger);
         };
 
         $container['S3'] = function ($c) {
