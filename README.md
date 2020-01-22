@@ -13,12 +13,7 @@ This projects contains components which I frequently reuse on my websites.  It's
 Custom services are configured in [config/services.php][2], standard services are set up with [Util::containerSetup()][3].
 
 - [Database][5]: raw database access.  Wraps around PDO.  Has no query builder or anything, designed to use with SQL.  Has some fetch, insert and update helpers, transactional block.  Detailed docs are [here][4].
-
-[1]: https://www.slimframework.com/
-[2]: config/services.php
-[3]: src/Util.php
-[4]: docs/HOWTO-database.md
-[5]: src/Services/Database.php
+- [Logger][6]: simple file logger, implements [PSR-3][8].  Files can have date based names.  Details [here][7].
 
 
 ## Folder structure
@@ -30,3 +25,13 @@ Custom services are configured in [config/services.php][2], standard services ar
 - `templates`: built in Twig templates, can be used as fallback in real applications.
 - `tests`: phpunit files.
 - `vendor`: third party components.
+
+
+[1]: https://www.slimframework.com/
+[2]: config/services.php
+[3]: src/Util.php
+[4]: docs/HOWTO-database.md
+[5]: src/Services/Database.php
+[6]: src/Services/Logger.php
+[7]: docs/HOWTO-logger.md
+[8]: https://www.php-fig.org/psr/psr-3/

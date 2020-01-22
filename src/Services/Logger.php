@@ -2,7 +2,11 @@
 
 /**
  * Simple PSR-3 compatible logger.
+ *
+ * Configuration stays in the 'logger' block.
  **/
+
+declare(strict_types=1);
 
 namespace Ufw1\Services;
 
