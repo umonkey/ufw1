@@ -31,6 +31,17 @@ $results = $this->fts->search($query, 100);
 
 Results have keys `key` (some document identifying string) and `meta` (a free form array).
 
+
+## Aliases
+
+Reads aliases from the `odict` table.  The table contains translations to be made before the text is normalized.  Used to normalize synonims, etc.  Fill it like this:
+
+```
+INSERT INTO odict (src, dst) VALUES ('ipod', 'apple');
+INSERT INTO odict (src, dst) VALUES ('iphone', 'apple');
+```
+
+
 [1]: https://www.sqlite.org/fts5.html
 [2]: https://dev.mysql.com/doc/refman/5.6/en/innodb-fulltext-index.html
 [3]: docs/HOWTO-stemmer.md
