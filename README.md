@@ -12,12 +12,10 @@ This projects contains components which I frequently reuse on my websites.  It's
 
 Custom services are configured in [config/services.php][2], standard services are set up with [Util::containerSetup()][3].
 
-- [Database][5], key `db`: raw database access.  Wraps around PDO.  Has no query builder or anything, designed to use with SQL.  Has some fetch, insert and update helpers, transactional block.  Detailed docs are [here][4].
-- [Logger][6], key `logger`: simple file logger, implements [PSR-3][8].  Files can have date based names.  Details [here][7].
-
 | Key | Class | Description |
 |-----|-------|-------------|
 | `db` | [Database][5] | Raw database access.  Wraps around PDO.  Has no query builder or anything, designed to use with SQL.  Has some fetch, insert and update helpers, transactional block.  Detailed docs are [here][4]. |
+| `logger` | [Logger][6] | Simple file logger, implements [PSR-3][8].  Files can have date based names.  Details [here][7]. |
 
 ## Folder structure
 
