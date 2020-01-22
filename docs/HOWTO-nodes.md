@@ -70,4 +70,23 @@ $nodes = $this->node->where('type = ? AND id IN (SELECT id FROM nodes_user_idx A
 ```
 
 
+## Saving edit history
+
+You can save current node contents when a new version is created, to maintain reversible edit log.  This is configured this way:
+
+```
+// config/settings.php:
+
+$settings['node']['history'] = [
+    'types' => [
+        'wiki', // enable history for wiki nodes
+        '*', // enable history for all nodes
+    ],
+    'compression' => 'gzip', // enables data compression, options: gzip, bzip, null.
+];
+```
+
+This way, before a node is saved, the current version is loaded, serialized, compressed and saved in the `node_history` table.  The table has 3 fields: `id`, `updated` (timestamp) and `contents` (serialized blob).  Currently there's no way of doing anyhting with the node history.
+
+
 [1]: https://en.wikipedia.org/wiki/Nested_set
