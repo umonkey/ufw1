@@ -13,8 +13,9 @@ class NodeFactory extends \Ufw1\Service
             return $row;
         });
 
-        if ($callback)
+        if ($callback) {
             $res = array_map($callback, $res);
+        }
 
         return $res;
     }
@@ -22,15 +23,17 @@ class NodeFactory extends \Ufw1\Service
     public function get($id)
     {
         $row = $this->database->fetchone("SELECT * FROM `nodes` WHERE `id` = ?", [$id]);
-        if ($row)
+        if ($row) {
             return $this->unpack($row);
+        }
     }
 
     public function getByKey($key)
     {
         $tmp = $this->database->fetchOne("SELECT * FROM `nodes` WHERE `key` = ? ORDER BY `id` LIMIT 1", [$key]);
-        if ($tmp)
+        if ($tmp) {
             return $this->unpack($tmp);
+        }
     }
 
     public function save(array $node)
@@ -42,8 +45,9 @@ class NodeFactory extends \Ufw1\Service
 
         $now = strftime("%Y-%m-%d %H:%M:%S");
 
-        if (empty($node["created"]))
+        if (empty($node["created"])) {
             $node["created"] = $now;
+        }
         $node["updated"] = $now;
 
         $node['deleted'] = empty($node['deleted']) ? 0 : 1;
@@ -96,30 +100,35 @@ class NodeFactory extends \Ufw1\Service
      **/
     protected function saveCurrent(array $node, $db)
     {
-        if (empty($node['id']) or empty($node['type']))
+        if (empty($node['id']) or empty($node['type'])) {
             return;
+        }
 
         $st = $this->settings['node_history'] ?? [];
-        if (empty($st['types']))
+        if (empty($st['types'])) {
             return;
+        }
 
         $types = $st['types'];
         $compression = $st['compression'] ?? null;
 
-        if ($types != '*' and !in_array($node['type'], $types))
+        if ($types != '*' and !in_array($node['type'], $types)) {
             return;
+        }
 
-        if ($compression == 'bzip' and !function_exists('bzcompress'))
+        if ($compression == 'bzip' and !function_exists('bzcompress')) {
             $compression = null;
+        }
 
         $old = $this->get($node['id']);
 
-        if ($compression == 'gzip')
+        if ($compression == 'gzip') {
             $item = 'g' . gzcompress(serialize($old));
-        elseif ($compression == 'bzip')
+        } elseif ($compression == 'bzip') {
             $item = 'b' . bzcompress(serialize($old));
-        else
+        } else {
             $item = '-' . serialize($old);
+        }
 
         $db->insert('nodes_history', [
             'id' => $node['id'],
@@ -133,8 +142,9 @@ class NodeFactory extends \Ufw1\Service
         if (array_key_exists("more", $row)) {
             $more = unserialize($row["more"]);
             unset($row["more"]);
-            if (is_array($more))
+            if (is_array($more)) {
                 $row = array_merge($row, $more);
+            }
         }
 
         return $row;
@@ -161,8 +171,9 @@ class NodeFactory extends \Ufw1\Service
         $more = [];
 
         foreach ($row as $k => $v) {
-            if ($v === "")
+            if ($v === "") {
                 $v = null;
+            }
 
             if (!in_array($k, $fields)) {
                 $more[$k] = $v;

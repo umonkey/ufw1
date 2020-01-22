@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Full text search API.
  *
@@ -13,7 +14,7 @@ namespace Ufw1\Services;
 
 class Search extends \Ufw1\Service
 {
-    static private $stopWords = ["а", "и", "о", "об", "в", "на", "под", "из"];
+    private static $stopWords = ["а", "и", "о", "об", "в", "на", "под", "из"];
 
     public function search($query, $limit = 100)
     {
@@ -32,7 +33,7 @@ class Search extends \Ufw1\Service
             case "sqlite":
                 $sql = "SELECT `key`, `meta` FROM `search` WHERE `search` MATCH :query ORDER BY bm25(`search`, 0, 0, 50) * CASE WHEN `title` = :query THEN 100 ELSE 1 END LIMIT {$limit}";
                 $params = [":query" => $query];
-            break;
+                break;
         }
 
         $rows = $this->database->fetch($sql, $params, function ($em) {
@@ -139,9 +140,7 @@ class Search extends \Ufw1\Service
         if (!empty($page['redirect']) or empty($page['source'])) {
             $title = $text = null;
             $meta = [];
-        }
-
-        else {
+        } else {
             $html = $page['html'];
 
             // strip_tags mishandles scripts, and we use them heavily for microdata,
@@ -248,8 +247,9 @@ class Search extends \Ufw1\Service
     {
         static $aliases = null;
 
-        if ($aliases === null)
+        if ($aliases === null) {
             $aliases = $this->database->fetchkv("SELECT `src`, `dst` FROM `odict` LIMIT 10000");
+        }
 
         foreach ($words as $k => $word) {
             if (array_key_exists($word, $aliases)) {

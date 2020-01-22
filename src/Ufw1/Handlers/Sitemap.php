@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Handle sitemap.
  **/
@@ -21,7 +22,7 @@ class Sitemap extends CommonHandler
 
             $base = $proto . "://" . $host;
 
-            $xml = "<?xml version='1.0' encoding='utf-8'?".">\n";
+            $xml = "<?xml version='1.0' encoding='utf-8'?" . ">\n";
             $xml .= "<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>\n";
 
             $sel = $this->db->query("SELECT * FROM `nodes` WHERE `published` = 1 ORDER BY `created`");
@@ -39,8 +40,9 @@ class Sitemap extends CommonHandler
 
                 if ($link) {
                     $ts = $node["updated"];
-                    if (!is_numeric($ts))
+                    if (!is_numeric($ts)) {
                         $ts = strtotime($ts);
+                    }
                     $date = strftime("%Y-%m-%d", $ts);
                     $xml .= "<url><loc>{$link}</loc><lastmod>{$date}</lastmod></url>\n";
                 }

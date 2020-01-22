@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Wiki pages.
  **/
@@ -8,7 +9,6 @@ namespace Ufw1\Handlers;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
-
 
 class Wiki extends CommonHandler
 {
@@ -45,14 +45,16 @@ class Wiki extends CommonHandler
 
         $canEdit = $wiki->canEditPages($user);
 
-        if (preg_match('@^File:(\d+)$@', $name, $m))
+        if (preg_match('@^File:(\d+)$@', $name, $m)) {
             return $this->onReadFilePage($request, $name, $m[1]);
+        }
 
         $node = $wiki->getPageByName($name);
 
         // Fake deleted pages.
-        if (empty($node['source']))
+        if (empty($node['source'])) {
             $node = null;
+        }
 
         if ($node) {
             $res = $wiki->renderPage($node);
@@ -113,8 +115,9 @@ class Wiki extends CommonHandler
         $pageName = $request->getQueryParam("name");
         $sectionName = $request->getQueryParam("section");
 
-        if (empty($pageName))
+        if (empty($pageName)) {
             $this->notfound();
+        }
 
         $wiki = $this->container->get('wiki');
 
@@ -172,8 +175,9 @@ class Wiki extends CommonHandler
             ? $node['url']
             : "/wiki?name=" . urlencode($node['name']);
 
-        if ($section)
+        if ($section) {
             $next .= '#' . str_replace(' ', '_', mb_strtolower($section));
+        }
 
         return $response->withJSON([
             "redirect" => $next,
@@ -188,8 +192,9 @@ class Wiki extends CommonHandler
         $user = $this->requireUser($request);
 
         $wiki = $this->container->get('wiki');
-        if (!$wiki->canEditPages($user))
+        if (!$wiki->canEditPages($user)) {
             return $this->forbidden();
+        }
 
         $comment = null;
 
@@ -214,16 +219,14 @@ class Wiki extends CommonHandler
                     "message" => "Не удалось загрузить файл.",
                 ]);
             }
-        }
-
-        elseif ($files = $request->getUploadedFiles()) {
+        } elseif ($files = $request->getUploadedFiles()) {
             $items = [];
 
-            if (!empty($files["files"]) and is_array($files["files"]))
+            if (!empty($files["files"]) and is_array($files["files"])) {
                 $items = $files["files"];
-
-            elseif (!empty($files["file"]))
+            } elseif (!empty($files["file"])) {
                 $items[] = $files["file"];
+            }
 
             $errors = 0;
             $code = [];
@@ -243,8 +246,9 @@ class Wiki extends CommonHandler
                 $body = file_get_contents($tmp);
                 unlink($tmp);
 
-                if ($tmp = $this->addFile($name, $type, $body))
+                if ($tmp = $this->addFile($name, $type, $body)) {
                     $code[] = $tmp;
+                }
             }
 
             $res = [];
@@ -255,8 +259,9 @@ class Wiki extends CommonHandler
                 $res["callback"] = "editor_insert";
                 $res["callback_args"] = implode("\n", $code);
 
-                if ($errors)
+                if ($errors) {
                     $res["message"] = "Не удалось принять некоторые файлы.";
+                }
             }
 
             return $response->withJSON($res);
@@ -269,8 +274,9 @@ class Wiki extends CommonHandler
         if (!($page = $this->pageGet($pname))) {
             $text = "# {$name}\n\n";
             $text .= "[[image:{$fid}]]\n\n";
-            if ($comment)
+            if ($comment) {
                 $text .= $comment;
+            }
 
             $this->pageSave($pname, $text, $user);
         }
@@ -305,8 +311,9 @@ class Wiki extends CommonHandler
     public function onRecentRSS(Request $request, Response $response, array $args)
     {
         $items = $this->node->where("`type` = 'wiki' AND `published` = 1 ORDER BY `created` DESC LIMIT 100", [], function ($node) {
-            if (preg_match('@^(File|wiki):@', $node["name"]))
+            if (preg_match('@^(File|wiki):@', $node["name"])) {
                 return null;
+            }
 
             $page = $this->pageProcess($node);
 
@@ -379,9 +386,7 @@ class Wiki extends CommonHandler
             $res = [
                 "success" => true,
             ];
-        }
-
-        elseif ($text = $request->getParam("text")) {
+        } elseif ($text = $request->getParam("text")) {
             if (preg_match('@^https?://[^\s]+$@', $text, $m)) {
                 $url = $m[0];
                 $doc = \Ufw1\Common::fetch($url);
@@ -439,10 +444,11 @@ class Wiki extends CommonHandler
     {
         $pages = array_filter($this->node->where("`type` = 'wiki'", [], function ($node) {
             $name = $node["name"];
-            if (0 === strpos($name, "File:"))
+            if (0 === strpos($name, "File:")) {
                 return null;
-            elseif (0 === strpos($name, "wiki:"))
+            } elseif (0 === strpos($name, "wiki:")) {
                 return null;
+            }
 
             return [
                 "name" => $name,
@@ -486,14 +492,17 @@ class Wiki extends CommonHandler
         $since = strftime("%Y-%m-%d %H:%M:%S", time() - 86400 * 30);
 
         $pages = $this->node->where("`type` = 'wiki' AND `updated` >= ? AND `published` = 1 ORDER BY `updated` DESC", [$since], function ($node) {
-            if (preg_match('@^(File|wiki):@', $node["name"]))
+            if (preg_match('@^(File|wiki):@', $node["name"])) {
                 return null;
+            }
 
-            if (!empty($node['redirect']))
+            if (!empty($node['redirect'])) {
                 return null;
+            }
 
-            if (empty($node['source']))
+            if (empty($node['source'])) {
                 return null;
+            }
 
             return [
                 "name" => $node["name"],
@@ -510,13 +519,13 @@ class Wiki extends CommonHandler
         }
 
         // One date = recent migration.
-        if (count($res) == 1)
+        if (count($res) == 1) {
             $res = [];
-
-        else {
+        } else {
             krsort($res);
-            foreach ($res as $k => $v)
+            foreach ($res as $k => $v) {
                 sort($res[$k], SORT_NATURAL | SORT_FLAG_CASE);
+            }
         }
 
         return $this->render($request, "wiki-recent.twig", [
@@ -583,20 +592,23 @@ class Wiki extends CommonHandler
      **/
     protected function refresh(Request $request)
     {
-        if ($request->getParam("debug"))
+        if ($request->getParam("debug")) {
             return true;
+        }
 
         $headers = $request->getHeaders();
 
         $cacheControl = @$headers["HTTP_CACHE_CONTROL"][0];
 
         // Refresh, Firefox
-        if ($cacheControl == "max-age=0")
+        if ($cacheControl == "max-age=0") {
             return true;
+        }
 
         // Shift-Refresh, Firefox
-        if ($cacheControl == "no-cache")
+        if ($cacheControl == "no-cache") {
             return true;
+        }
 
         return false;
     }
@@ -637,15 +649,14 @@ class Wiki extends CommonHandler
     {
         $image = null;
 
-        if (!empty($page["image"]))
+        if (!empty($page["image"])) {
             return $page["image"];
+        }
 
         if (preg_match('@<img[^>]+/>@ms', $page["html"], $m)) {
             if (preg_match('@src="([^"]+)"@', $m[0], $n)) {
                 $image = $n[1];
-            }
-
-            elseif (preg_match("@src='([^']+)'@", $m[0], $n)) {
+            } elseif (preg_match("@src='([^']+)'@", $m[0], $n)) {
                 $image = $n[1];
             }
         }
@@ -677,8 +688,9 @@ class Wiki extends CommonHandler
                         if ($src = $this->pageGet($parts[1])) {
                             $reps = [];
                             $reps["{{name}}"] = $name;
-                            foreach ($m as $k => $v)
+                            foreach ($m as $k => $v) {
                                 $reps['{{' . $k . '}}'] = $v;
+                            }
 
                             $src = str_replace(array_keys($reps), array_values($reps), $src);
 
@@ -701,15 +713,15 @@ class Wiki extends CommonHandler
     {
         $class = get_called_class();
 
-        $app->get ('/wiki',                   $class . ':onRead');
-        $app->get ('/wiki/edit',              $class . ':onEdit');
-        $app->post('/wiki/edit',              $class . ':onSave');
-        $app->post('/wiki/embed-clipboard',   $class . ':onEmbedClipboard');
-        $app->get ('/wiki/index',             $class . ':onIndex');
-        $app->get ('/wiki/recent',            $class . ':onRecent');
-        $app->get ('/wiki/recent-files.json', $class . ':onRecentFiles');
-        $app->get ('/wiki/reindex',           $class . ':onReindex');
-        $app->any ('/wiki/upload',            $class . ':onUpload');
+        $app->get('/wiki', $class . ':onRead');
+        $app->get('/wiki/edit', $class . ':onEdit');
+        $app->post('/wiki/edit', $class . ':onSave');
+        $app->post('/wiki/embed-clipboard', $class . ':onEmbedClipboard');
+        $app->get('/wiki/index', $class . ':onIndex');
+        $app->get('/wiki/recent', $class . ':onRecent');
+        $app->get('/wiki/recent-files.json', $class . ':onRecentFiles');
+        $app->get('/wiki/reindex', $class . ':onReindex');
+        $app->any('/wiki/upload', $class . ':onUpload');
     }
 
     private function isS3AutoUploadEnabled()

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * File related functions.
  **/
@@ -123,8 +124,9 @@ class Files extends CommonHandler
 
     protected function onUpload(Request $request, Response $response, array $args)
     {
-        if (!($folder = (int)$request->getParam("folder_id")))
+        if (!($folder = (int)$request->getParam("folder_id"))) {
             $folder = null;  // 0 => null
+        }
 
         $files = $request->getUploadedFiles();
 
@@ -209,8 +211,9 @@ class Files extends CommonHandler
         $id = $args["id"];
         $file = $this->node->get($id);
 
-        if (empty($file) or $file["type"] != "file")
+        if (empty($file) or $file["type"] != "file") {
             return $this->notfound($response);
+        }
 
         return $this->render($response, "files-show.twig", [
             "file" => $file,
@@ -271,8 +274,9 @@ class Files extends CommonHandler
             return $this->sendCached($request, $body, $file['files'][$size]['type'], $file['created']);
         }
 
-        if (!empty($file['files'][$size]['url']))
+        if (!empty($file['files'][$size]['url'])) {
             return $response->withRedirect($file['files'][$size]['url']);
+        }
 
         $logger->warning('don\'t know how to serve file {0}, data: {1}', [$id, $file['files'][$size]]);
         $this->unavailable();
@@ -284,18 +288,22 @@ class Files extends CommonHandler
             $id = $args["id"];
             $file = $this->node->get($id);
 
-            if (empty($file) or $file["type"] != "file")
+            if (empty($file) or $file["type"] != "file") {
                 return $this->notfound($response);
+            }
 
-            if (!($body = $this->file->getBody($file)))
+            if (!($body = $this->file->getBody($file))) {
                 return $this->notfound($response);
+            }
 
             $img = imagecreatefromstring($body);
-            if ($img === false)
+            if ($img === false) {
                 return $this->notfound($response);
+            }
 
-            if ($body = $this->getImage($img))
+            if ($body = $this->getImage($img)) {
                 return ["image/jpeg", $body];
+            }
 
             return $this->notfound($response);
         }, $request->getUri()->getPath());
@@ -306,15 +314,18 @@ class Files extends CommonHandler
         $id = $args["id"];
         $file = $this->file->get($id);
 
-        if (empty($file))
+        if (empty($file)) {
             return $this->notfound($response);
+        }
 
-        if (!($body = $this->file->getBody($file)))
+        if (!($body = $this->file->getBody($file))) {
             return $this->notfound($response);
+        }
 
         $dst = $_SERVER["DOCUMENT_ROOT"] . $request->getUri()->getPath();
-        if (is_dir($dir = dirname($dst)) and is_writable($dir))
+        if (is_dir($dir = dirname($dst)) and is_writable($dir)) {
             file_put_contents($dst, $body);
+        }
 
         $response = $response->withHeader("Content-Type", $file["mime_type"])
             ->withHeader("Content-Length", strlen($body))
@@ -356,8 +367,9 @@ class Files extends CommonHandler
                 $dst = imagecreatetruecolor($nw, $nh);
 
                 $res = imagecopyresampled($dst, $img, 0, 0, 0, 0, $nw, $nh, $iw, $ih);
-                if (false === $res)
+                if (false === $res) {
                     throw new \RuntimeException("could not resize the image");
+                }
 
                 imagedestroy($img);
                 $img = $dst;
@@ -390,16 +402,18 @@ class Files extends CommonHandler
     protected function dbGetFile($id)
     {
         $node = $this->node->get($id);
-        if ($node and $node["type"] == "file")
+        if ($node and $node["type"] == "file") {
             return $node;
+        }
     }
 
     protected function dbGetFolders($folder)
     {
-        if ($folder)
+        if ($folder) {
             $rows = $this->db->fetch("SELECT `id`, `name` FROM `folders` WHERE `parent` = ? ORDER BY `name`", [$folder]);
-        else
+        } else {
             $rows = $this->db->fetch("SELECT `id`, `name` FROM `folders` WHERE `parent` IS NULL ORDER BY `name`");
+        }
 
         if ($folder) {
             $row = $this->db->fetchOne("SELECT `parent` FROM `folders` WHERE `id` = ?", [$folder]);
@@ -425,16 +439,18 @@ class Files extends CommonHandler
     {
         // FIXME: use nodes and node__rel
 
-        if ($folder)
+        if ($folder) {
             $rows = $this->db->fetch("SELECT `id`, `name`, `kind`, `length`, `created` FROM `files` WHERE `folder_id` = ?", [$folder]);
-        else
+        } else {
             $rows = $this->db->fetch("SELECT `id`, `name`, `kind`, `length`, `created` FROM `files` WHERE `folder_id` IS NULL");
+        }
 
         $rows = array_map(function ($em) {
             $image = "/images/file.png";
 
-            if ($em["kind"] == "photo")
+            if ($em["kind"] == "photo") {
                 $image = "/i/thumbnails/{$em["id"]}.jpg";
+            }
 
             return [
                 "link" => "/admin/files?file={$em["id"]}",
@@ -461,12 +477,13 @@ class Files extends CommonHandler
         $ts = strftime("%Y-%m-%d %H:%M:%S");
 
         $parts = explode("/", $type);
-        if ($parts[0] == "video")
+        if ($parts[0] == "video") {
             $kind = "video";
-        elseif ($parts[0] == "image")
+        } elseif ($parts[0] == "image") {
             $kind = "photo";
-        else
+        } else {
             $kind = "other";
+        }
 
         $res = $this->db->insert("files", [
             "folder_id" => $folder,
@@ -489,8 +506,9 @@ class Files extends CommonHandler
 
         if ($files = $request->getUploadedFiles()) {
             foreach ($files["files"] as $file) {
-                if ($file->getError())
+                if ($file->getError()) {
                     continue;
+                }
 
                 $name = $file->getClientFilename();
                 $type = $file->getClientMediaType();
@@ -498,10 +516,11 @@ class Files extends CommonHandler
                 $hash = md5($data);
 
                 $old = $this->node->getByKey($hash);
-                if ($old)
+                if ($old) {
                     $id = $old["id"];
-                else
+                } else {
                     $id = $this->dbInsertFile(null, $name, $type, $data, $hash);
+                }
 
                 $res[] = [
                     "id" => $id,
@@ -519,10 +538,11 @@ class Files extends CommonHandler
                 $hash = md5($data);
 
                 $old = $this->file->getByHash($hash);
-                if ($old)
+                if ($old) {
                     $id = $old["id"];
-                else
+                } else {
                     $id = $this->dbInsertFile(null, $name, $type, $data, $hash);
+                }
 
                 $res[] = [
                     "id" => $id,
@@ -560,9 +580,7 @@ class Files extends CommonHandler
                 $this->logger->debug("files: file {name} exists.", [
                     "name" => $fname,
                 ]);
-            }
-
-            else {
+            } else {
                 $fdir = dirname($fpath);
                 if (!is_dir($fdir)) {
                     $res = @mkdir($fdir, $dmode, true);
@@ -594,9 +612,7 @@ class Files extends CommonHandler
                 $this->logger->debug("files: node with key={key} already exists.", [
                     "key" => $file["hash"],
                 ]);
-            }
-
-            else {
+            } else {
                 $node = [
                     "id" => $file["id"],
                     "type" => "file",
@@ -623,6 +639,6 @@ class Files extends CommonHandler
     {
         $class = get_called_class();
 
-        $app->get ('/node/{id:[0-9]+}/download/{size}', $class . ':onDownload');
+        $app->get('/node/{id:[0-9]+}/download/{size}', $class . ':onDownload');
     }
 }

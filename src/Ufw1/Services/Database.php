@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Database interface class.
  *
@@ -80,8 +81,9 @@ class Database extends \Ufw1\Service
     protected function connect()
     {
         if (is_null($this->conn)) {
-            if (!is_array($this->dsn))
+            if (!is_array($this->dsn)) {
                 throw new \RuntimeException("database not configured");
+            }
             $this->conn = new \PDO($this->dsn["name"], $this->dsn["user"] ?? null, $this->dsn["password"] ?? null);
             $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
@@ -125,8 +127,9 @@ class Database extends \Ufw1\Service
 
         $res = $sth->fetchAll(\PDO::FETCH_ASSOC);
 
-        if ($callback)
+        if ($callback) {
             $res = array_filter(array_map($callback, $res));
+        }
 
         return $res;
     }

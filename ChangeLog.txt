@@ -1,5 +1,6 @@
 2020-01-22:
 - SPA fixes.
+- PHP code style fixes.
 
 2020-01-20:
 - Added base controller class.

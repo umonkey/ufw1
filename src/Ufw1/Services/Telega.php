@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Simple, pretty dumb atm, telegram notifications.
  **/
@@ -22,8 +23,12 @@ class Telega extends \Ufw1\Service
             return false;
         }
 
-        $url = sprintf('https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s',
-            $st['telega']['bot_id'], $st['telega']['chat_id'], urlencode($text));
+        $url = sprintf(
+            'https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s',
+            $st['telega']['bot_id'],
+            $st['telega']['chat_id'],
+            urlencode($text)
+        );
 
         $ch = curl_init();
         curl_setopt($ch, \CURLOPT_URL, $url);

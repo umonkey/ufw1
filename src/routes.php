@@ -6,8 +6,8 @@ use Slim\Http\Response;
 \Ufw1\Handlers\Admin::setupRoutes($app);
 \Ufw1\Handlers\Wiki::setupRoutes($app);
 
-$app->get ('/tasks/run-one', '\Ufw1\Handlers\Tasks:onRunOne');
-$app->get ('/tasks/files/dump', '\Ufw1\Handlers\Files:onDump');
+$app->get('/tasks/run-one', '\Ufw1\Handlers\Tasks:onRunOne');
+$app->get('/tasks/files/dump', '\Ufw1\Handlers\Files:onDump');
 
 $app->any('/upload', '\Ufw1\Handlers\Upload');
 
@@ -24,7 +24,7 @@ $app->get('/search', '\Ufw1\Handlers\Search:onGet');
 $app->get('/search.xml', '\Ufw1\Handlers\Search:onGetXML');
 $app->get('/search/suggest', '\Ufw1\Handlers\Search:onSuggest');
 
-$app->get ('/sitemap.xml', '\Ufw1\Handlers\Sitemap:onGet');
+$app->get('/sitemap.xml', '\Ufw1\Handlers\Sitemap:onGet');
 
 $app->get('/login', '\Ufw1\Handlers\Account:onGetLoginForm');
 $app->post('/login', '\Ufw1\Handlers\Account:onLogin');

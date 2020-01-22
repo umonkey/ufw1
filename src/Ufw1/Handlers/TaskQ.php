@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Background task handler.
  **/
@@ -161,16 +162,13 @@ class TaskQ extends CommonHandler
                 $this->logger->warning('taskq: dependency not found, action={0}', [$action]);
                 return;
             }
-        }
-
-        elseif ($action == 'update-node-thumbnail')
+        } elseif ($action == 'update-node-thumbnail') {
             return $this->onUpdateNodeThumbnail($payload['id']);
-
-        elseif ($action == 'telega')
+        } elseif ($action == 'telega') {
             return $this->onTelega($payload['message']);
-
-        elseif ($action == 'handle-file-upload')
+        } elseif ($action == 'handle-file-upload') {
             return $this->onHandleFileUpload($payload['id']);
+        }
 
         $this->logger->warning("taskq: unhandled task with action={action}, payload={payload}.", [
             'action' => $action,
@@ -226,7 +224,7 @@ class TaskQ extends CommonHandler
     {
         $class = get_called_class();
 
-        $app->get('/taskq/list',            $class . ':onList');
+        $app->get('/taskq/list', $class . ':onList');
         $app->any('/taskq/{id:[0-9]+}/run', $class . ':onRun');
     }
 }

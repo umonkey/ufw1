@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Prepare file thumbnails.
  *
@@ -48,15 +49,17 @@ class Thumbnailer extends \Ufw1\Service
         $updateCount = 0;
 
         foreach ($config as $key => $options) {
-            if ($key == 'original')
+            if ($key == 'original') {
                 continue;
+            }
 
             $missing = empty($node['files'][$key]);
 
             if (isset($node['files'][$key]) and $node['files'][$key]['storage'] == 'local') {
                 $dst = $this->file->fsgetpath($node['files'][$key]['path']);
-                if (!file_exists($dst))
+                if (!file_exists($dst)) {
                     $missing = true;
+                }
             }
 
             if ($force or $missing) {
@@ -75,14 +78,10 @@ class Thumbnailer extends \Ufw1\Service
                 if ($format == 'webp') {
                     $res = $this->getImageWebP($img);
                     $type = 'image/webp';
-                }
-
-                elseif ($node['files']['original']['type'] == 'image/png') {
+                } elseif ($node['files']['original']['type'] == 'image/png') {
                     $res = $this->getImagePNG($img);
                     $type = 'image/png';
-                }
-
-                else {
+                } else {
                     $res = $this->getImageJPEG($img);
                     $type = 'image/jpeg';
                 }
@@ -111,8 +110,9 @@ class Thumbnailer extends \Ufw1\Service
             }
         }
 
-        if ($updateCount)
+        if ($updateCount) {
             $logger->debug('thumbnailer: node {0} updated, files={1}', [$node['id'] ?? null, $node['files']]);
+        }
 
         return $node;
     }
@@ -120,8 +120,9 @@ class Thumbnailer extends \Ufw1\Service
     public function createDefault($imageBody)
     {
         $img = @imageCreateFromString($imageBody);
-        if (false === $img)
+        if (false === $img) {
             throw new \RuntimeException("error parsing image");
+        }
 
         $img = $this->scaleImage($img, [
             "width" => 300,
@@ -139,8 +140,9 @@ class Thumbnailer extends \Ufw1\Service
     {
         $img = @imagecreatefromstring($blob);
 
-        if (false === $img)
+        if (false === $img) {
             throw new \RuntimeException('error parsing image');
+        }
 
         return $img;
     }
@@ -198,11 +200,13 @@ class Thumbnailer extends \Ufw1\Service
 
         $scale = 1;
 
-        if ($options['width'] and $options['width'] < $iw)
+        if ($options['width'] and $options['width'] < $iw) {
             $scale = $options['width'] / $iw;
+        }
 
-        if ($options['height'] and $options['height'] < $ih)
+        if ($options['height'] and $options['height'] < $ih) {
             $scale = min($scale, $options['height'] / $ih);
+        }
 
         $nw = round($iw * $scale);
         $nh = round($ih * $scale);
@@ -210,8 +214,9 @@ class Thumbnailer extends \Ufw1\Service
         $this->logger->debug('thumbnailer: resizing image from {0}x{1} to {2}x{3}', [$iw, $ih, $nw, $nh]);
 
         // Never upscale.
-        if ($nw < $iw and $nh < $ih)
+        if ($nw < $iw and $nh < $ih) {
             $img = $this->resizeImage($img, $nw, $nh);
+        }
 
         if ($options['sharpen']) {
             $this->logger->debug('thumbnailer: sharpening');
@@ -258,17 +263,13 @@ class Thumbnailer extends \Ufw1\Service
     {
         if ($file["storage"] == "local") {
             return $this->file->fsget($file['path']);
-        }
-
-        elseif ($file["storage"] == "s3") {
+        } elseif ($file["storage"] == "s3") {
             $url = $file['url'];
             $this->logger->debug('thumbnailer: fetching {0}', [$url]);
             $data = @file_get_contents($url);
             $this->logger->debug('thumbnailer: read {0} bytes.', [strlen($data)]);
             return $data;
-        }
-
-        else {
+        } else {
             throw new \RuntimeException("unsupported storage type: {$file["storage"]}");
         }
     }
@@ -280,8 +281,9 @@ class Thumbnailer extends \Ufw1\Service
         $dst = imagecreatetruecolor($nw, $nh);
 
         $res = imagecopyresampled($dst, $img, 0, 0, 0, 0, $nw, $nh, $iw, $ih);
-        if (false === $res)
+        if (false === $res) {
             throw new \RuntimeException('could not resize the image');
+        }
 
         imagedestroy($img);
         $img = $dst;
@@ -298,16 +300,19 @@ class Thumbnailer extends \Ufw1\Service
     {
         $logger = $this->logger;
 
-        if (empty($file['files'][$key]))
+        if (empty($file['files'][$key])) {
             throw new \RuntimeException('file version not found: ' . $key);
+        }
 
         $f = $file['files'][$key];
-        if (empty($f['path']))
+        if (empty($f['path'])) {
             throw new \RuntimeException('file version has no path: ' . $key);
+        }
 
         $src = $this->file->fsgetpath($f['path']);
-        if (file_exists($src))
+        if (file_exists($src)) {
             return $src;
+        }
 
         if ($f['storage'] == 's3') {
             $url = $f['url'];
@@ -318,8 +323,9 @@ class Thumbnailer extends \Ufw1\Service
                 throw new \RuntimeException('error fetching remote file');
             }
 
-            if (!is_dir($dir = dirname($src)))
+            if (!is_dir($dir = dirname($src))) {
                 mkdir($dir, 0775, true);
+            }
 
             file_put_contents($src, $body);
             unset($body);

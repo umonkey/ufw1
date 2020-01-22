@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Show search results.
  * Currently only renders the template, we're using Yandex search.
@@ -117,8 +118,9 @@ class Search extends CommonHandler
 
         // Do we use wiki at all?
         $wikiCount = (int)$this->db->fetchCell("SELECT COUNT(1) FROM `nodes` WHERE `type` = 'wiki' AND `published` = 1");
-        if ($wikiCount == 0)
+        if ($wikiCount == 0) {
             return null;
+        }
 
         return [
             "name" => $query,

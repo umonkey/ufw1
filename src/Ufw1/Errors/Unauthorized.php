@@ -2,4 +2,7 @@
 
 namespace Ufw1\Errors;
 
-class Unauthorized extends \RuntimeException { }
+class Unauthorized extends \RuntimeException
+{
+
+}

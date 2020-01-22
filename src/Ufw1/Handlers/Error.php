@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Custom error handler.
  **/
@@ -8,7 +9,6 @@ namespace Ufw1\Handlers;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
-
 
 class Error extends CommonHandler
 {
@@ -37,22 +37,19 @@ class Error extends CommonHandler
             $tpl = "unauthorized.twig";
             $status = 401;
             $log = false;
-        }
-
-        elseif ($e instanceof \Ufw1\Errors\Forbidden) {
+        } elseif ($e instanceof \Ufw1\Errors\Forbidden) {
             // $tpl = "forbidden.twig";
             $status = 403;
             $log = false;
-        }
-
-        elseif ($e instanceof \Ufw1\Errors\NotFound) {
+        } elseif ($e instanceof \Ufw1\Errors\NotFound) {
             $tpl = "notfound.twig";
             $status = 404;
             $log = false;
         }
 
-        if ($log)
+        if ($log) {
             $this->logger->error('exception: {class}: {message}, stack: {stack}', $data['e']);
+        }
 
         $xrw = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? null;
         if ($xrw == "XMLHttpRequest") {

@@ -4,7 +4,6 @@ namespace Ufw1\Services;
 
 use \Slim\Http\Response;
 use \Psr\Container\ContainerInterface;
-
 use \Ufw1\Util;
 
 class Template extends \Ufw1\Service
@@ -42,8 +41,9 @@ class Template extends \Ufw1\Service
         $data = $this->addDefaults($data);
         $data = array_merge($this->defaults, $data);
 
-        if (isset($_GET['debug']) and $_GET['debug'] == 'tpl')
+        if (isset($_GET['debug']) and $_GET['debug'] == 'tpl') {
             debug($fileName, $data);
+        }
 
         $template = $this->twig->load($fileName);
         $html = $template->render($data);
@@ -92,8 +92,9 @@ class Template extends \Ufw1\Service
 
     protected function parseTimestamp($value)
     {
-        if (is_numeric($value))
+        if (is_numeric($value)) {
             return $value;
+        }
         return strtotime($value);
     }
 
@@ -135,10 +136,11 @@ class Template extends \Ufw1\Service
 
             $months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
             $now = strftime("%Y");
-            if ($year == $now)
+            if ($year == $now) {
                 $date = sprintf("%u %s", $day, $months[$month - 1]);
-            else
+            } else {
                 $date = sprintf("%u %s %u года", $day, $months[$month - 1], $year);
+            }
             return $date;
         }));
 
@@ -157,19 +159,22 @@ class Template extends \Ufw1\Service
         }));
 
         $this->twig->addFilter(new \Twig\TwigFilter("filesize", function ($size) {
-            if ($size > 1048576)
+            if ($size > 1048576) {
                 return sprintf("%.02f MB", $size / 1048576);
-            else
+            } else {
                 return sprintf("%.02f KB", $size / 1024);
+            }
         }));
 
         // Link to the specified subfile.
         $this->twig->addFunction(new \Twig\TwigFunction("file_link", function ($node, $version = 'original', $missing = '') {
-            if ($node["type"] != "file")
+            if ($node["type"] != "file") {
                 return $missing;
+            }
 
-            if (empty($node["files"][$version]))
+            if (empty($node["files"][$version])) {
                 return $missing;
+            }
 
             $ver = array_merge([
                 "storage" => "local",
@@ -177,10 +182,9 @@ class Template extends \Ufw1\Service
                 "url" => null,
             ], $node["files"][$version]);
 
-            if (!empty($ver["url"]))
+            if (!empty($ver["url"])) {
                 return $ver["url"];
-
-            elseif ($ver["storage"] == "local") {
+            } elseif ($ver["storage"] == "local") {
                 return "/node/{$node["id"]}/download/{$version}";
             }
 
@@ -191,10 +195,11 @@ class Template extends \Ufw1\Service
             if (preg_match('@^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2}) (?<hour>\d{2}):(?<min>\d{2}):(?<sec>\d{2})$@', $dt, $m)) {
                 $months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
                 $now = strftime("%Y");
-                if ($m["year"] == $now)
+                if ($m["year"] == $now) {
                     $date = sprintf("%u %s", $m["day"], $months[$m["month"] - 1]);
-                else
+                } else {
                     $date = sprintf("%u %s %u", $m["day"], $months[$m["month"] - 1], $m["year"]);
+                }
                 return $date;
             }
 

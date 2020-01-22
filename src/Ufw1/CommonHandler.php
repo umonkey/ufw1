@@ -51,18 +51,19 @@ class CommonHandler
 
     protected function requireRole(Request $request, $role)
     {
-        if (empty($role))
+        if (empty($role)) {
             return true;
+        }
 
         $account = $this->requireUser($request);
 
-        if (is_array($role) and in_array($account["role"], $role))
+        if (is_array($role) and in_array($account["role"], $role)) {
             return true;
-
-        elseif (!is_array($role) and $account["role"] == $role)
+        } elseif (!is_array($role) and $account["role"] == $role) {
             return true;
+        }
 
-        throw new \Ufw1\Errors\Forbidden;
+        throw new \Ufw1\Errors\Forbidden();
     }
 
     /**
@@ -76,21 +77,26 @@ class CommonHandler
     protected function getUser(Request $request)
     {
         $session = $this->sessionGet($request);
-        if (empty($session))
+        if (empty($session)) {
             return null;
+        }
 
-        if (empty($session["user_id"]))
+        if (empty($session["user_id"])) {
             return null;
+        }
 
         $user = $this->node->get($session["user_id"]);
-        if (empty($user))
+        if (empty($user)) {
             return null;
+        }
 
-        if ($user["type"] != "user")
+        if ($user["type"] != "user") {
             return null;
+        }
 
-        if (!empty($session["password"]) and $session["password"] != $user["password"])
+        if (!empty($session["password"]) and $session["password"] != $user["password"]) {
             return null;
+        }
 
         return $user;
     }
@@ -98,11 +104,13 @@ class CommonHandler
     protected function requireUser(Request $request)
     {
         $user = $this->getUser($request);
-        if (empty($user))
-            throw new \Ufw1\Errors\Unauthorized;
+        if (empty($user)) {
+            throw new \Ufw1\Errors\Unauthorized();
+        }
 
-        if ($user["published"] == 0)
-            throw new \Ufw1\Errors\Forbidden;
+        if ($user["published"] == 0) {
+            throw new \Ufw1\Errors\Forbidden();
+        }
 
         return $user;
     }
@@ -111,11 +119,13 @@ class CommonHandler
     {
         $user = $this->requireUser($request);
 
-        if (empty($user["role"]))
-            throw new \Ufw1\Errors\Forbidden;
+        if (empty($user["role"])) {
+            throw new \Ufw1\Errors\Forbidden();
+        }
 
-        if ($user["role"] != "admin")
-            throw new \Ufw1\Errors\Forbidden;
+        if ($user["role"] != "admin") {
+            throw new \Ufw1\Errors\Forbidden();
+        }
 
         return $user;
     }
@@ -124,17 +134,21 @@ class CommonHandler
     {
         $user = $this->getUser($request);
 
-        if (empty($user))
+        if (empty($user)) {
             return false;
+        }
 
-        if ($user["published"] != 1)
+        if ($user["published"] != 1) {
             return false;
+        }
 
-        if (empty($user["role"]))
+        if (empty($user["role"])) {
             return false;
+        }
 
-        if ($user["role"] != "admin")
+        if ($user["role"] != "admin") {
             return false;
+        }
 
         return true;
     }
@@ -158,8 +172,9 @@ class CommonHandler
         $id = $this->sessionGetId($request);
         if ($id) {
             $row = $this->db->fetchOne("SELECT `data` FROM `sessions` WHERE `id` = ?", [$id]);
-            if ($row)
+            if ($row) {
                 return unserialize($row["data"]);
+            }
         }
     }
 
@@ -186,7 +201,8 @@ class CommonHandler
 
         $now = strftime("%Y-%m-%d %H:%M:%S");
 
-        $this->db->query("REPLACE INTO `sessions` (`id`, `updated`, `data`) VALUES (?, ?, ?)", [$sid, $now, serialize($data)]);
+        $this->db->query("REPLACE INTO `sessions` (`id`, `updated`, `data`) "
+            . "VALUES (?, ?, ?)", [$sid, $now, serialize($data)]);
 
         $this->logger->debug("session {sid} updated.", [
             "sid" => $sid,
@@ -220,7 +236,8 @@ class CommonHandler
 
         if ($data) {
             $now = strftime("%Y-%m-%d %H:%M:%S");
-            $this->db->query("REPLACE INTO `sessions` (`id`, `updated`, `data`) VALUES (?, ?, ?)", [$sid, $now, serialize($data)]);
+            $this->db->query("REPLACE INTO `sessions` (`id`, `updated`, `data`) "
+                . "VALUES (?, ?, ?)", [$sid, $now, serialize($data)]);
 
             setcookie("session_id", $sid, time() + 86400 * 30, "/");
 
@@ -263,8 +280,9 @@ class CommonHandler
      **/
     protected function render(Request $request, $templateName, array $data = [])
     {
-        if (empty($data["breadcrumbs"]))
+        if (empty($data["breadcrumbs"])) {
             $data["breadcrumbs"] = $this->getBreadcrumbs($request, $data);
+        }
 
         $html = $this->renderHTML($request, $templateName, $data);
 
@@ -317,8 +335,9 @@ class CommonHandler
     protected function renderXML(Request $request, $templateName, array $data)
     {
         $def = $this->container->get("settings")["templates"];
-        if (!empty($def["defaults"]))
+        if (!empty($def["defaults"])) {
             $data = array_merge($def["defaults"], $data);
+        }
 
         $xml = $this->template->render($templateName, $data);
 
@@ -352,10 +371,13 @@ class CommonHandler
     protected function search($query)
     {
         return array_map(function ($em) {
-            if (!($name = $em['meta']['title']))
+            if (!($name = $em['meta']['title'])) {
                 $name = substr($em['key'], 5);
-            if (!($link = $em['meta']['link']))
+            }
+
+            if (!($link = $em['meta']['link'])) {
                 $link = '/wiki?name=' . urlencode($name);
+            }
 
             $snippet = Util::processTypography($em['meta']['snippet'] ?? '');
             $snippet = str_replace('&nbsp;', ' ', $snippet);
@@ -382,22 +404,25 @@ class CommonHandler
 
     protected function sendFromCache(Request $request, $callback, $key = null)
     {
-        if ($key === null)
+        if ($key === null) {
             $key = $request->getUri()->getPath();
+        }
 
         $ckey = md5($key);
 
         $cc = $request->getServerParam("HTTP_CACHE_CONTROL");
         $refresh = $cc == "no-cache";
 
-        if ($request->getQueryParam("debug") == "tpl")
+        if ($request->getQueryParam("debug") == "tpl") {
             $refresh = true;
+        }
 
         $row = $refresh ? null : $this->db->fetchOne("SELECT * FROM `cache` WHERE `key` = ?", [$ckey]);
         if (empty($row)) {
             $_tmp = $callback($request);
-            if (!is_array($_tmp))
+            if (!is_array($_tmp)) {
                 return $_tmp;
+            }
 
             list($type, $body) = $_tmp;
 
@@ -418,8 +443,9 @@ class CommonHandler
         if ($key[0] == "/") {
             $path = $_SERVER["DOCUMENT_ROOT"] . $key;
             $folder = dirname($path);
-            if (file_exists($folder) and is_dir($folder) and is_writable($folder))
+            if (file_exists($folder) and is_dir($folder) and is_writable($folder)) {
                 file_put_contents($path, $body);
+            }
         }
 
         return $this->sendCached($request, $body, $type, $added);
@@ -432,8 +458,10 @@ class CommonHandler
         $response = new Response(200);
 
         if ($lastmod) {
-            if (!is_numeric($lastmod))
+            if (!is_numeric($lastmod)) {
                 $lastmod = strtotime($lastmod);
+            }
+
             $ts = gmstrftime("%a, %d %b %Y %H:%M:%S %z", $lastmod);
             $response = $response->withHeader("Last-Modified", $ts);
         }
@@ -461,8 +489,9 @@ class CommonHandler
         $html = preg_replace_callback('@(src|href)="([^"]+\.(css|js))"@', function ($m) use ($root) {
             $path = $root . $m[2];
 
-            if (!file_exists($path))
+            if (!file_exists($path)) {
                 return $m[0];
+            }
 
             $etag = sprintf("%x-%x", filemtime($path), filesize($path));
             return sprintf('%s="%s?etag=%s"', $m[1], $m[2], $etag);
@@ -485,20 +514,21 @@ class CommonHandler
 
     protected function forbidden()
     {
-        throw new \Ufw1\Errors\Forbidden;
+        throw new \Ufw1\Errors\Forbidden();
     }
 
     protected function unauthorized()
     {
-        throw new \Ufw1\Errors\Unauthorized;
+        throw new \Ufw1\Errors\Unauthorized();
     }
 
     protected function notfound($message = null)
     {
-        if ($message)
+        if ($message) {
             throw new Errors\NotFound($message);
-        else
+        } else {
             throw new Errors\NotFound();
+        }
     }
 
     protected function unavailable($message = null)
@@ -519,12 +549,16 @@ class CommonHandler
     protected function fsget($name)
     {
         $st = $this->container->get("settings");
-        if (empty($st['files']['path']))
+
+        if (empty($st['files']['path'])) {
             throw new \RuntimeException('file storage not configured');
+        }
 
         $path = $st['files']['path'] . '/' . $name;
-        if (!file_exists($path))
+
+        if (!file_exists($path)) {
             throw new \RuntimeException("file {$name} is not readable");
+        }
 
         return file_get_contents($path);
     }
@@ -536,20 +570,25 @@ class CommonHandler
         $name = substr($hash, 0, 1) . '/' . substr($hash, 1, 2) . '/' . $hash;
 
         $st = $this->container->get("settings");
-        if (empty($st['files']['path']))
+
+        if (empty($st['files']['path'])) {
             throw new \RuntimeException('file storage not configured');
+        }
 
         $path = $st['files']['path'] . '/' . $name;
 
         $dir = dirname($path);
         if (!is_dir($dir)) {
             $res = mkdir($dir, 0775, true);
-            if ($res === false)
+
+            if ($res === false) {
                 throw new \RuntimeException("could not create folder {$dir}");
+            }
         }
 
-        if (!file_put_contents($path))
+        if (!file_put_contents($path)) {
             throw new \RuntimeException("file {$name} is not readable");
+        }
 
         chmod($path, 0664);
 

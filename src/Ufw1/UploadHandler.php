@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Handle file uploads.
  *
@@ -49,8 +50,9 @@ class UploadHandler extends Handlers
             );
 
         $ext = mb_strtolower(pathinfo($res["real_name"], PATHINFO_EXTENSION));
-        if (!in_array($ext, ["jpg", "jpeg", "png", "gif"]))
+        if (!in_array($ext, ["jpg", "jpeg", "png", "gif"])) {
             throw new RuntimeException("file of unsupported type");
+        }
 
         $tmp = tempnam($_SERVER["DOCUMENT_ROOT"], "upload_");
         $file->moveTo($tmp);
@@ -59,8 +61,9 @@ class UploadHandler extends Handlers
         unlink($tmp);
 
         $hash = md5($res["body"]);
-        if ($file = $this->db->getFileByHash($hash))
+        if ($file = $this->db->getFileByHash($hash)) {
             return $file;
+        }
 
         $part1 = substr(sha1($_SERVER["DOCUMENT_ROOT"]), 0, 10);
         $part2 = substr(sha1($res["body"]), 0, 10);

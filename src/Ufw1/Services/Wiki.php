@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Wiki access code.
  *
@@ -11,8 +12,9 @@ class Wiki extends \Ufw1\Service
 {
     public function updatePage($name, $source, array $user, $section = null)
     {
-        if (!$this->canEditPages($user))
-            throw new Errors\Forbidden;
+        if (!$this->canEditPages($user)) {
+            throw new Errors\Forbidden();
+        }
 
         if (!($node = $this->getPageByName($name))) {
             $node = [
@@ -73,8 +75,9 @@ class Wiki extends \Ufw1\Service
         }
 
         $role = $user['role'] ?? 'nobody';
-        if (is_array($roles) and in_array($role, $roles))
+        if (is_array($roles) and in_array($role, $roles)) {
             return true;
+        }
 
         return false;
     }
@@ -88,8 +91,9 @@ class Wiki extends \Ufw1\Service
         }
 
         $role = $user['role'] ?? 'nobody';
-        if (is_array($roles) and in_array($role, $roles))
+        if (is_array($roles) and in_array($role, $roles)) {
             return true;
+        }
 
         return false;
     }
@@ -176,9 +180,7 @@ class Wiki extends \Ufw1\Service
 
             if (preg_match('@^([a-z0-9-_]+):\s+(.+)$@', $line, $m)) {
                 $res[$m[1]] = $m[2];
-            }
-
-            else {
+            } else {
                 // wrong format
                 $source = $node["source"];
                 break;
@@ -329,9 +331,9 @@ class Wiki extends \Ufw1\Service
             }
         }
 
-        if (count($album) == 1)
+        if (count($album) == 1) {
             $out[] = $album[0];
-        elseif (count($album) > 1) {
+        } elseif (count($album) > 1) {
             $code = "<div class='photoalbum'>";
             $code .= implode("", $album);
             $code .= "</div>";
@@ -354,8 +356,9 @@ class Wiki extends \Ufw1\Service
 
         $source = preg_replace_callback('@\[\[([^]]+)\]\]@', function ($m) use ($interwiki) {
             // Embed images later.
-            if (0 === strpos($m[1], "image:"))
+            if (0 === strpos($m[1], "image:")) {
                 return $m[0];
+            }
 
             // Embed maps later.
             if (0 === strpos($m[1], "map:")) {
@@ -447,14 +450,10 @@ class Wiki extends \Ufw1\Service
                 if (preg_match('@^width=(\d+)$@', $part, $m)) {
                     $iw = $m[1] . "px";
                     $ih = round($m[1] / $rate) . "px";
-                }
-
-                elseif (preg_match('@^height=(\d+)$@', $part, $m)) {
+                } elseif (preg_match('@^height=(\d+)$@', $part, $m)) {
                     $ih = $m[1] . "px";
                     $iw = round($m[1] * $rate) . "px";
-                }
-
-                else {
+                } else {
                     $className .= " " . $part;
                 }
             }
@@ -463,9 +462,7 @@ class Wiki extends \Ufw1\Service
                 $info['small'] = $info['large'];
                 $info['small_webp'] = $info['large_webp'] ?? null;
                 $info['link'] = null;
-            }
-
-            elseif ($iw == "auto" and $ih == "auto") {
+            } elseif ($iw == "auto" and $ih == "auto") {
                 $ih = "150px";
                 $iw = round(150 * $rate) . "px";
             }
@@ -613,9 +610,7 @@ class Wiki extends \Ufw1\Service
                 } else {
                     $wanted .= $line . PHP_EOL;
                 }
-            }
-
-            else {
+            } else {
                 if ($found and trim($m[1]) == $sectionName) {
                     $wanted .= $line . PHP_EOL;
                     continue;
@@ -652,11 +647,13 @@ class Wiki extends \Ufw1\Service
         foreach ($lines as $line) {
             $line = trim($line);
 
-            if (0 === strpos($line, '---'))
+            if (0 === strpos($line, '---')) {
                 return $props;
+            }
 
-            if (preg_match('@^([a-z0-9_-]+):\s+(.+)$@i', $line, $m))
+            if (preg_match('@^([a-z0-9_-]+):\s+(.+)$@i', $line, $m)) {
                 $props[$m[1]] = $m[2];
+            }
         }
 
         return [];

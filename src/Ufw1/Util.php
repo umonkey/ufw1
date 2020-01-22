@@ -1,12 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ufw1;
 
 use Psr\Container\ContainerInterface;
+use Slim\App;
 
 class Util
 {
-    public static function cleanHtml($html)
+    public static function cleanHtml(string $html): string
     {
         // Closing tags should never have leading space.
         $html = preg_replace('@\s+</([a-z0-9]+)>@', '</\1>', $html);
@@ -22,18 +25,20 @@ class Util
         return $html;
     }
 
-    public static function parseHtmlAttrs($tag)
+    public static function parseHtmlAttrs(string $tag): array
     {
         $res = [];
 
         if (preg_match_all('@([a-z-]+)="([^"]+)"@', $tag, $m)) {
-            foreach ($m[1] as $idx => $key)
+            foreach ($m[1] as $idx => $key) {
                 $res[$key] = trim($m[2][$idx]);
+            }
         }
 
         if (preg_match_all("@([a-z-]+)='([^']+)'@", $tag, $m)) {
-            foreach ($m[1] as $idx => $key)
+            foreach ($m[1] as $idx => $key) {
                 $res[$key] = trim($m[2][$idx]);
+            }
         }
 
         return $res;
@@ -47,7 +52,7 @@ class Util
      * @param  string $text Source text.
      * @return string       Updated text.
      **/
-    public static function processTypography($text)
+    public static function processTypography(string $text): string
     {
         // Some typography.
         $text = preg_replace('@\s+--\s+@', '&nbsp;— ', $text);
@@ -60,12 +65,13 @@ class Util
         return $text;
     }
 
-    public static function hyphenate($text, $len = 10)
+    public static function hyphenate(string $text, int $len = 10): string
     {
         $text = preg_replace_callback('@[а-я]+@ui', function ($m) use ($len) {
             $word = $m[0];
-            if (mb_strlen($word) < $len)
+            if (mb_strlen($word) < $len) {
                 return $word;
+            }
 
             $word = preg_replace('@([бвгджзйклмнпрстфхцчшщ]+[аеёиоуыьэюя]+(?:ль)?)@ui', '\1|', $word);
 
@@ -93,24 +99,17 @@ class Util
         return $text;
     }
 
-    public static function plural($number, $single, $double, $multiple)
+    public static function plural(int $number, string $single, string $double, string $multiple): string
     {
         $titles = array($single, $double, $multiple);
         $cases = array(2, 0, 1, 1, 1, 2);
         return $titles[($number % 100 > 4 && $number % 100 < 20) ? 2 : $cases[min($number % 10, 5)]];
     }
 
-    public static function containerSetup(&$container)
+    public static function containerSetup(ContainerInterface $container): void
     {
         $container['database'] = function ($c) {
             return new Services\Database($c);
-        };
-
-        $container['errorHandler'] = function ($c) {
-            return function ($request, $response, $e) use ($c) {
-                $h = new \Ufw1\Handlers\Error($c);
-                return $h($request, $response, ['exception' => $e]);
-            };
         };
 
         $container['file'] = function ($c) {
@@ -127,7 +126,7 @@ class Util
 
         $container['notFoundHandler'] = function ($c) {
             return function ($request, $response) use ($c) {
-                throw new \Ufw1\Errors\NotFound;
+                throw new \Ufw1\Errors\NotFound();
             };
         };
 
@@ -156,29 +155,32 @@ class Util
         };
 
         $container['thumbnailer'] = function ($c) {
-            if (class_exists('\Imagickx'))
+            if (class_exists('\Imagickx')) {
                 return new Services\Thumbnailer2($c);
-            else
+            } else {
                 return new Services\Thumbnailer($c);
+            }
         };
 
         $container['wiki'] = function ($c) {
             $t = new Services\Wiki($c);
             return $t;
         };
+
+        self::installErrorHandler($container);
     }
 
-    public static function installAccount($app)
+    public static function installAccount(App $app): void
     {
         Handlers\Account::setupRoutes($app);
     }
 
-    public static function installAdmin($app)
+    public static function installAdmin(App $app): void
     {
         Handlers\Admin::setupRoutes($app);
     }
 
-    public static function installErrorHandler($container)
+    public static function installErrorHandler(ContainerInterface $container): void
     {
         $container['errorHandler'] = function ($c) {
             return function ($request, $response, $e) use ($c) {
@@ -188,45 +190,45 @@ class Util
         };
     }
 
-    public static function installFiles($app)
+    public static function installFiles(App $app): void
     {
         Handlers\Files::setupRoutes($app);
     }
 
-    public static function installSearch($app)
+    public static function installSearch(App $app): void
     {
-        $app->get('/search',         '\Ufw1\Handlers\Search:onGet');
-        $app->get('/search.xml',     '\Ufw1\Handlers\Search:onGetXML');
+        $app->get('/search', '\Ufw1\Handlers\Search:onGet');
+        $app->get('/search.xml', '\Ufw1\Handlers\Search:onGetXML');
         $app->get('/search/suggest', '\Ufw1\Handlers\Search:onSuggest');
     }
 
-    public static function installTaskQ($app)
+    public static function installTaskQ(App $app): void
     {
         $class = Handlers\TaskQ::class;
 
-        $app->get('/taskq/list',            $class . ':onList');
+        $app->get('/taskq/list', $class . ':onList');
         $app->any('/taskq/{id:[0-9]+}/run', $class . ':onRun');
     }
 
-    public static function installWiki($app)
+    public static function installWiki(App $app): void
     {
         $class = Handlers\Wiki::class;
 
-        $app->get ('/wiki',                   $class . ':onRead');
-        $app->get ('/wiki/edit',              $class . ':onEdit');
-        $app->post('/wiki/edit',              $class . ':onSave');
-        $app->post('/wiki/embed-clipboard',   $class . ':onEmbedClipboard');
-        $app->get ('/wiki/index',             $class . ':onIndex');
-        $app->get ('/wiki/recent',            $class . ':onRecent');
-        $app->get ('/wiki/recent-files.json', $class . ':onRecentFiles');
-        $app->get ('/wiki/reindex',           $class . ':onReindex');
-        $app->any ('/wiki/upload',            $class . ':onUpload');
+        $app->get('/wiki', $class . ':onRead');
+        $app->get('/wiki/edit', $class . ':onEdit');
+        $app->post('/wiki/edit', $class . ':onSave');
+        $app->post('/wiki/embed-clipboard', $class . ':onEmbedClipboard');
+        $app->get('/wiki/index', $class . ':onIndex');
+        $app->get('/wiki/recent', $class . ':onRecent');
+        $app->get('/wiki/recent-files.json', $class . ':onRecentFiles');
+        $app->get('/wiki/reindex', $class . ':onReindex');
+        $app->any('/wiki/upload', $class . ':onUpload');
     }
 
     /**
      * Adds admin UI to the touring table.
      **/
-    public static function addAdminRoutes(&$app)
+    public static function addAdminRoutes(App &$app): void
     {
         if (class_exists('\App\Handlers\TaskQ')) {
             $app->get('/taskq/list', '\App\Handlers\TaskQ:onList');
@@ -240,7 +242,7 @@ class Util
     /**
      * Perform actions after the package is updated.
      **/
-    public static function postUpdate()
+    public static function postUpdate(): void
     {
         if (!file_exists('docs')) {
             if (file_exists('vendor/umonkey/ufw1/docs')) {

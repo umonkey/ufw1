@@ -7,8 +7,9 @@
 
 function debug()
 {
-    while (ob_get_level())
+    while (ob_get_level()) {
         ob_end_clean();
+    }
 
     if (PHP_SAPI != 'cli') {
         header("HTTP/1.0 503 Debug");

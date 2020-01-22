@@ -1,7 +1,10 @@
 <?php
+
 /**
  * Basic administrative UI.
  **/
+
+declare(strict_types=1);
 
 namespace Ufw1\Handlers;
 
@@ -78,11 +81,13 @@ class Admin extends CommonHandler
 
         $types = array_keys($st);
 
-        if (isset($args['type']))
+        if (isset($args['type'])) {
             $types = in_array($args['type'], $types) ? [$args['type']] : [];
+        }
 
-        if (empty($types))
+        if (empty($types)) {
             $this->forbidden();
+        }
 
         $types = implode(', ', array_map(function ($em) {
             return "'{$em}'";
@@ -131,8 +136,9 @@ class Admin extends CommonHandler
         $user = $this->requireAdmin($request);
 
         $id = $args['id'];
-        if (!($node = $this->node->get($id)))
+        if (!($node = $this->node->get($id))) {
             $this->notfound();
+        }
 
         $st = $this->container->get('settings');
         $form = $st['node_forms'][$node['type']] ?? null;
@@ -157,8 +163,9 @@ class Admin extends CommonHandler
         $user = $this->requireAdmin($request);
 
         $id = $args['id'];
-        if (!($node = $this->node->get($id)))
+        if (!($node = $this->node->get($id))) {
             $this->notfound();
+        }
 
         $code = json_encode($node, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $code = str_replace('\r', '\n', $code);
@@ -194,13 +201,15 @@ class Admin extends CommonHandler
 
         // Check access.
         $config = $this->getNodeConfig($node['type']);
-        if ($user['role'] != 'admin' and (empty($config['edit_roles']) or !in_array($user['role'], $config['edit_roles'])))
+        if ($user['role'] != 'admin' and (empty($config['edit_roles']) or !in_array($user['role'], $config['edit_roles']))) {
             $this->forbidden();
+        }
 
         if ($raw = $request->getParam('raw_node')) {
             $node = json_decode($raw, true);
-            if ($node === null)
+            if ($node === null) {
                 $this->fail('Ошибка в коде.');
+            }
         } else {
             $node = array_merge($node, $form);
         }
@@ -211,8 +220,9 @@ class Admin extends CommonHandler
             $this->taskq->add('update-node-thumbnail', ['id' => $node['id']]);
         }
 
-        if (empty($next))
+        if (empty($next)) {
             $next = "/admin/nodes/{$node['type']}?edited={$node['id']}";
+        }
 
         $this->db->commit();
 
@@ -233,27 +243,30 @@ class Admin extends CommonHandler
         $id = (int)$request->getParam('id');
         $deleted = (int)$request->getParam('deleted');
 
-        if (!($node = $this->node->get($id)))
+        if (!($node = $this->node->get($id))) {
             $this->fail('Документ не найден.');
+        }
 
         // Check access.
         $config = $this->getNodeConfig($node['type']);
-        if ($user['role'] != 'admin' and (empty($config['edit_roles']) or !in_array($user['role'], $config['edit_roles'])))
+        if ($user['role'] != 'admin' and (empty($config['edit_roles']) or !in_array($user['role'], $config['edit_roles']))) {
             $this->forbidden();
+        }
 
         $node['deleted'] = $deleted;
         $node = $this->node->save($node);
 
         $this->db->commit();
 
-        if ($node['type'] == 'user' and $deleted)
+        if ($node['type'] == 'user' and $deleted) {
             $message = 'Пользователь удалён.';
-        elseif ($node['type'] == 'user' and !$deleted)
+        } elseif ($node['type'] == 'user' and !$deleted) {
             $message = 'Пользователь восстановлен.';
-        elseif ($deleted)
+        } elseif ($deleted) {
             $message = 'Документ удалён';
-        elseif (!$deleted)
+        } elseif (!$deleted) {
             $message = 'Документ восстановлен.';
+        }
 
         return $response->withJSON([
             'success' => true,
@@ -273,27 +286,30 @@ class Admin extends CommonHandler
         $id = (int)$request->getParam('id');
         $published = (int)$request->getParam('published');
 
-        if (!($node = $this->node->get($id)))
+        if (!($node = $this->node->get($id))) {
             $this->fail('Документ не найден.');
+        }
 
         // Check access.
         $config = $this->getNodeConfig($node['type']);
-        if ($user['role'] != 'admin' and (empty($config['edit_roles']) or !in_array($user['role'], $config['edit_roles'])))
+        if ($user['role'] != 'admin' and (empty($config['edit_roles']) or !in_array($user['role'], $config['edit_roles']))) {
             $this->forbidden();
+        }
 
         $node['published'] = $published;
         $node = $this->node->save($node);
 
         $this->db->commit();
 
-        if ($node['type'] == 'user' and $published)
+        if ($node['type'] == 'user' and $published) {
             $message = 'Пользователь активирован.';
-        elseif ($node['type'] == 'user' and !$published)
+        } elseif ($node['type'] == 'user' and !$published) {
             $message = 'Пользователь заблокирован.';
-        elseif ($published)
+        } elseif ($published) {
             $message = 'Документ опубликован';
-        elseif (!$published)
+        } elseif (!$published) {
             $message = 'Документ сокрыт.';
+        }
 
         return $response->withJSON([
             'success' => true,
@@ -375,8 +391,9 @@ class Admin extends CommonHandler
             }
         }
 
-        if (empty($types))
+        if (empty($types)) {
             $this->forbidden();
+        }
 
         return $this->render($request, 'admin-submit.twig', [
             'user' => $user,
@@ -390,8 +407,9 @@ class Admin extends CommonHandler
 
         if (isset($args['type'])) {
             $form = $this->container->get('settings')['node_forms'][$args['type']] ?? null;
-            if (empty($form))
+            if (empty($form)) {
                 $this->notfound();
+            }
 
             return $this->render($request, 'admin-submit-node.twig', [
                 'user' => $user,
@@ -461,9 +479,7 @@ class Admin extends CommonHandler
             return $response->withJSON([
                 'redirect' => $next,
             ]);
-        }
-
-        else {
+        } else {
             $session = $this->sessionGet($request);
             $session = json_encode($session, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
@@ -482,8 +498,9 @@ class Admin extends CommonHandler
         $user = $this->requireAdmin($request);
 
         $node = $this->node->get($args["id"]);
-        if (empty($node) or $node['type'] != 'user')
+        if (empty($node) or $node['type'] != 'user') {
             $this->notfound();
+        }
 
         $this->sessionEdit($request, function ($data) use ($node) {
             $data['user_stack'][] = [
@@ -525,8 +542,9 @@ class Admin extends CommonHandler
         }
 
         $user = $this->requireUser($request);
-        if (!in_array($user['role'], $roles))
+        if (!in_array($user['role'], $roles)) {
             $this->forbidden();
+        }
 
         return $user;
     }
@@ -548,8 +566,9 @@ class Admin extends CommonHandler
         $st = $this->container->get('settings')['node_forms'] ?? [];
 
         $types = [];
-        foreach ($st as $k => $v)
+        foreach ($st as $k => $v) {
             $types[$k] = $v['title'] ?? $k;
+        }
 
         asort($types);
 
@@ -566,19 +585,22 @@ class Admin extends CommonHandler
         try {
             $limit = strftime('%Y-%m-%d %H:%M:%S', time() - 600);
             $count = $this->db->fetchcell('SELECT COUNT(1) FROM `taskq` WHERE `added` < ?', [$limit]);
-            if ($count > 0)
+            if ($count > 0) {
                 $res['taskq_stale'] = $count;
+            }
         } catch (\Exception $e) {
             $res['taskq_dberror'] = $e->getMessage();
         }
 
         $st = $this->container->get('settings')['taskq'];
-        if (empty($st['ping_url']) or empty($st['exec_pattern']))
+        if (empty($st['ping_url']) or empty($st['exec_pattern'])) {
             $res['taskq_config'] = true;
+        }
 
         $st = $this->container->get('settings')['S3'];
-        if (empty($st['access_key']))
+        if (empty($st['access_key'])) {
             $res['s3_config'] = true;
+        }
 
         return $res;
     }
@@ -608,23 +630,23 @@ class Admin extends CommonHandler
     {
         $class = get_called_class();
 
-        $app->get ('/admin',                             $class . ':onDashboard');
-        $app->get ('/admin/database',                    $class . ':onDatabaseStatus');
-        $app->get ('/admin/nodes',                       $class . ':onNodeList');
-        $app->get ('/admin/nodes/{type}',                $class . ':onNodeListOne');
-        $app->post('/admin/nodes/delete',                $class . ':onDeleteNode');
-        $app->post('/admin/nodes/save',                  $class . ':onSaveNode');
-        $app->post('/admin/nodes/publish',               $class . ':onPublishNode');
-        $app->get ('/admin/nodes/{id:[0-9]+}/edit',      $class . ':onEditNode');
-        $app->get ('/admin/nodes/{id:[0-9]+}/edit-raw',  $class . ':onEditRawNode');
-        $app->get ('/admin/nodes/{id:[0-9]+}/dump',      $class . ':onDumpNode');
-        $app->post('/admin/nodes/{id:[0-9]+}/sudo',      $class . ':onSudo');
+        $app->get('/admin', $class . ':onDashboard');
+        $app->get('/admin/database', $class . ':onDatabaseStatus');
+        $app->get('/admin/nodes', $class . ':onNodeList');
+        $app->get('/admin/nodes/{type}', $class . ':onNodeListOne');
+        $app->post('/admin/nodes/delete', $class . ':onDeleteNode');
+        $app->post('/admin/nodes/save', $class . ':onSaveNode');
+        $app->post('/admin/nodes/publish', $class . ':onPublishNode');
+        $app->get('/admin/nodes/{id:[0-9]+}/edit', $class . ':onEditNode');
+        $app->get('/admin/nodes/{id:[0-9]+}/edit-raw', $class . ':onEditRawNode');
+        $app->get('/admin/nodes/{id:[0-9]+}/dump', $class . ':onDumpNode');
+        $app->post('/admin/nodes/{id:[0-9]+}/sudo', $class . ':onSudo');
         $app->post('/admin/nodes/{id:[0-9]+}/upload-s3', $class . ':onUploadS3');
-        $app->get ('/admin/s3',                          $class . ':onS3');
-        $app->post('/admin/s3',                          $class . ':onScheduleS3');
-        $app->any ('/admin/session',                     $class . ':onEditSession');
-        $app->get ('/admin/submit',                      $class . ':onSubmitList');
-        $app->get ('/admin/submit/{type}',               $class . ':onSubmit');
-        $app->get ('/admin/taskq',                       $class . ':onTaskQ');
+        $app->get('/admin/s3', $class . ':onS3');
+        $app->post('/admin/s3', $class . ':onScheduleS3');
+        $app->any('/admin/session', $class . ':onEditSession');
+        $app->get('/admin/submit', $class . ':onSubmitList');
+        $app->get('/admin/submit/{type}', $class . ':onSubmit');
+        $app->get('/admin/taskq', $class . ':onTaskQ');
     }
 }

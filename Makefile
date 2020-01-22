@@ -19,4 +19,7 @@ sql:
 test: test-syntax
 
 test-syntax:
-	vendor/bin/phpcs src
+	vendor/bin/phpcs --standard=PSR12 --ignore='database/migrations' --exclude=Generic.Files.LineLength src
+
+phpcbf:
+	vendor/bin/phpcbf --standard=PSR12 --ignore='database/migrations' --exclude=Generic.Files.LineLength src

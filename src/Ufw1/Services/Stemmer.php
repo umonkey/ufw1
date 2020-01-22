@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the RussianStemmer package
  *
@@ -48,7 +49,8 @@ class Stemmer extends \Ufw1\Service
             self::removeEndings($word, self::REGEX_REFLEXIVES, $rv);
 
             // Затем в следующем порядке пробуем удалить окончания: ADJECTIVAL, VERB, NOUN. Как только одно из них найдено – шаг завершается.
-            if (!(self::removeEndings(
+            if (
+                !(self::removeEndings(
                     $word,
                     array(
                         self::REGEX_PARTICIPLE1 . self::REGEX_ADJECTIVE,

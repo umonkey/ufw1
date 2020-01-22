@@ -7,8 +7,9 @@ class FileFactory extends \Ufw1\Service
     public function get($id)
     {
         $node = $this->node->get($id);
-        if (empty($node) or $node["type"] != "file")
+        if (empty($node) or $node["type"] != "file") {
             return null;
+        }
 
         return $this->fix($node);
     }
@@ -16,8 +17,9 @@ class FileFactory extends \Ufw1\Service
     public function getByHash($hash)
     {
         $node = $this->node->getByKey($hash);
-        if (empty($node) or $node["type"] != "file")
+        if (empty($node) or $node["type"] != "file") {
             return null;
+        }
 
         return $this->fix($node);
     }
@@ -26,8 +28,9 @@ class FileFactory extends \Ufw1\Service
     {
         $logger = $this->logger;
 
-        if ($node["type"] != "file")
+        if ($node["type"] != "file") {
             return false;
+        }
 
         $body = $this->fsget($node['fname']);
         return $body;
@@ -84,10 +87,12 @@ class FileFactory extends \Ufw1\Service
                 'path' => $fname,
             ]];
 
-            if (isset($props['width']))
+            if (isset($props['width'])) {
                 $node['files']['original']['width'] = $props['width'];
-            if (isset($props['height']))
+            }
+            if (isset($props['height'])) {
                 $node['files']['original']['height'] = $props['height'];
+            }
         }
 
         $node = $this->node->save($node);
@@ -108,10 +113,11 @@ class FileFactory extends \Ufw1\Service
     {
         $kind = "other";
 
-        if (0 === strpos($type, "image/"))
+        if (0 === strpos($type, "image/")) {
             $kind = "photo";
-        elseif (0 === strpos($type, "video/"))
+        } elseif (0 === strpos($type, "video/")) {
             $kind = "video";
+        }
 
         return $kind;
     }
@@ -119,12 +125,13 @@ class FileFactory extends \Ufw1\Service
     protected function fix(array $node)
     {
         if (empty($node["kind"])) {
-            if (0 === strpos($node["mime_type"], "image/"))
+            if (0 === strpos($node["mime_type"], "image/")) {
                 $node["kind"] = "photo";
-            elseif (0 === strpos($node["mime_type"], "video/"))
+            } elseif (0 === strpos($node["mime_type"], "video/")) {
                 $node["kind"] = "video";
-            else
+            } else {
                 $node["kind"] = "other";
+            }
         }
 
         return $node;
@@ -134,15 +141,17 @@ class FileFactory extends \Ufw1\Service
     {
         $settings = $this->getSettings();
 
-        if (empty($settings["path"]))
+        if (empty($settings["path"])) {
             throw new \RuntimeException("file storage path not set");
+        }
 
         $path = $settings["path"];
 
         if (!is_dir($path)) {
             $res = mkdir($path, 0775, true);
-            if ($res === false)
+            if ($res === false) {
                 throw new \RuntimeException("file storage does not exist and could not be created: {$path}");
+            }
         } elseif (!is_writable($path)) {
             throw new \RuntimeException("file storage is not writable: {$path}");
         }
@@ -183,8 +192,9 @@ class FileFactory extends \Ufw1\Service
     public function fsget($path)
     {
         $fpath = $this->fsgetpath($path);
-        if (!file_exists($fpath))
+        if (!file_exists($fpath)) {
             return false;
+        }
         return file_get_contents($fpath);
     }
 
@@ -205,13 +215,15 @@ class FileFactory extends \Ufw1\Service
         $fpath = $storage . '/' . $fname;
         if (!is_dir($dir = dirname($fpath))) {
             $res = mkdir($dir, 0775, true);
-            if ($res === false)
+            if ($res === false) {
                 throw new \RuntimeException('could not create file folder');
+            }
         }
 
         $res = @file_put_contents($fpath, $body);
-        if ($res === false)
+        if ($res === false) {
             throw new \RuntimeException('error writing file');
+        }
 
         return $fname;
     }

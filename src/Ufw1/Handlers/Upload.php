@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Handle file uploads.
  *
@@ -28,10 +29,11 @@ class Upload extends CommonHandler
         $this->requireAdmin($request);
 
         $info = $this->getFile($request);
-        if ($info === false)
+        if ($info === false) {
             return $response->withJSON([
                 "message" => "Не удалось получить файл.",
             ]);
+        }
 
         $name = "File:{$info["id"]}";
         $text = "# Файл {$info["name"]}\n\n";
@@ -63,8 +65,9 @@ class Upload extends CommonHandler
                 return $res;
             }
         } elseif ($files = $request->getUploadedFiles()) {
-            if (!empty($files["file"]))
+            if (!empty($files["file"])) {
                 return $this->receiveFile($files["file"]);
+            }
         }
 
         return false;
@@ -83,8 +86,9 @@ class Upload extends CommonHandler
             );
 
         $ext = mb_strtolower(pathinfo($res["name"], PATHINFO_EXTENSION));
-        if (!in_array($ext, ["jpg", "jpeg", "png", "gif"]))
+        if (!in_array($ext, ["jpg", "jpeg", "png", "gif"])) {
             throw new \RuntimeException("file of unsupported type: {$ext}");
+        }
 
         $tmp = tempnam($_SERVER["DOCUMENT_ROOT"], "upload_");
         $file->moveTo($tmp);
@@ -93,8 +97,9 @@ class Upload extends CommonHandler
         unlink($tmp);
 
         $hash = md5($res["body"]);
-        if ($file = $this->db->getFileByHash($hash))
+        if ($file = $this->db->getFileByHash($hash)) {
             return $file;
+        }
 
         $id = $this->db->saveFile($res);
         $res["id"] = $id;

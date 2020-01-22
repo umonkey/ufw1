@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Upload files using S3.
  **/
@@ -59,7 +60,7 @@ class S3 extends \Ufw1\Service
             ]);
 
             if ($data["Code"] == "AccessDenied") {
-                throw new \Ufw1\Errors\S3AccessDenied;
+                throw new \Ufw1\Errors\S3AccessDenied();
             } else {
                 throw new \RuntimeException("Cloud storage error: " . $data["Message"]);
             }
@@ -70,8 +71,9 @@ class S3 extends \Ufw1\Service
         }
 
         $contents = $data['Contents'];
-        if (isset($contents['Key']))
+        if (isset($contents['Key'])) {
             $contents = [$contents];
+        }
 
         $files = array_map(function ($em) use ($endpoint, $bucket) {
             return [
@@ -94,16 +96,18 @@ class S3 extends \Ufw1\Service
      **/
     public function putObject($dst, $src, $props = array())
     {
-        if (!is_readable($src))
+        if (!is_readable($src)) {
             throw new \RuntimeException("source file not readable: {$src}");
+        }
 
         return $this->putObjectBody($dst, file_get_contents($src), $props);
     }
 
     public function putObjectBody($dst, $data, $props = [])
     {
-        if ($dst[0] != "/")
+        if ($dst[0] != "/") {
             throw new \RuntimeException("remote path must be absolute");
+        }
 
         $dst = $this->fixUnicodeTarget($dst);
 
@@ -113,8 +117,9 @@ class S3 extends \Ufw1\Service
             "storage_class" => "STANDARD",
             ), $props);
 
-        if ($props["type"] === null)
+        if ($props["type"] === null) {
             $props["type"] = "application/octet-stream";
+        }
 
         $time = time();
 
@@ -131,8 +136,9 @@ class S3 extends \Ufw1\Service
 
         $res = $this->doRequest("PUT", $_url = "https://{$this->config["bucket"]}.{$this->config["endpoint"]}{$dst}", $headers, $data);
 
-        if ($res[0]['status'] != 200)
+        if ($res[0]['status'] != 200) {
             $_url = null;
+        }
 
         return [$res[0], $res[1], $_url];
     }
@@ -140,20 +146,24 @@ class S3 extends \Ufw1\Service
     protected function doRequest($method, $url, array $headers = [], $payload = "")
     {
         $time = time();
-        if (!isset($headers["Date"]))
+        if (!isset($headers["Date"])) {
             $headers["Date"] = gmdate('r', $time);
-        if (!isset($headers["x-amz-date"]))
+        }
+        if (!isset($headers["x-amz-date"])) {
             $headers["x-amz-date"] = gmdate("Ymd", $time) . "T" . gmdate("His", $time) . "Z";
-        if (!isset($headers["x-amz-content-sha256"]))
+        }
+        if (!isset($headers["x-amz-content-sha256"])) {
             $headers["x-amz-content-sha256"] = hash("sha256", $payload ? $payload : "");
+        }
 
         $props = $this->prepare($method, $url, $headers, $payload);
         $headers["Authorization"] = $props["Authorization"];
 
-        if (function_exists("curl_init"))
+        if (function_exists("curl_init")) {
             $res = $this->doRequestCurl($method, $url, $payload, $headers);
-        else
+        } else {
             $res = $this->doRequestStream($method, $url, $payload, $headers);
+        }
 
         return $res;
     }
@@ -161,8 +171,9 @@ class S3 extends \Ufw1\Service
     protected function doRequestCurl($method, $url, $payload, array $headers)
     {
         $h = array();
-        foreach ($headers as $k => $v)
+        foreach ($headers as $k => $v) {
             $h[] = $k . ": " . $v;
+        }
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -266,8 +277,9 @@ class S3 extends \Ufw1\Service
     protected function doRequestStream($method, $url, $payload, array $headers)
     {
         $h = "";
-        foreach ($headers as $k => $v)
+        foreach ($headers as $k => $v) {
             $h .= "{$k}: {$v}\r\n";
+        }
 
         $context = stream_context_create($ctx = array(
             "http" => array(
@@ -299,8 +311,9 @@ class S3 extends \Ufw1\Service
 
     public function prepare($method, $url, array $headers, $payload)
     {
-        if (false === strpos($url, "://"))
+        if (false === strpos($url, "://")) {
             throw new RuntimeException("url must be fully qualified");
+        }
 
         $parts = explode("/", $url, 4);
         $headers["Host"] = $parts[2];
@@ -331,12 +344,14 @@ class S3 extends \Ufw1\Service
 
         ksort($headers);
         $CanonicalHeaders = "";
-        foreach ($headers as $k => $v)
+        foreach ($headers as $k => $v) {
             $CanonicalHeaders .= strtolower($k) . ":" . trim($v) . "\n";
+        }
 
         $SignedHeaders = array();
-        foreach ($headers as $k => $v)
+        foreach ($headers as $k => $v) {
             $SignedHeaders[] = strtolower($k);
+        }
         $SignedHeaders = implode(";", $SignedHeaders);
 
         $HashedPayload = hash("sha256", $payload);
@@ -354,9 +369,11 @@ class S3 extends \Ufw1\Service
     protected function getStringToSign(array $headers, array $res)
     {
         $date = strftime("%Y%m%d");
-        foreach ($headers as $k => $v)
-            if (strtolower($k) == "x-amz-date")
+        foreach ($headers as $k => $v) {
+            if (strtolower($k) == "x-amz-date") {
                 $date = $v;
+            }
+        }
 
         $ymd = substr($date, 0, 8);
 
@@ -395,8 +412,9 @@ class S3 extends \Ufw1\Service
         $Credential = "{$this->config["access_key"]}/{$date}/{$this->config["bucket_region"]}/{$this->config["service"]}/aws4_request";
 
         $sh = array();
-        foreach ($headers as $k => $v)
+        foreach ($headers as $k => $v) {
             $sh[] = strtolower($k);
+        }
         sort($sh);
         $SignedHeaders = implode(";", $sh);
 
@@ -421,8 +439,9 @@ class S3 extends \Ufw1\Service
 
         foreach ($res as $k => $v) {
             $lines = explode("\n", $v);
-            foreach ($lines as $line)
+            foreach ($lines as $line) {
                 printf("%s: %s\n", $k, $line);
+            }
         }
 
         $this->check("CanonicalRequestHash", "816cd5b414d056048ba4f7c5386d6e0533120fb1fcfa93762cf0fc39e2cf19e0", $res["CanonicalRequestHash"]);
@@ -452,9 +471,11 @@ class S3 extends \Ufw1\Service
 
     protected function getDate(array $headers)
     {
-        foreach ($headers as $k => $v)
-            if (strtolower($k) == "x-amz-date")
+        foreach ($headers as $k => $v) {
+            if (strtolower($k) == "x-amz-date") {
                 return $v;
+            }
+        }
         return strftime("%Y%m%d");
     }
 
@@ -471,8 +492,9 @@ class S3 extends \Ufw1\Service
     protected function fixUnicodeTarget($dst)
     {
         $parts = explode("/", $dst);
-        foreach ($parts as $k => $v)
+        foreach ($parts as $k => $v) {
             $parts[$k] = rawurlencode($v);
+        }
         return implode("/", $parts);
     }
 
@@ -481,14 +503,17 @@ class S3 extends \Ufw1\Service
      **/
     public function uploadNodeFiles(array $node)
     {
-        if (!array_key_exists("type", $node))
+        if (!array_key_exists("type", $node)) {
             return $node;
+        }
 
-        if ($node["type"] != "file")
+        if ($node["type"] != "file") {
             return $node;
+        }
 
-        if (empty($node["files"]) or !is_array($node["files"]))
+        if (empty($node["files"]) or !is_array($node["files"])) {
             return $node;
+        }
 
         $lstorage = $this->settings["files"]["path"] ?? $_SERVER['DOCUMENT_ROOT'] . '/../data/files';
 
@@ -514,11 +539,12 @@ class S3 extends \Ufw1\Service
                 ]);
 
                 $rpath = "/" . $file["path"];
-                if ($part == "original")
+                if ($part == "original") {
                     // $rpath .= "/" . urlencode($node["name"]);  // has problems with unicode
                     $rpath .= "/original";
-                elseif ($node["kind"] == "photo")
+                } elseif ($node["kind"] == "photo") {
                     $rpath .= "/image.jpg";
+                }
 
                 $res = $this->putObject($rpath, $src, [
                     "type" => $file["type"],

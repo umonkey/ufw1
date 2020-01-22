@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Account operations.
  *
@@ -10,7 +11,6 @@ namespace Ufw1\Handlers;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
-
 
 class Account extends CommonHandler
 {
@@ -36,8 +36,9 @@ class Account extends CommonHandler
 
             $nodes = $this->node->where("`type` = 'user' AND `deleted` = 0 AND `id` IN (SELECT `id` FROM `nodes_user_idx` WHERE `email` = ?) ORDER BY `id`", [$email]);
 
-            if (empty($nodes))
+            if (empty($nodes)) {
                 $this->fail("Нет пользователя с таким адресом.");
+            }
 
             $user = $nodes[0];
 
@@ -150,9 +151,11 @@ class Account extends CommonHandler
             "password" => "Не задан пароль.",
         ];
 
-        foreach ($require as $k => $msg)
-            if (empty($form[$k]))
+        foreach ($require as $k => $msg) {
+            if (empty($form[$k])) {
                 $this->fail($msg);
+            }
+        }
     }
 
     protected function notifyAdmin(Request $request, array $node)
@@ -174,14 +177,14 @@ class Account extends CommonHandler
     {
         $class = get_called_class();
 
-        $app->get ('/account',      $class . ':onInfo');
-        $app->get ('/login',        $class . ':onGetLoginForm');
-        $app->post('/login',        $class . ':onLogin');
-        $app->get ('/login/google', $class . ':onLoginGoogle');
-        $app->get ('/login/vk',     $class . ':onLoginVK');
-        $app->any ('/logout',       $class . ':onLogout');
-        $app->get ('/logout/bye',   $class . ':onLogoutComplete');
-        $app->any ('/profile',      $class . ':onProfile');
-        $app->any ('/register',     $class . ':onRegister');
+        $app->get('/account', $class . ':onInfo');
+        $app->get('/login', $class . ':onGetLoginForm');
+        $app->post('/login', $class . ':onLogin');
+        $app->get('/login/google', $class . ':onLoginGoogle');
+        $app->get('/login/vk', $class . ':onLoginVK');
+        $app->any('/logout', $class . ':onLogout');
+        $app->get('/logout/bye', $class . ':onLogoutComplete');
+        $app->any('/profile', $class . ':onProfile');
+        $app->any('/register', $class . ':onRegister');
     }
 }

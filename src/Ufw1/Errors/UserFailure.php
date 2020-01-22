@@ -2,4 +2,7 @@
 
 namespace Ufw1\Errors;
 
-class UserFailure extends \RuntimeException { }
+class UserFailure extends \RuntimeException
+{
+
+}

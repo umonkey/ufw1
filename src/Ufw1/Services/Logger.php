@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Simple PSR-3 compatible logger.
  **/
@@ -71,8 +72,9 @@ class Logger extends \Ufw1\Service implements LoggerInterface
         $repl = [];
         foreach ($context as $k => $v) {
             $k = '{' . $k . '}';
-            if (is_array($v))
+            if (is_array($v)) {
                 $v = json_encode($v, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
             $repl[$k] = $v;
         }
 
@@ -80,10 +82,11 @@ class Logger extends \Ufw1\Service implements LoggerInterface
 
         $prefix = sprintf("%s %06.2f %04u %s: ", strftime("%Y-%m-%d %H:%M:%S"), microtime(true) - $this->startup, ++$this->count, $level);
 
-        if (!empty($this->config["path"]))
+        if (!empty($this->config["path"])) {
             $this->logToFile($this->config["path"], $prefix, $message);
-        else
+        } else {
             $this->logToStderr($prefix, $message);
+        }
     }
 
     protected function logToFile($fn, $prefix, $message)
@@ -96,22 +99,24 @@ class Logger extends \Ufw1\Service implements LoggerInterface
             "%H" => strftime("%H", $now),
         ]);
 
-        if (file_exists($fn) and is_writable($fn))
-            ;
-        elseif (!is_dir($dir = dirname($fn)))
+        if (file_exists($fn) and is_writable($fn)) {
+        } elseif (!is_dir($dir = dirname($fn))) {
             throw new \RuntimeException("log dir {$dir} does not exist");
-        elseif (!is_writable($dir))
+        } elseif (!is_writable($dir)) {
             throw new \RuntimeException("log dir {$dir} is not writable");
+        }
 
         $text = "";
-        foreach (explode("\n", rtrim($message)) as $line)
+        foreach (explode("\n", rtrim($message)) as $line) {
             $text .= $prefix . rtrim($line) . PHP_EOL;
+        }
 
         $umask = umask(0117);
 
         $fp = fopen($fn, "a");
-        if ($fp === false)
+        if ($fp === false) {
             throw new \RuntimeException("could not open log file {$fn} for writing");
+        }
 
         umask($umask);
 
@@ -128,9 +133,7 @@ class Logger extends \Ufw1\Service implements LoggerInterface
         if (!empty($this->config["symlink"])) {
             if (!file_exists($link = $this->config["symlink"])) {
                 symlink(realpath($fn), $link);
-            }
-
-            elseif (realpath(readlink($link)) != realpath($fn)) {
+            } elseif (realpath(readlink($link)) != realpath($fn)) {
                 unlink($link);
                 symlink(realpath($fn), $link);
 
@@ -142,8 +145,9 @@ class Logger extends \Ufw1\Service implements LoggerInterface
     protected function logToStderr($prefix, $message)
     {
         $text = "";
-        foreach (explode("\n", rtrim($message)) as $line)
+        foreach (explode("\n", rtrim($message)) as $line) {
             $text .= $prefix . rtrim($line) . PHP_EOL;
+        }
 
         error_log($text);
 

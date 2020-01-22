@@ -2,4 +2,7 @@
 
 namespace Ufw1\Errors;
 
-class NotFound extends \RuntimeException { }
+class NotFound extends \RuntimeException
+{
+
+}

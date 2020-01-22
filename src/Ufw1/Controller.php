@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Base controller, implements service access etc.
  **/
@@ -138,22 +139,25 @@ abstract class Controller
 
     protected function sendFromCache(Request $request, $callback, $key = null)
     {
-        if ($key === null)
+        if ($key === null) {
             $key = $request->getUri()->getPath();
+        }
 
         $ckey = md5($key);
 
         $cc = $request->getServerParam("HTTP_CACHE_CONTROL");
         $refresh = $cc == "no-cache";
 
-        if ($request->getQueryParam("debug") == "tpl")
+        if ($request->getQueryParam("debug") == "tpl") {
             $refresh = true;
+        }
 
         $row = $refresh ? null : $this->db->fetchOne("SELECT * FROM `cache` WHERE `key` = ?", [$ckey]);
         if (empty($row)) {
             $_tmp = $callback($request);
-            if (!is_array($_tmp))
+            if (!is_array($_tmp)) {
                 return $_tmp;
+            }
 
             list($type, $body) = $_tmp;
 
@@ -174,8 +178,9 @@ abstract class Controller
         if ($key[0] == "/") {
             $path = $_SERVER["DOCUMENT_ROOT"] . $key;
             $folder = dirname($path);
-            if (file_exists($folder) and is_dir($folder) and is_writable($folder))
+            if (file_exists($folder) and is_dir($folder) and is_writable($folder)) {
                 file_put_contents($path, $body);
+            }
         }
 
         return $this->sendCached($request, $body, $type, $added);
@@ -188,8 +193,9 @@ abstract class Controller
         $response = new Response(200);
 
         if ($lastmod) {
-            if (!is_numeric($lastmod))
+            if (!is_numeric($lastmod)) {
                 $lastmod = strtotime($lastmod);
+            }
             $ts = gmstrftime("%a, %d %b %Y %H:%M:%S %z", $lastmod);
             $response = $response->withHeader("Last-Modified", $ts);
         }
@@ -222,8 +228,9 @@ abstract class Controller
         $html = preg_replace_callback('@(src|href)="([^"]+\.(css|js))"@', function ($m) use ($root) {
             $path = $root . $m[2];
 
-            if (!file_exists($path))
+            if (!file_exists($path)) {
                 return $m[0];
+            }
 
             $etag = sprintf("%x-%x", filemtime($path), filesize($path));
             return sprintf('%s="%s?etag=%s"', $m[1], $m[2], $etag);
@@ -246,20 +253,21 @@ abstract class Controller
 
     protected function forbidden()
     {
-        throw new \Ufw1\Errors\Forbidden;
+        throw new \Ufw1\Errors\Forbidden();
     }
 
     protected function unauthorized()
     {
-        throw new \Ufw1\Errors\Unauthorized;
+        throw new \Ufw1\Errors\Unauthorized();
     }
 
     protected function notfound($message = null)
     {
-        if ($message)
+        if ($message) {
             throw new Errors\NotFound($message);
-        else
+        } else {
             throw new Errors\NotFound();
+        }
     }
 
     protected function unavailable($message = null)

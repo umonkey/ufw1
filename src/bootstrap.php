@@ -1,17 +1,16 @@
 <?php
 
-require_once __DIR__ . '/functions.php';
+declare(strict_types=1);
 
-if (!defined('DATA_DIR')) {
-    define('DATA_DIR', realpath(dirname($_SERVER['DOCUMENT_ROOT']) . '/data'));
-}
+require_once __DIR__ . '/functions.php';
 
 /**
  * Default exception handler for unhandled exceptions.
  **/
 set_exception_handler(function ($e) {
-    while (ob_get_level())
+    while (ob_get_level()) {
         ob_end_clean();
+    }
 
     $trace = $e->getTraceAsString();
     $trace = str_replace(dirname(__DIR__) . '/', '', $trace);

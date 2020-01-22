@@ -87,8 +87,9 @@ class Compiler
             $files = $this->unroll($pattern);
 
             foreach ($files as $src) {
-                if (!is_readable($src))
+                if (!is_readable($src)) {
                     throw new RuntimeException("file {$src} not readable");
+                }
 
                 if (!preg_match('@\.min\.(js|css)@', $src)) {
                     $tmp = explode(".", $src);
@@ -106,7 +107,7 @@ class Compiler
                         $this->debug("reading {$src} (re-minified, from {$tmp})");
                         $src = $tmp;
                     } elseif ($this->is_css($src)) {
-                        $min = new CSSmin;
+                        $min = new CSSmin();
                         $data = file_get_contents($src);
                         $data = $min->run($data);
                         $data = "/* {$src} */ {$data}";
@@ -230,7 +231,7 @@ class CSSmin
      * @param bool|int $raise_php_limits
      * If true, PHP settings will be raised if needed
      */
-    public function __construct($raise_php_limits = TRUE)
+    public function __construct($raise_php_limits = true)
     {
         // Set suggested PHP limits
         $this->memory_limit = 128 * 1048576; // 128MB in bytes
@@ -247,7 +248,7 @@ class CSSmin
      * @param int|bool $linebreak_pos
      * @return string
      */
-    public function run($css = '', $linebreak_pos = FALSE)
+    public function run($css = '', $linebreak_pos = false)
     {
         if (empty($css)) {
             return '';
@@ -280,7 +281,7 @@ class CSSmin
         }
 
         // preserve strings so their content doesn't get accidentally minified
-        $css = preg_replace_callback('/(?:"(?:[^\\\\"]|\\\\.|\\\\)*")|'."(?:'(?:[^\\\\']|\\\\.|\\\\)*')/S", array($this, 'replace_string'), $css);
+        $css = preg_replace_callback('/(?:"(?:[^\\\\"]|\\\\.|\\\\)*")|' . "(?:'(?:[^\\\\']|\\\\.|\\\\)*')/S", array($this, 'replace_string'), $css);
 
         // Let's divide css code in chunks of 5.000 chars aprox.
         // Reason: PHP's PCRE functions like preg_replace have a "backtrack limit"
@@ -407,7 +408,6 @@ class CSSmin
     {
         // strings are safe, now wrestle the comments
         for ($i = 0, $max = count($this->comments); $i < $max; $i++) {
-
             $token = $this->comments[$i];
             $placeholder = '/' . self::COMMENT . $i . '___/';
 
@@ -418,8 +418,8 @@ class CSSmin
                 $token_tring = self::TOKEN . (count($this->preserved_tokens) - 1) . '___';
                 $css = preg_replace($placeholder, $token_tring, $css, 1);
                 // Preserve new lines for /*! important comments
-                $css = preg_replace('/\s*[\n\r\f]+\s*(\/\*'. $token_tring .')/S', self::NL.'$1', $css);
-                $css = preg_replace('/('. $token_tring .'\*\/)\s*[\n\r\f]+\s*/', '$1'.self::NL, $css);
+                $css = preg_replace('/\s*[\n\r\f]+\s*(\/\*' . $token_tring . ')/S', self::NL . '$1', $css);
+                $css = preg_replace('/(' . $token_tring . '\*\/)\s*[\n\r\f]+\s*/', '$1' . self::NL, $css);
                 continue;
             }
 
@@ -427,10 +427,10 @@ class CSSmin
             // shorten that to /*\*/ and the next one to /**/
             if (substr($token, (strlen($token) - 1), 1) === '\\') {
                 $this->preserved_tokens[] = '\\';
-                $css = preg_replace($placeholder,  self::TOKEN . (count($this->preserved_tokens) - 1) . '___', $css, 1);
+                $css = preg_replace($placeholder, self::TOKEN . (count($this->preserved_tokens) - 1) . '___', $css, 1);
                 $i = $i + 1; // attn: advancing the loop
                 $this->preserved_tokens[] = '';
-                $css = preg_replace('/' . self::COMMENT . $i . '___/',  self::TOKEN . (count($this->preserved_tokens) - 1) . '___', $css, 1);
+                $css = preg_replace('/' . self::COMMENT . $i . '___/', self::TOKEN . (count($this->preserved_tokens) - 1) . '___', $css, 1);
                 continue;
             }
 
@@ -441,7 +441,7 @@ class CSSmin
                 if ($start_index > 2) {
                     if (substr($css, $start_index - 3, 1) === '>') {
                         $this->preserved_tokens[] = '';
-                        $css = preg_replace($placeholder,  self::TOKEN . (count($this->preserved_tokens) - 1) . '___', $css, 1);
+                        $css = preg_replace($placeholder, self::TOKEN . (count($this->preserved_tokens) - 1) . '___', $css, 1);
                     }
                 }
             }
@@ -454,8 +454,8 @@ class CSSmin
         // Normalize all whitespace strings to single spaces. Easier to work with that way.
         $css = preg_replace('/\s+/', ' ', $css);
 
-		// Fix IE7 issue on matrix filters which browser accept whitespaces between Matrix parameters
-		$css = preg_replace_callback('/\s*filter\:\s*progid:DXImageTransform\.Microsoft\.Matrix\(([^\)]+)\)/', array($this, 'preserve_old_IE_specific_matrix_definition'), $css);
+        // Fix IE7 issue on matrix filters which browser accept whitespaces between Matrix parameters
+        $css = preg_replace_callback('/\s*filter\:\s*progid:DXImageTransform\.Microsoft\.Matrix\(([^\)]+)\)/', array($this, 'preserve_old_IE_specific_matrix_definition'), $css);
 
         // Shorten & preserve calculations calc(...) since spaces are important
         $css = preg_replace_callback('/calc(\(((?:[^\(\)]+|(?1))*)\))/i', array($this, 'replace_calc'), $css);
@@ -531,8 +531,8 @@ class CSSmin
         // <percentage> data type: https://developer.mozilla.org/en-US/docs/Web/CSS/percentage
         $css = preg_replace('/([^\\\\]\:|\s)0(?:em|ex|ch|rem|vw|vh|vm|vmin|cm|mm|in|px|pt|pc|%)/iS', '${1}0', $css);
 
-		// 0% step in a keyframe? restore the % unit
-		$css = preg_replace_callback('/(@[a-z\-]*?keyframes[^\{]+\{)(.*?)(\}\})/iS', array($this, 'replace_keyframe_zero'), $css);
+        // 0% step in a keyframe? restore the % unit
+        $css = preg_replace_callback('/(@[a-z\-]*?keyframes[^\{]+\{)(.*?)(\}\})/iS', array($this, 'replace_keyframe_zero'), $css);
 
         // Replace 0 0; or 0 0 0; or 0 0 0 0; with 0.
         $css = preg_replace('/\:0(?: 0){1,3}(;|\}| \!)/', ':0$1', $css);
@@ -563,20 +563,20 @@ class CSSmin
 
         // Find a fraction that is used for Opera's -o-device-pixel-ratio query
         // Add token to add the "\" back in later
-        $css = preg_replace('/\(([a-z\-]+):([0-9]+)\/([0-9]+)\)/i', '($1:$2'. self::QUERY_FRACTION .'$3)', $css);
+        $css = preg_replace('/\(([a-z\-]+):([0-9]+)\/([0-9]+)\)/i', '($1:$2' . self::QUERY_FRACTION . '$3)', $css);
 
         // Remove empty rules.
         $css = preg_replace('/[^\};\{\/]+\{\}/S', '', $css);
 
         // Add "/" back to fix Opera -o-device-pixel-ratio query
-        $css = preg_replace('/'. self::QUERY_FRACTION .'/', '/', $css);
+        $css = preg_replace('/' . self::QUERY_FRACTION . '/', '/', $css);
 
-		// Replace multiple semi-colons in a row by a single one
+        // Replace multiple semi-colons in a row by a single one
         // See SF bug #1980989
         $css = preg_replace('/;;+/', ';', $css);
 
         // Restore new lines for /*! important comments
-        $css = preg_replace('/'. self::NL .'/', "\n", $css);
+        $css = preg_replace('/' . self::NL . '/', "\n", $css);
 
         // Lowercase all uppercase properties
         $css = preg_replace_callback('/(\{|\;)([A-Z\-]+)(\:)/', array($this, 'lowercase_properties'), $css);
@@ -584,7 +584,7 @@ class CSSmin
         // Some source control tools don't like it when files containing lines longer
         // than, say 8000 characters, are checked in. The linebreak option is used in
         // that case to split long lines after a specific column.
-        if ($linebreak_pos !== FALSE && (int) $linebreak_pos >= 0) {
+        if ($linebreak_pos !== false && (int) $linebreak_pos >= 0) {
             $linebreak_pos = (int) $linebreak_pos;
             $start_index = $i = 0;
             while ($i < strlen($css)) {
@@ -632,18 +632,18 @@ class CSSmin
             $start_index = $index + 4; // "url(".length()
             $end_index = $last_index - 1;
             $terminator = $m[1]; // ', " or empty (not quoted)
-            $found_terminator = FALSE;
+            $found_terminator = false;
 
             if (strlen($terminator) === 0) {
                 $terminator = ')';
             }
 
-            while ($found_terminator === FALSE && $end_index+1 <= $max_index) {
+            while ($found_terminator === false && $end_index + 1 <= $max_index) {
                 $end_index = $this->index_of($css, $terminator, $end_index + 1);
 
                 // endIndex == 0 doesn't really apply here
                 if ($end_index > 0 && substr($css, $end_index - 1, 1) !== '\\') {
-                    $found_terminator = TRUE;
+                    $found_terminator = true;
                     if (')' != $terminator) {
                         $end_index = $this->index_of($css, ')', $end_index);
                     }
@@ -722,9 +722,11 @@ class CSSmin
                 // Restore, maintain case, otherwise filter will break
                 $sb[] = $m[1] . '#' . $m[2] . $m[3] . $m[4] . $m[5] . $m[6] . $m[7];
             } else {
-                if (strtolower($m[2]) == strtolower($m[3]) &&
+                if (
+                    strtolower($m[2]) == strtolower($m[3]) &&
                     strtolower($m[4]) == strtolower($m[5]) &&
-                    strtolower($m[6]) == strtolower($m[7])) {
+                    strtolower($m[6]) == strtolower($m[7])
+                ) {
                     // Compress.
                     $hex = '#' . strtolower($m[3] . $m[5] . $m[7]);
                 } else {
@@ -777,16 +779,16 @@ class CSSmin
     private function replace_calc($matches)
     {
         $this->preserved_tokens[] = trim(preg_replace('/\s*([\*\/\(\),])\s*/', '$1', $matches[2]));
-        return 'calc('. self::TOKEN . (count($this->preserved_tokens) - 1) . '___' . ')';
+        return 'calc(' . self::TOKEN . (count($this->preserved_tokens) - 1) . '___' . ')';
     }
 
-	private function preserve_old_IE_specific_matrix_definition($matches)
-	{
-		$this->preserved_tokens[] = $matches[1];
-		return 'filter:progid:DXImageTransform.Microsoft.Matrix(' . self::TOKEN . (count($this->preserved_tokens) - 1) . '___' . ')';
+    private function preserve_old_IE_specific_matrix_definition($matches)
+    {
+        $this->preserved_tokens[] = $matches[1];
+        return 'filter:progid:DXImageTransform.Microsoft.Matrix(' . self::TOKEN . (count($this->preserved_tokens) - 1) . '___' . ')';
     }
 
-	private function replace_keyframe_zero($matches)
+    private function replace_keyframe_zero($matches)
     {
         return $matches[1] . preg_replace('/0(\{|,[^\)\{]+\{)/', '0%$1', $matches[2]) . $matches[3];
     }
@@ -794,7 +796,7 @@ class CSSmin
     private function rgb_to_hex($matches)
     {
         // Support for percentage values rgb(100%, 0%, 45%);
-        if ($this->index_of($matches[1], '%') >= 0){
+        if ($this->index_of($matches[1], '%') >= 0) {
             $rgbcolors = explode(',', str_replace('%', '', $matches[1]));
             for ($i = 0; $i < count($rgbcolors); $i++) {
                 $rgbcolors[$i] = $this->round_number(floatval($rgbcolors[$i]) * 2.55);
@@ -810,7 +812,7 @@ class CSSmin
         }
 
         // Fix for issue #2528093
-        if (!preg_match('/[\s\,\);\}]/', $matches[2])){
+        if (!preg_match('/[\s\,\);\}]/', $matches[2])) {
             $matches[2] = ' ' . $matches[2];
         }
 
@@ -834,32 +836,32 @@ class CSSmin
         } else {
             $v2 = $l < 0.5 ? $l * (1 + $s) : ($l + $s) - ($s * $l);
             $v1 = (2 * $l) - $v2;
-            $r = $this->round_number(255 * $this->hue_to_rgb($v1, $v2, $h + (1/3)));
+            $r = $this->round_number(255 * $this->hue_to_rgb($v1, $v2, $h + (1 / 3)));
             $g = $this->round_number(255 * $this->hue_to_rgb($v1, $v2, $h));
-            $b = $this->round_number(255 * $this->hue_to_rgb($v1, $v2, $h - (1/3)));
+            $b = $this->round_number(255 * $this->hue_to_rgb($v1, $v2, $h - (1 / 3)));
         }
 
-        return $this->rgb_to_hex(array('', $r.','.$g.','.$b, $matches[2]));
+        return $this->rgb_to_hex(array('', $r . ',' . $g . ',' . $b, $matches[2]));
     }
 
     private function lowercase_pseudo_first($matches)
     {
-        return ':first-'. strtolower($matches[1]) .' '. $matches[2];
+        return ':first-' . strtolower($matches[1]) . ' ' . $matches[2];
     }
 
     private function lowercase_directives($matches)
     {
-        return '@'. strtolower($matches[1]);
+        return '@' . strtolower($matches[1]);
     }
 
     private function lowercase_pseudo_elements($matches)
     {
-        return ':'. strtolower($matches[1]);
+        return ':' . strtolower($matches[1]);
     }
 
     private function lowercase_common_functions($matches)
     {
-        return ':'. strtolower($matches[1]) .'(';
+        return ':' . strtolower($matches[1]) . '(';
     }
 
     private function lowercase_common_functions_values($matches)
@@ -869,7 +871,7 @@ class CSSmin
 
     private function lowercase_properties($matches)
     {
-        return $matches[1].strtolower($matches[2]).$matches[3];
+        return $matches[1] . strtolower($matches[2]) . $matches[3];
     }
 
     /* HELPERS
@@ -879,9 +881,15 @@ class CSSmin
     private function hue_to_rgb($v1, $v2, $vh)
     {
         $vh = $vh < 0 ? $vh + 1 : ($vh > 1 ? $vh - 1 : $vh);
-        if ($vh * 6 < 1) return $v1 + ($v2 - $v1) * 6 * $vh;
-        if ($vh * 2 < 1) return $v2;
-        if ($vh * 3 < 2) return $v1 + ($v2 - $v1) * ((2/3) - $vh) * 6;
+        if ($vh * 6 < 1) {
+            return $v1 + ($v2 - $v1) * 6 * $vh;
+        }
+        if ($vh * 2 < 1) {
+            return $v2;
+        }
+        if ($vh * 3 < 2) {
+            return $v1 + ($v2 - $v1) * ((2 / 3) - $vh) * 6;
+        }
         return $v1;
     }
 
@@ -908,7 +916,7 @@ class CSSmin
     {
         $index = strpos($haystack, $needle, $offset);
 
-        return ($index !== FALSE) ? $index : -1;
+        return ($index !== false) ? $index : -1;
     }
 
     /**
@@ -921,9 +929,9 @@ class CSSmin
      * @param int|bool $end index (optional)
      * @return string
      */
-    private function str_slice($str, $start = 0, $end = FALSE)
+    private function str_slice($str, $start = 0, $end = false)
     {
-        if ($end !== FALSE && ($start < 0 || $end <= 0)) {
+        if ($end !== false && ($start < 0 || $end <= 0)) {
             $max = strlen($str);
 
             if ($start < 0) {
@@ -943,8 +951,8 @@ class CSSmin
             }
         }
 
-        $slice = ($end === FALSE) ? substr($str, $start) : substr($str, $start, $end - $start);
-        return ($slice === FALSE) ? '' : $slice;
+        $slice = ($end === false) ? substr($str, $start) : substr($str, $start, $end - $start);
+        return ($slice === false) ? '' : $slice;
     }
 
     /**
@@ -956,9 +964,15 @@ class CSSmin
     {
         if (is_string($size)) {
             switch (substr($size, -1)) {
-                case 'M': case 'm': return $size * 1048576;
-                case 'K': case 'k': return $size * 1024;
-                case 'G': case 'g': return $size * 1073741824;
+                case 'M':
+                case 'm':
+                    return $size * 1048576;
+                case 'K':
+                case 'k':
+                    return $size * 1024;
+                case 'G':
+                case 'g':
+                    return $size * 1073741824;
             }
         }
 
@@ -1022,7 +1036,8 @@ class CSSmin
  * @link http://code.google.com/p/jsmin-php/
  */
 
-class JSMin {
+class JSMin
+{
     const ORD_LF            = 10;
     const ORD_SPACE         = 32;
     const ACTION_KEEP_A     = 1;
@@ -1090,8 +1105,10 @@ class JSMin {
             // determine next command
             $command = self::ACTION_KEEP_A; // default
             if ($this->a === ' ') {
-                if (($this->lastByteOut === '+' || $this->lastByteOut === '-')
-                        && ($this->b === $this->lastByteOut)) {
+                if (
+                    ($this->lastByteOut === '+' || $this->lastByteOut === '-')
+                        && ($this->b === $this->lastByteOut)
+                ) {
                     // Don't delete this space. If we do, the addition/subtraction
                     // could be parsed as a post-increment
                 } elseif (! $this->isAlphaNum($this->b)) {
@@ -1103,15 +1120,19 @@ class JSMin {
 
                     // in case of mbstring.func_overload & 2, must check for null b,
                     // otherwise mb_strpos will give WARNING
-                } elseif ($this->b === null
+                } elseif (
+                    $this->b === null
                           || (false === strpos('{[(+-!~', $this->b)
-                              && ! $this->isAlphaNum($this->b))) {
+                              && ! $this->isAlphaNum($this->b))
+                ) {
                     $command = self::ACTION_DELETE_A;
                 }
             } elseif (! $this->isAlphaNum($this->a)) {
-                if ($this->b === ' '
+                if (
+                    $this->b === ' '
                     || ($this->b === "\n"
-                        && (false === strpos('}])+-"\'', $this->a)))) {
+                        && (false === strpos('}])+-"\'', $this->a)))
+                ) {
                     $command = self::ACTION_DELETE_A_B;
                 }
             }
@@ -1136,9 +1157,11 @@ class JSMin {
     protected function action($command)
     {
         // make sure we don't compress "a + ++b" to "a+++b", etc.
-        if ($command === self::ACTION_DELETE_A_B
+        if (
+            $command === self::ACTION_DELETE_A_B
             && $this->b === ' '
-            && ($this->a === '+' || $this->a === '-')) {
+            && ($this->a === '+' || $this->a === '-')
+        ) {
             // Note: we're at an addition/substraction operator; the inputIndex
             // will certainly be a valid index
             if ($this->input[$this->inputIndex] === $this->a) {
@@ -1164,7 +1187,7 @@ class JSMin {
                 $this->a = $this->b;
                 if ($this->a === "'" || $this->a === '"') { // string literal
                     $str = $this->a; // in case needed for exception
-                    for(;;) {
+                    for (;;) {
                         $this->output .= $this->a;
                         $this->lastByteOut = $this->a;
 
@@ -1175,7 +1198,8 @@ class JSMin {
                         if ($this->isEOF($this->a)) {
                             $byte = $this->inputIndex - 1;
                             throw new JSMin_UnterminatedStringException(
-                                "JSMin: Unterminated String at byte {$byte}: {$str}");
+                                "JSMin: Unterminated String at byte {$byte}: {$str}"
+                            );
                         }
                         $str .= $this->a;
                         if ($this->a === '\\') {
@@ -1194,11 +1218,11 @@ class JSMin {
                 if ($this->b === '/' && $this->isRegexpLiteral()) {
                     $this->output .= $this->a . $this->b;
                     $pattern = '/'; // keep entire pattern in case we need to report it in the exception
-                    for(;;) {
+                    for (;;) {
                         $this->a = $this->get();
                         $pattern .= $this->a;
                         if ($this->a === '[') {
-                            for(;;) {
+                            for (;;) {
                                 $this->output .= $this->a;
                                 $this->a = $this->get();
                                 $pattern .= $this->a;
@@ -1213,7 +1237,8 @@ class JSMin {
                                 if ($this->isEOF($this->a)) {
                                     throw new JSMin_UnterminatedRegExpException(
                                         "JSMin: Unterminated set in RegExp at byte "
-                                            . $this->inputIndex .": {$pattern}");
+                                        . $this->inputIndex . ": {$pattern}"
+                                    );
                                 }
                             }
                         }
@@ -1227,7 +1252,8 @@ class JSMin {
                         } elseif ($this->isEOF($this->a)) {
                             $byte = $this->inputIndex - 1;
                             throw new JSMin_UnterminatedRegExpException(
-                                "JSMin: Unterminated RegExp at byte {$byte}: {$pattern}");
+                                "JSMin: Unterminated RegExp at byte {$byte}: {$pattern}"
+                            );
                         }
                         $this->output .= $this->a;
                         $this->lastByteOut = $this->a;
@@ -1369,7 +1395,7 @@ class JSMin {
     {
         $this->get();
         $comment = '';
-        for(;;) {
+        for (;;) {
             $get = $this->get();
             if ($get === '*') {
                 if ($this->peek() === '/') { // end of comment reached
@@ -1381,7 +1407,7 @@ class JSMin {
                             $this->keptComment = "\n";
                         }
                         $this->keptComment .= "/*!" . substr($comment, 1) . "*/\n";
-                    } else if (preg_match('/^@(?:cc_on|if|elif|else|end)\\b/', $comment)) {
+                    } elseif (preg_match('/^@(?:cc_on|if|elif|else|end)\\b/', $comment)) {
                         // IE conditional
                         $this->keptComment .= "/*{$comment}*/";
                     }
@@ -1389,7 +1415,8 @@ class JSMin {
                 }
             } elseif ($get === null) {
                 throw new JSMin_UnterminatedCommentException(
-                    "JSMin: Unterminated comment at byte {$this->inputIndex}: /*{$comment}");
+                    "JSMin: Unterminated comment at byte {$this->inputIndex}: /*{$comment}"
+                );
             }
             $comment .= $get;
         }
@@ -1419,6 +1446,12 @@ class JSMin {
     }
 }
 
-class JSMin_UnterminatedStringException extends Exception {}
-class JSMin_UnterminatedCommentException extends Exception {}
-class JSMin_UnterminatedRegExpException extends Exception {}
+class JSMin_UnterminatedStringException extends Exception
+{
+}
+class JSMin_UnterminatedCommentException extends Exception
+{
+}
+class JSMin_UnterminatedRegExpException extends Exception
+{
+}

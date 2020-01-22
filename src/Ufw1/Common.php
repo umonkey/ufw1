@@ -2,7 +2,6 @@
 
 namespace Ufw1;
 
-
 class Common
 {
     public static function fetch($url)
@@ -35,8 +34,9 @@ class Common
             }
         }
 
-        if (false === $res["data"])
+        if (false === $res["data"]) {
             $res["error"] = error_get_last();
+        }
 
         return $res;
     }
@@ -74,16 +74,19 @@ class Common
         $html = preg_replace_callback('@<h([12345])>(.+)</h([12345])>@', function ($m) use (&$level, &$toc) {
             list($str, $openLevel, $titleText, $closeLevel) = $m;
 
-            if ($openLevel != $closeLevel)
+            if ($openLevel != $closeLevel) {
                 return $str;
+            }
 
-            if ($openLevel == 1)
+            if ($openLevel == 1) {
                 return $str;
+            }
 
-            if ($openLevel > $level)
+            if ($openLevel > $level) {
                 $toc .= str_repeat("<ul>", $openLevel - $level);
-            elseif ($openLevel < $level)
+            } elseif ($openLevel < $level) {
                 $toc .= str_repeat("</ul>", $level - $openLevel);
+            }
 
             $level = (int)$openLevel;
 
@@ -95,8 +98,9 @@ class Common
             return $code;
         }, $html);
 
-        if ($level > 1)
+        if ($level > 1) {
             $toc .= str_repeat("</ul>", $level - 1);
+        }
 
         $html = str_replace("<div id=\"toc\"></div>", "<div id=\"toc\">{$toc}</div>", $html);
 
@@ -105,14 +109,15 @@ class Common
 
     public static function renderMarkdown($source)
     {
-        if (empty($source))
+        if (empty($source)) {
             return "";
+        }
 
         $environment = \League\CommonMark\Environment::createCommonMarkEnvironment();
-        $environment->addExtension(new \League\CommonMark\Ext\Table\TableExtension);
+        $environment->addExtension(new \League\CommonMark\Ext\Table\TableExtension());
 
         if (class_exists('League\CommonMark\Ext\TaskList\TaskListExtension')) {
-            $environment->addExtension(new \League\CommonMark\Ext\TaskList\TaskListExtension);
+            $environment->addExtension(new \League\CommonMark\Ext\TaskList\TaskListExtension());
         }
 
         $dp = new \League\CommonMark\DocParser($environment);

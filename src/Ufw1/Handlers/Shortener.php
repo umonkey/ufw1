@@ -1,4 +1,5 @@
 <?php
+
 /**
  * URL shortener.
  **/
@@ -8,7 +9,6 @@ namespace Ufw1\Handlers;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
-
 
 class Shortener extends \Ufw1\CommonHandler
 {
@@ -26,8 +26,9 @@ class Shortener extends \Ufw1\CommonHandler
 
         $node = $this->node->getByKey($key);
 
-        if ($node and $node['type'] != 'sokr')
+        if ($node and $node['type'] != 'sokr') {
             $this->fail('Невозможно создать ссылку: коллизия.');
+        }
 
         $node = array_merge($node, [
             'type' => 'sokr',
@@ -78,14 +79,17 @@ class Shortener extends \Ufw1\CommonHandler
 
         $node = $this->node->get($id);
 
-        if (empty($node))
+        if (empty($node)) {
             $this->notfound();
+        }
 
-        if ($node['deleted'] == 1)
+        if ($node['deleted'] == 1) {
             $this->gone();
+        }
 
-        if ($node['published'] == 0)
+        if ($node['published'] == 0) {
             $this->forbidden();
+        }
 
         // TODO: log access
 
@@ -102,8 +106,8 @@ class Shortener extends \Ufw1\CommonHandler
         $class = get_called_class();
 
         $app->post('/admin/shortener', $class . ':onShorten');
-        $app->get ('/l/{link}',        $class . ':onRedirect');
-        $app->get ('/shorten',         $class . ':onPreview');
+        $app->get('/l/{link}', $class . ':onRedirect');
+        $app->get('/shorten', $class . ':onPreview');
     }
 
     protected function shorten($link)
@@ -114,8 +118,9 @@ class Shortener extends \Ufw1\CommonHandler
 
         $node = $this->node->getByKey($key);
 
-        if ($node and $node['type'] != 'sokr')
+        if ($node and $node['type'] != 'sokr') {
             $this->fail('Невозможно создать ссылку: коллизия.');
+        }
 
         $node = array_merge($node ?? [], [
             'type' => 'sokr',

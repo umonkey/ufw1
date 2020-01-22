@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Alternative thumbnailer, based on Imagick.
  * https://www.php.net/imagick
@@ -12,8 +13,9 @@ class Thumbnailer2 extends Thumbnailer
     {
         $img = new \Imagick();
         $res = $img->readImageBlob($blob);
-        if ($res === false)
+        if ($res === false) {
             throw new \RuntimeException('error reading image');
+        }
         return $img;
     }
 
@@ -21,8 +23,9 @@ class Thumbnailer2 extends Thumbnailer
     {
         $img = new \Imagick();
         $res = $img->readImage($src);
-        if ($res === false)
+        if ($res === false) {
             throw new \RuntimeException('error reading image');
+        }
         return $img;
     }
 
@@ -60,8 +63,9 @@ class Thumbnailer2 extends Thumbnailer
         }
 
         $res = $img->resizeImage($nw, $nh, $filter, 1);
-        if ($res === false)
+        if ($res === false) {
             throw new \RuntimeException('error resizing image');
+        }
         return $img;
     }
 

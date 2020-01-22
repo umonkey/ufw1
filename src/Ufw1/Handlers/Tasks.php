@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Background task handler.
  **/
@@ -45,9 +46,7 @@ class Tasks extends CommonHandler
                     $this->logger->debug("tasks: task {id} delayed.", [
                         "id" => $task["id"],
                     ]);
-                }
-
-                else {
+                } else {
                     $count = $this->db->fetchcell("SELECT COUNT(1) FROM `tasks`");
 
                     $this->logger->debug("tasks: task {id} finished, {count} tasks left.", [
@@ -59,9 +58,7 @@ class Tasks extends CommonHandler
                 }
 
                 $this->db->commit();
-            }
-
-            catch (\Exception $e) {
+            } catch (\Exception $e) {
                 $this->logger->debug("tasks: task {id} failed, exception={e}", [
                     "id" => $task["id"],
                     "e" => [
@@ -117,9 +114,7 @@ class Tasks extends CommonHandler
             } else {
                 return "NOT FOUND";
             }
-        }
-
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             $this->logger->error("tasks: handler for task {id} failed, exception={e}.", [
                 "id" => $task["id"],
                 "e" => [

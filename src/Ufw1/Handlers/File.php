@@ -1,7 +1,10 @@
 <?php
+
 /**
  * Handle file download.
  **/
+
+declare(strict_types=1);
 
 namespace Ufw1\Handlers;
 
@@ -11,7 +14,7 @@ use Ufw1\CommonHandler;
 
 class File extends CommonHandler
 {
-    public function onGet(Request $request, Response $response, array $args)
+    public function onGet(Request $request, Response $response, array $args): Response
     {
         $name = $args["name"];
         $file = $this->db->getFileByName($name);
