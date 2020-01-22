@@ -15,7 +15,6 @@ namespace Ufw1\Services;
 
 use PDO;
 use PDOStatement;
-use Psr\Container\ContainerInterface;
 
 class Database
 {
@@ -64,17 +63,6 @@ class Database
         }
     }
 
-    public function getThumbnail(string $name, string $type): ?array
-    {
-        $rows = $this->fetch("SELECT * FROM `thumbnails` WHERE `name` = ? AND `type` = ?", [$name, $type]);
-        return $rows ? $rows[0] : null;
-    }
-
-    public function saveThumbnail(string $name, string $type, string $body): void
-    {
-        $this->query("INSERT INTO `thumbnails` (`name`, `type`, `body`, `hash`) VALUES (?, ?, ?, ?)", [$name, $type, $body, md5($body)]);
-    }
-
     /**
      * Connect to the database.
      *
@@ -88,7 +76,7 @@ class Database
             }
 
             $this->conn = new PDO($this->dsn["name"], $this->dsn["user"] ?? null, $this->dsn["password"] ?? null);
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
@@ -128,7 +116,7 @@ class Database
         $sth = $db->prepare($query);
         $sth->execute($params);
 
-        $res = $sth->fetchAll(\PDO::FETCH_ASSOC);
+        $res = $sth->fetchAll(PDO::FETCH_ASSOC);
 
         if ($callback) {
             $res = array_filter(array_map($callback, $res));
@@ -158,7 +146,7 @@ class Database
         return $sth->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    public function fetchcell(string $query, array $params = array())
+    public function fetchCell(string $query, array $params = array())
     {
         $db = $this->connect();
         $sth = $db->prepare($query);
@@ -174,7 +162,7 @@ class Database
             $sth = $db->prepare($query);
             $sth->execute($params);
             return $sth;
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $_m = $e->getMessage();
 
             // Server gone away.
@@ -246,22 +234,16 @@ class Database
         }
 
         $_set = implode(", ", $_set);
-        $_where = implode(" AND ", $_where);
 
-        $query = "UPDATE `{$tableName}` SET {$_set} WHERE {$_where}";
+        $query = "UPDATE `{$tableName}` SET {$_set}";
+
+        if (!empty($_where)) {
+            $_where = implode(" AND ", $_where);
+            $query .= " WHERE {$_where}";
+        }
+
         $sth = $this->query($query, $_params);
         return $sth->rowCount();
-    }
-
-    public function cacheSet(string $key, string $value): void
-    {
-        $now = time();
-        $this->query("REPLACE INTO `cache` (`key`, `added`, `value`) VALUES (?, ?, ?)", [$key, $now, $value]);
-    }
-
-    public function cacheGet(string $key): string
-    {
-        return $this->fetchCell("SELECT `value` FROM `cache` WHERE `key` = ?", [$key]);
     }
 
     /**
