@@ -38,8 +38,10 @@ $settings = [
         'edit_role' => 'admin',
     ],
 
-    'nodes_idx' => [
-        'file' => ['kind'],
+    'node' => [
+        'indexes' => [
+            'file' => ['kind'],
+        ],
     ],
 
     'interwiki' => [

@@ -2,9 +2,10 @@
 
 use Slim\Http\Request;
 use Slim\Http\Response;
+use Ufw1\Util;
 
-\Ufw1\Handlers\Admin::setupRoutes($app);
-\Ufw1\Handlers\Wiki::setupRoutes($app);
+Util::installAdmin($app);
+Util::installWiki($app);
 
 $app->get('/tasks/run-one', '\Ufw1\Handlers\Tasks:onRunOne');
 $app->get('/tasks/files/dump', '\Ufw1\Handlers\Files:onDump');
