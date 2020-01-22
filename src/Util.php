@@ -114,8 +114,10 @@ class Util
         };
 
         $container['file'] = function ($c) {
-            return new Services\FileFactory($c->get('logger'),
-                $c->get('node'), $c->get('settings'));
+            $logger = $c->get('logger');
+            $node = $c->get('node');
+            $settings = $c->get('settings');
+            return new Services\FileFactory($logger, $node, $settings);
         };
 
         $container['fts'] = function ($c) {

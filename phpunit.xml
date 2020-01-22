@@ -1,4 +1,4 @@
-<phpunit bootstrap="src/bootstrap.php">
+<phpunit bootstrap="config/bootstrap.php">
     <testsuites>
         <testsuite name="SlimSkeleton">
             <directory suffix='Tests.php'>tests</directory>

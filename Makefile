@@ -17,6 +17,7 @@ sql:
 	sqlite3 -header data/database.sqlite3
 
 test: test-syntax
+	phpunit
 
 test-syntax:
 	find src -type f -name '*.php' -exec php -l {} \;

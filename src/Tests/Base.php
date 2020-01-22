@@ -15,7 +15,7 @@ class Base extends TestCase
 
     public function setUp(): void
     {
-        require getcwd() . '/src/bootstrap.php';
+        include getcwd() . '/config/bootstrap.php';
         $this->app = $app;
         $this->container = $app->getContainer();
     }
