@@ -9,6 +9,8 @@ help:
 migrate:
 	phinx migrate
 
+push: release
+
 release:
 	-hg push default
 	-hg push github
