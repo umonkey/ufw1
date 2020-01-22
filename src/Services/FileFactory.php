@@ -1,4 +1,15 @@
 <?php
+/**
+ * File storage interface.
+ *
+ * Files are stored as nodes, in the database.  File bodies are either stored in the local file system,
+ * or uploaded to S3 and urls are stored locally.
+ *
+ * Most used methods:
+ * - get()
+ * - getByHash()
+ * - add()
+ **/
 
 declare(strict_types=1);
 
@@ -8,10 +19,19 @@ use Psr\Log\LoggerInterface;
 
 class FileFactory
 {
+    /**
+     * @var LoggerInterface
+     **/
     protected $logger;
 
+    /**
+     * @var NodeFactory
+     **/
     protected $node;
 
+    /**
+     * @var array
+     **/
     protected $settings;
 
     public function __construct(LoggerInterface $logger, NodeFactory $node, array $settings)
@@ -26,17 +46,36 @@ class FileFactory
         ], $settings);
     }
 
-    public function get($id)
+    /**
+     * Get one file node by id.
+     *
+     * @param int $id File id.
+     *
+     * @return array File node or null if node not found.
+     **/
+    public function get(int $id): ?array
     {
         $node = $this->node->get($id);
         if (empty($node) or $node["type"] != "file") {
             return null;
         }
 
+        // Upgrade really old nodes.
         return $this->fix($node);
     }
 
-    public function getByHash($hash)
+    /**
+     * Find file node by source file hash.
+     *
+     * The hash is used in the `key` node field and is calculated as
+     * MD5 of the source file contents.
+     *
+     * Use this to find duplicates before creating new files.
+     *
+     * @param string $hash Source file hash.
+     * @return array File or null, if not found.
+     **/
+    public function getByHash(string $hash): ?array
     {
         $node = $this->node->getByKey($hash);
         if (empty($node) or $node["type"] != "file") {
@@ -46,12 +85,15 @@ class FileFactory
         return $this->fix($node);
     }
 
-    public function getBody(array $node)
+    /**
+     * Get source file contents.
+     *
+     * Finds the file in the local storage.
+     **/
+    public function getBody(array $node): ?string
     {
-        $logger = $this->logger;
-
         if ($node["type"] != "file") {
-            return false;
+            return null;
         }
 
         $body = $this->fsget($node['fname']);
@@ -63,17 +105,26 @@ class FileFactory
      *
      * Creates the node only.
      * Does not prepare thumbnails or upload to S3: use taskq for that.
+     *
+     * If the file already exists -- reuses the old one (found by the `key` field),
+     * otherwise a new node with type=file is created.  If the existing file is
+     * deleted -- it's ignored.
+     *
+     * @param string $name  Source file name, e.g. "DCIM123.jpg"
+     * @param string $type  Source file type, e.g. "image/jpeg".
+     * @param string $body  Source file contents.
+     * @param array  $props Additional node properties.
+     *
+     * @return array Saved node contents.
      **/
-    public function add($name, $type, $body, array $props = [])
+    public function add(string $name, string $type, string $body, array $props = []): array
     {
-        $logger = $this->logger;
-
         $hash = md5($body);
 
         $now = strftime("%Y-%m-%d %H:%M:%S");
 
         if ($old = $this->node->getByKey($hash) and $old['deleted'] == 0) {
-            $logger->info("files: file {id} reused.", [
+            $this->logger->info("files: file {id} reused.", [
                 "id" => $old["id"],
             ]);
 
@@ -122,7 +173,7 @@ class FileFactory
         return $node;
     }
 
-    private function shouldReplaceOriginal(array $node)
+    private function shouldReplaceOriginal(array $node): bool
     {
         if (empty($node['id'])) {
             return true;
@@ -131,7 +182,7 @@ class FileFactory
         return true;
     }
 
-    private function getKindByType($type)
+    private function getKindByType(string $type): string
     {
         $kind = "other";
 
@@ -144,7 +195,7 @@ class FileFactory
         return $kind;
     }
 
-    protected function fix(array $node)
+    protected function fix(array $node): array
     {
         if (empty($node["kind"])) {
             if (0 === strpos($node["mime_type"], "image/")) {
@@ -159,36 +210,33 @@ class FileFactory
         return $node;
     }
 
-    public function getStoragePath()
+    /**
+     * Returns the full path to the file storage.
+     *
+     * The path is set in $settings['file']['path'].
+     *
+     * Does NOT check if the folder exists.  This sould NOT be done here, only during
+     * the real file access.
+     **/
+    public function getStoragePath(): string
     {
-        $settings = $this->getSettings();
+        $path = $this->settings['path'] ?? null;
 
-        if (empty($settings["path"])) {
+        if (empty($path) {
             throw new \RuntimeException("file storage path not set");
-        }
-
-        $path = $settings["path"];
-
-        if (!is_dir($path)) {
-            $res = mkdir($path, 0775, true);
-            if ($res === false) {
-                throw new \RuntimeException("file storage does not exist and could not be created: {$path}");
-            }
-        } elseif (!is_writable($path)) {
-            throw new \RuntimeException("file storage is not writable: {$path}");
         }
 
         return $path;
     }
 
-    public function getStorageSize()
+    /**
+     * Returns the amount of available disk space.
+     *
+     * @return int Free disk space.
+     **/
+    public function getStorageSize(): int
     {
-        return disk_free_space($this->getStoragePath());
-    }
-
-    protected function getSettings()
-    {
-        return $this->settings;
+        return (int)disk_free_space($this->getStoragePath());
     }
 
     /**
@@ -197,12 +245,14 @@ class FileFactory
      * @param string $path Local file path, e.g. '1/b9/1b9a744e14005e033fae6a45fd24f612'
      * @return string File body, or false if it doesn't exist.
      **/
-    public function fsget($path)
+    public function fsget(string $path): ?string
     {
         $fpath = $this->fsgetpath($path);
+
         if (!file_exists($fpath)) {
-            return false;
+            return null;
         }
+
         return file_get_contents($fpath);
     }
 
@@ -210,17 +260,15 @@ class FileFactory
      * Save file body to a file, return local path.
      *
      * @param string $body File contents.
+     *
      * @return string Local path to the file, e.g.: '1/b9/1b9a744e14005e033fae6a45fd24f612'
      **/
-    public function fsput($body)
+    public function fsput(string $body): string
     {
-        $st = $this->settings;
-        $storage = $st['path'];
-
         $hash = md5($body);
         $fname = substr($hash, 0, 1) . '/' . substr($hash, 1, 2) . '/' . $hash;
+        $fpath = $this->fsgetpath($fname);
 
-        $fpath = $storage . '/' . $fname;
         if (!is_dir($dir = dirname($fpath))) {
             $res = mkdir($dir, 0775, true);
             if ($res === false) {
@@ -242,13 +290,10 @@ class FileFactory
      * @param string $path Storage-local path.
      * @return string Absolute path.
      **/
-    public function fsgetpath($path)
+    public function fsgetpath(string $path): string
     {
-        $st = $this->settings;
-        $storage = $st['path'];
-
+        $storage = $this->getStoragePath();
         $fpath = $storage . '/' . $path;
-
         return $fpath;
     }
 }

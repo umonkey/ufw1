@@ -12,11 +12,6 @@ Uses [dependency injection][11], named after [Symfony services][12].  Services a
 Uses "nodes", individual pieces of content, such as a page, poll, article, forum topic, or a blog entry.  This is first [introduced by Drupal][13], works well and simplifies document management greatly.
 
 
-## Installing
-
-    $ composer require umonkey/ufw1:dev-default
-
-
 ## Services
 
 Custom services are configured in [config/services.php][2], standard services are set up with [Util::containerSetup()][3].
@@ -24,6 +19,7 @@ Custom services are configured in [config/services.php][2], standard services ar
 | Key | Class | Description |
 |-----|-------|-------------|
 | `db` | [Database][5] | Raw database access.  Wraps around PDO.  Has no query builder or anything, designed to use with SQL.  Has some fetch, insert and update helpers, transactional block.  Detailed docs are [here][4]. |
+| `file` | [FileFactory][14] | File storage interface.  Represents files stored in the database (as nodes).  Files can have multiple versions (thumbnails), can be stored locally or on S3.  Detailed docs are [here][15].  |
 | `logger` | [Logger][6] | Simple file logger, implements [PSR-3][8].  Files can have date based names.  Details [here][7]. |
 | `node` | [NodeFactory][9] | Document storage.  Stores documents as "nodes", in the `nodes` table, Drupal style.  Nodes are of various types, have indexes etc.  Detailed docs are [here][10]. |
 
@@ -36,6 +32,11 @@ Custom services are configured in [config/services.php][2], standard services ar
 - `templates`: built in Twig templates, can be used as fallback in real applications.
 - `tests`: phpunit files.
 - `vendor`: third party components.
+
+
+## Installing
+
+    $ composer require umonkey/ufw1:dev-default
 
 
 [1]: https://www.slimframework.com/
@@ -51,3 +52,5 @@ Custom services are configured in [config/services.php][2], standard services ar
 [11]: https://en.wikipedia.org/wiki/Dependency_injection
 [12]: https://symfony.com/doc/current/service_container.html
 [13]: https://www.drupal.org/docs/7/nodes-content-types-and-fields/about-nodes
+[14]: src/Services/FileFactory.php
+[15]: docs/HOWTO-files.php
