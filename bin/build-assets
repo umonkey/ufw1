@@ -5,7 +5,7 @@ ini_set('display_errors', 'stderr');
 
 requireAutoloader();
 
-require __DIR__ . '/../src/Ufw1/compress.php';
+require __DIR__ . '/../src/compress.php';
 
 
 function requireAutoloader()

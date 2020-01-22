@@ -12,11 +12,23 @@
 
 namespace Ufw1\Services;
 
-class Search extends \Ufw1\Service
+use Psr\Log\LoggerInterface;
+
+class Search
 {
+    protected $database;
+
+    protected $logger;
+
     private static $stopWords = ["а", "и", "о", "об", "в", "на", "под", "из"];
 
-    public function search($query, $limit = 100)
+    public function __construct(Database $database, LoggerInterface $logger)
+    {
+        $this->database = $database;
+        $this->logger = $logger;
+    }
+
+    public function search(string $query, int $limit = 100): array
     {
         // TODO: synonims
         $query = $this->normalizeText($query);
@@ -46,7 +58,7 @@ class Search extends \Ufw1\Service
         return $rows;
     }
 
-    public function suggest($query, $limit = 10)
+    public function suggest(string $query, int $limit = 10): array
     {
         // TODO: synonims
         $query = $this->normalizeText($query);
@@ -93,7 +105,7 @@ class Search extends \Ufw1\Service
      * @param array $meta Extra data, optional.
      * @return void
      **/
-    public function reindexDocument($key, $title, $body, array $meta = [])
+    public function reindexDocument(string $key, string $title, string $body, array $meta = []): void
     {
         $meta = $meta ? serialize($meta) : null;
 
@@ -120,7 +132,7 @@ class Search extends \Ufw1\Service
      *
      * @param array $args Node spec, in 'id'.
      **/
-    public function reindexNode(array $args)
+    public function reindexNode(array $args): void
     {
         $node = $this->node->get($args['id']);
 
@@ -133,7 +145,7 @@ class Search extends \Ufw1\Service
         }
     }
 
-    protected function reindexWikiNode(array $node)
+    protected function reindexWikiNode(array $node): void
     {
         $page = $this->wiki->renderPage($node);
 
@@ -167,7 +179,7 @@ class Search extends \Ufw1\Service
         $this->reindexDocument("node:" . $node["id"], $title, $text, $meta);
     }
 
-    public function reindexAll(array $items)
+    public function reindexAll(array $items): void
     {
         $this->logger->debug("search: normalizing {count} documents.", [
             "count" => count($items),
@@ -206,7 +218,7 @@ class Search extends \Ufw1\Service
         ]);
     }
 
-    public function normalizeText($text)
+    public function normalizeText(string $text): string
     {
         if ($words = $this->splitWords($text)) {
             if ($words = $this->normalizeWords($words)) {
@@ -226,7 +238,7 @@ class Search extends \Ufw1\Service
      * @param string $text Source text.
      * @return array Words, lower case, excluding stop words.
      **/
-    protected function splitWords($text)
+    protected function splitWords(string $text): array
     {
         $text = mb_strtolower($text);
         $words = preg_split('@[^a-zабвгдеёжзийклмнопрстуфхцчшщыьэъюя0-9]+@u', $text, -1, PREG_SPLIT_NO_EMPTY);
@@ -243,7 +255,7 @@ class Search extends \Ufw1\Service
      * @param array $words Source words.
      * @return array Normalized words.
      **/
-    protected function normalizeWords(array $words)
+    protected function normalizeWords(array $words): array
     {
         static $aliases = null;
 

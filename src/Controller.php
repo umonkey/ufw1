@@ -4,6 +4,8 @@
  * Base controller, implements service access etc.
  **/
 
+declare(strict_types=1);
+
 namespace Ufw1;
 
 use Slim\Http\Request;
@@ -42,7 +44,7 @@ abstract class Controller
     /**
      * Check if service exists.
      **/
-    public function __isset(string $key)
+    public function __isset(string $key): bool
     {
         return $this->container->has($key);
     }
@@ -58,7 +60,7 @@ abstract class Controller
 
      * @return Response ready to use response.
      **/
-    protected function render(Request $request, $templateName, array $data = []): Response
+    protected function render(Request $request, string $templateName, array $data = []): Response
     {
         if (empty($data['breadcrumbs'])) {
             $data['breadcrumbs'] = $this->getBreadcrumbs($request, $data);
@@ -80,7 +82,7 @@ abstract class Controller
      *
      * @return Response ready to use response.
      **/
-    protected function renderHTML(Request $request, $templateName, array $data = []): string
+    protected function renderHTML(Request $request, string $templateName, array $data = []): string
     {
         $data = array_replace([
             'language' => 'ru',
@@ -100,7 +102,7 @@ abstract class Controller
         return $html;
     }
 
-    protected function renderXML(Request $request, $templateName, array $data = []): Response
+    protected function renderXML(Request $request, string $templateName, array $data = []): Response
     {
         $def = $this->settings->templates;
 
@@ -117,7 +119,7 @@ abstract class Controller
         return $response->withHeader("Content-Type", "text/xml; charset=utf-8");
     }
 
-    protected function renderRSS(Request $request, array $channel, array $items)
+    protected function renderRSS(Request $request, array $channel, array $items): Response
     {
         $proto = $request->getServerParam("HTTPS") == "https" ? "https" : "http";
         $host = $request->getUri()->getHost();
@@ -137,7 +139,7 @@ abstract class Controller
         ]);
     }
 
-    protected function sendFromCache(Request $request, $callback, $key = null)
+    protected function sendFromCache(Request $request, $callback, string $key = null): Response
     {
         if ($key === null) {
             $key = $request->getUri()->getPath();
@@ -186,7 +188,7 @@ abstract class Controller
         return $this->sendCached($request, $body, $type, $added);
     }
 
-    protected function sendCached(Request $request, $body, $type, $lastmod)
+    protected function sendCached(Request $request, string $body, string $type, $lastmod): Response
     {
         $etag = sprintf("\"%x-%x\"", $lastmod, strlen($body));
 
@@ -221,7 +223,7 @@ abstract class Controller
      *
      * TODO: move to Twig filter, e.g. |etag
      **/
-    protected function fixAssetsCache(Request $request, $html): string
+    protected function fixAssetsCache(Request $request, string $html): string
     {
         $root = $request->getServerParam("DOCUMENT_ROOT");
 
@@ -246,22 +248,22 @@ abstract class Controller
      * @param array $data Template data.
      * @return array Breadcrumbs info.
      **/
-    public function getBreadcrumbs(Request $request, array $data)
+    public function getBreadcrumbs(Request $request, array $data): array
     {
         return [];
     }
 
-    protected function forbidden()
+    protected function forbidden(): void
     {
         throw new \Ufw1\Errors\Forbidden();
     }
 
-    protected function unauthorized()
+    protected function unauthorized(): void
     {
         throw new \Ufw1\Errors\Unauthorized();
     }
 
-    protected function notfound($message = null)
+    protected function notfound(string $message = null): void
     {
         if ($message) {
             throw new Errors\NotFound($message);
@@ -270,12 +272,12 @@ abstract class Controller
         }
     }
 
-    protected function unavailable($message = null)
+    protected function unavailable(string $message = null): void
     {
         throw new \Ufw1\Errors\Unavailable($message);
     }
 
-    protected function fail($message)
+    protected function fail(string $message): void
     {
         throw new \Ufw1\Errors\UserFailure($message);
     }

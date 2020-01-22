@@ -150,15 +150,15 @@ class Database
         return $res;
     }
 
-    public function fetchOne(string $query, array $params = array()): array
+    public function fetchOne(string $query, array $params = array()): ?array
     {
         $db = $this->connect();
         $sth = $db->prepare($query);
         $sth->execute($params);
-        return $sth->fetch(PDO::FETCH_ASSOC);
+        return $sth->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    public function fetchcell(string $query, array $params = array()): mixed
+    public function fetchcell(string $query, array $params = array())
     {
         $db = $this->connect();
         $sth = $db->prepare($query);
@@ -226,7 +226,7 @@ class Database
         $query = "INSERT INTO `{$tableName}` ({$_fields}) VALUES ({$_marks})";
         $sth = $this->query($query, $_params);
 
-        return $this->conn->lastInsertId();
+        return (int)$this->conn->lastInsertId();
     }
 
     public function update(string $tableName, array $fields, array $where): int

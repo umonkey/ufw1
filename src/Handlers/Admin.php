@@ -527,7 +527,7 @@ class Admin extends CommonHandler
      * @param Request $request Request information, for cookies etc.
      * @return array User info, or throws an exception.
      **/
-    protected function requireAdmin($request)
+    protected function requireAdmin(Request $request): array
     {
         $st = $this->container->get('settings');
 

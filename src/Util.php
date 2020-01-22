@@ -108,13 +108,14 @@ class Util
 
     public static function containerSetup(ContainerInterface $container): void
     {
-        $container['database'] = function ($c) {
+        $container['db'] = function ($c) {
             $dsn = $c->get('settings')['dsn'];
             return new Services\Database($dsn);
         };
 
         $container['file'] = function ($c) {
-            return new Services\FileFactory($c);
+            return new Services\FileFactory($c->get('logger'),
+                $c->get('node'), $c->get('settings'));
         };
 
         $container['fts'] = function ($c) {
@@ -122,7 +123,7 @@ class Util
         };
 
         $container['logger'] = function ($c) {
-            return new Services\Logger($c);
+            return new Services\Logger($c->get('settings')['logger']);
         };
 
         $container['notFoundHandler'] = function ($c) {
@@ -132,39 +133,57 @@ class Util
         };
 
         $container['node'] = function ($c) {
-            return new Services\NodeFactory($c);
+            $db = $c->get('db');
+            $logger = $c->get('logger');
+            return new Services\NodeFactory($db, $logger);
         };
 
         $container['S3'] = function ($c) {
-            return new Services\S3($c);
+            $config = $c->get('settings')['S3'];
+            $logger = $c->get('logger');
+            $node = $c->get('node');
+            $taskq = $c->get('taskq');
+            return new Services\S3($config, $logger, $node, $taskq);
         };
 
         $container['stemmer'] = function ($c) {
-            return new Services\Stemmer($c);
+            return new Services\Stemmer();
         };
 
         $container['taskq'] = function ($c) {
-            return new Services\TaskQueue($c);
+            $db = $c->get('db');
+            $logger = $c->get('logger');
+            $settings = $c->get('settings')['taskq'];
+            return new Services\TaskQueue($db, $logger, $settings);
         };
 
         $container['telega'] = function ($c) {
-            return new Services\Telega($c);
+            $logger = $c->get('logger');
+            $settings = $c->get('settings')['telega'];
+            return new Services\Telega($logger, $settings);
         };
 
         $container['template'] = function ($c) {
-            return new Services\Template($c);
+            $settings = $c->get('settings')['templates'];
+            return new Services\Template($settings);
         };
 
         $container['thumbnailer'] = function ($c) {
+            $config = $c->get('settings')['thumbnails'];
+            $logger = $c->get('logger');
+
             if (class_exists('\Imagickx')) {
-                return new Services\Thumbnailer2($c);
+                return new Services\Thumbnailer2($config, $logger);
             } else {
-                return new Services\Thumbnailer($c);
+                return new Services\Thumbnailer($config, $logger);
             }
         };
 
         $container['wiki'] = function ($c) {
-            $t = new Services\Wiki($c);
+            $settings = $c->get('settings')['wiki'];
+            $node = $c->get('node');
+            $logger = $c->get('logger');
+            $t = new Services\Wiki($settings, $node, $logger);
             return $t;
         };
 
@@ -213,7 +232,7 @@ class Util
 
     public static function installWiki(App $app): void
     {
-        $class = Handlers\Wiki::class;
+        $class = Controllers\Wiki::class;
 
         $app->get('/wiki', $class . ':onRead');
         $app->get('/wiki/edit', $class . ':onEdit');

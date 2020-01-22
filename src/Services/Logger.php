@@ -10,7 +10,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\InvalidArgumentException;
 use Psr\Container\ContainerInterface;
 
-class Logger extends \Ufw1\Service implements LoggerInterface
+class Logger implements LoggerInterface
 {
     protected $config = [];
 
@@ -18,11 +18,9 @@ class Logger extends \Ufw1\Service implements LoggerInterface
 
     protected $startup = null;
 
-    public function __construct(ContainerInterface $container)
+    public function __construct(array $config)
     {
-        parent::__construct($container);
-
-        $this->config = $this->settings['logger'];
+        $this->config = $config;
 
         $this->startup = defined("STARTUP_TS") ? STARTUP_TS : microtime(true);
     }

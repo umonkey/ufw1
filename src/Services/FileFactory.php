@@ -1,9 +1,31 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ufw1\Services;
 
-class FileFactory extends \Ufw1\Service
+use Psr\Log\LoggerInterface;
+
+class FileFactory
 {
+    protected $logger;
+
+    protected $node;
+
+    protected $settings;
+
+    public function __construct(LoggerInterface $logger, NodeFactory $node, array $settings)
+    {
+        $this->logger = $logger;
+
+        $this->node = $node;
+
+        $this->settings = array_replace([
+            'dmode' => 0775,
+            'fmode' => 0664,
+        ], $settings);
+    }
+
     public function get($id)
     {
         $node = $this->node->get($id);
@@ -166,21 +188,7 @@ class FileFactory extends \Ufw1\Service
 
     protected function getSettings()
     {
-        static $settings = null;
-
-        if ($settings === null) {
-            $settings = $this->settings["files"] ?? [];
-
-            $host = $_SERVER["SERVER_NAME"];
-
-            $settings = array_merge([
-                "path" => dirname($_SERVER["DOCUMENT_ROOT"]) . "/data/files/" . $host,
-                "dmode" => 0775,
-                "fmode" => 0664,
-            ], $settings);
-        }
-
-        return $settings;
+        return $this->settings;
     }
 
     /**
@@ -207,7 +215,7 @@ class FileFactory extends \Ufw1\Service
     public function fsput($body)
     {
         $st = $this->settings;
-        $storage = $st['files']['path'] ?? $_SERVER['DOCUMENT_ROOT'] . '/../data/files';
+        $storage = $st['path'];
 
         $hash = md5($body);
         $fname = substr($hash, 0, 1) . '/' . substr($hash, 1, 2) . '/' . $hash;
@@ -237,7 +245,7 @@ class FileFactory extends \Ufw1\Service
     public function fsgetpath($path)
     {
         $st = $this->settings;
-        $storage = $st['files']['path'] ?? $_SERVER['DOCUMENT_ROOT'] . '/../data/files';
+        $storage = $st['path'];
 
         $fpath = $storage . '/' . $path;
 

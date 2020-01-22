@@ -4,13 +4,38 @@
  * Task queue service.
  **/
 
+declare(strict_types=1);
+
 namespace Ufw1\Services;
 
-class TaskQueueService extends \Ufw1\Service
+use Psr\Log\LoggerInterface;
+
+class TaskQueue
 {
+    /**
+     * @var Database
+     **/
+    protected $database;
+
+    /**
+     * @var LoggerInterface
+     **/
+    protected $logger;
+
+    /**
+     * @var array
+     **/
+    protected $settings;
+
     protected $ping = false;
 
-    public function add($action, array $data = [], $priority = 0)
+    public function __construct(Database $database, LoggerInterface $logger, array $settings)
+    {
+        $this->database = $database;
+        $this->logger = $logger;
+    }
+
+    public function add(string $action, array $data = [], int $priority = 0): int
     {
         $logger = $this->logger;
 

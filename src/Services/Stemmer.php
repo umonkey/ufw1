@@ -11,9 +11,11 @@
  * @source https://github.com/NeonXP/Stemmer/blob/master/src/NXP/Stemmer.php
  */
 
+declare(strict_types=1);
+
 namespace Ufw1\Services;
 
-class Stemmer extends \Ufw1\Service
+class Stemmer
 {
     public const VOWEL = 'аеёиоуыэюя';
     public const REGEX_PERFECTIVE_GERUNDS1 = '(в|вши|вшись)$';

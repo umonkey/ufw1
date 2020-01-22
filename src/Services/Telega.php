@@ -4,11 +4,31 @@
  * Simple, pretty dumb atm, telegram notifications.
  **/
 
+declare(strict_types=1);
+
 namespace Ufw1\Services;
 
-class Telega extends \Ufw1\Service
+use Psr\Log\LoggerInterface;
+
+class Telega
 {
-    public function sendMessage($text)
+    /**
+     * @var LoggerInterface
+     **/
+    protected $logger;
+
+    /**
+     * @var array
+     **/
+    protected $settings;
+
+    public function __construct(array $settings, LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+        $this->settings = $settings;
+    }
+
+    public function sendMessage(string $text): bool
     {
         $logger = $this->logger;
 
@@ -18,7 +38,7 @@ class Telega extends \Ufw1\Service
         }
 
         $st = $this->settings;
-        if (empty($st['telega']['bot_id']) or empty($st['telega']['chat_id'])) {
+        if (empty($st['bot_id']) or empty($st['chat_id'])) {
             $logger->warning('telega: bot/chat not set.');
             return false;
         }

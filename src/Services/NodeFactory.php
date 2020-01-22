@@ -1,10 +1,31 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ufw1\Services;
 
-class NodeFactory extends \Ufw1\Service
+use Ufw1\Services\Database;
+use Psr\Log\LoggerInterface;
+
+class NodeFactory
 {
-    public function where($conditions, array $params = [], $callback = null)
+    /**
+     * @var Database
+     **/
+    protected $database;
+
+    /**
+     * @var LoggerInterface
+     **/
+    protected $logger;
+
+    public function __construct(Database $database, LoggerInterface $logger)
+    {
+        $this->database = $database;
+        $this->logger = $logger;
+    }
+
+    public function where(string $conditions, array $params = [], $callback = null): array
     {
         $query = "SELECT * FROM `nodes` WHERE " . $conditions;
 
@@ -20,28 +41,32 @@ class NodeFactory extends \Ufw1\Service
         return $res;
     }
 
-    public function get($id)
+    public function get(int $id): ?array
     {
         $row = $this->database->fetchone("SELECT * FROM `nodes` WHERE `id` = ?", [$id]);
         if ($row) {
             return $this->unpack($row);
+        } else {
+            return null;
         }
     }
 
-    public function getByKey($key)
+    public function getByKey(string $key): ?array
     {
         $tmp = $this->database->fetchOne("SELECT * FROM `nodes` WHERE `key` = ? ORDER BY `id` LIMIT 1", [$key]);
         if ($tmp) {
             return $this->unpack($tmp);
+        } else {
+            return null;
         }
     }
 
-    public function save(array $node)
+    public function save(array $node): array
     {
         $db = $this->database;
         $logger = $this->logger;
 
-        $this->saveCurrent($node, $db);
+        $this->saveCurrent($node);
 
         $now = strftime("%Y-%m-%d %H:%M:%S");
 
@@ -98,7 +123,7 @@ class NodeFactory extends \Ufw1\Service
      * @param array $node Node to be saved.
      * @return void
      **/
-    protected function saveCurrent(array $node, $db)
+    protected function saveCurrent(array $node): void
     {
         if (empty($node['id']) or empty($node['type'])) {
             return;
@@ -137,7 +162,7 @@ class NodeFactory extends \Ufw1\Service
         ]);
     }
 
-    public function unpack(array $row)
+    public function unpack(array $row): array
     {
         if (array_key_exists("more", $row)) {
             $more = unserialize($row["more"]);
@@ -150,7 +175,7 @@ class NodeFactory extends \Ufw1\Service
         return $row;
     }
 
-    protected function packNode(array $row)
+    protected function packNode(array $row): array
     {
         return $this->pack($row, [
             "id",
@@ -166,7 +191,7 @@ class NodeFactory extends \Ufw1\Service
         ]);
     }
 
-    protected function pack(array $row, array $fields)
+    protected function pack(array $row, array $fields): array
     {
         $more = [];
 
@@ -191,7 +216,7 @@ class NodeFactory extends \Ufw1\Service
      *
      * @param array $node Node to reindex.
      **/
-    protected function indexUpdate(array $node)
+    protected function indexUpdate(array $node): void
     {
         $db = $this->database;
         $settings = $this->settings;

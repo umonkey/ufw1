@@ -6,11 +6,37 @@
  * Moved away from the andler to allow CLI usage.
  **/
 
+declare(strict_types=1);
+
 namespace Ufw1\Services;
 
-class Wiki extends \Ufw1\Service
+use Psr\Log\LoggerInterface;
+
+class Wiki
 {
-    public function updatePage($name, $source, array $user, $section = null)
+    /**
+     * @var NodeFactory
+     **/
+    protected $node;
+
+    /**
+     * @var LoggerInterface
+     **/
+    protected $logger;
+
+    /**
+     * @var array
+     **/
+    protected $settings;
+
+    public function __construct(array $settings, NodeFactory $node, LoggerInterface $logger)
+    {
+        $this->settings = $settings;
+        $this->node = $node;
+        $this->logger = $logger;
+    }
+
+    public function updatePage(string $name, string $source, array $user, string $section = null): array
     {
         if (!$this->canEditPages($user)) {
             throw new Errors\Forbidden();
@@ -66,9 +92,9 @@ class Wiki extends \Ufw1\Service
      * @param array $user User node.
      * @return bool True, if the user can read pages.
      **/
-    public function canReadPages(array $user = null)
+    public function canReadPages(array $user = null): bool
     {
-        $roles = $this->settings['wiki']['reader_roles'] ?? null;
+        $roles = $this->settings['reader_roles'] ?? null;
         if (empty($roles)) {
             $this->logger->warning('wiki: reader_roles array not set.');
             return false;
@@ -82,9 +108,9 @@ class Wiki extends \Ufw1\Service
         return false;
     }
 
-    public function canEditPages(array $user = null)
+    public function canEditPages(array $user = null): bool
     {
-        $roles = $this->settings['wiki']['editor_roles'] ?? null;
+        $roles = $this->settings['editor_roles'] ?? null;
         if (empty($roles)) {
             $this->logger->warning('wiki: editor_roles array not set.');
             return false;
@@ -104,7 +130,7 @@ class Wiki extends \Ufw1\Service
      * @param string $name Page name.
      * @return array Page node or null.
      **/
-    public function getPageByName($name)
+    public function getPageByName(string $name): ?array
     {
         $name = explode('#', $name)[0];
 
@@ -116,11 +142,12 @@ class Wiki extends \Ufw1\Service
     /**
      * Returns source code of the page, if any.
      *
-     * @param string $name Page name.
+     * @param string $name    Page name.
      * @param string $section Section name.
+     *
      * @return string Source code.
      **/
-    public function getPageSource($name, $section = null)
+    public function getPageSource(string $name, string $section = null): string
     {
         $page = $this->getPageByName($name);
         if (empty($page) or empty($page['source'])) {
@@ -148,10 +175,13 @@ class Wiki extends \Ufw1\Service
      *
      * Only the wiki page itself, not the actual HTML page with template stuff.
      *
+     * TODO: rename to processPage(), return node with attributes added.
+     *
      * @param array $node Wiki page node.
+     *
      * @return array Page properties and HTML code.
      **/
-    public function renderPage(array $node)
+    public function renderPage(array $node): array
     {
         if ($node['type'] != 'wiki') {
             throw new \RuntimeException('not a wiki page');
@@ -207,7 +237,7 @@ class Wiki extends \Ufw1\Service
         return $res;
     }
 
-    public function getPageKey($name)
+    public function getPageKey(string $name): string
     {
         return md5(mb_strtolower(trim($name)));
     }
@@ -222,7 +252,7 @@ class Wiki extends \Ufw1\Service
      * @param  string $link Page name, with section optionally.
      * @return string       Link to the page.
      **/
-    protected function getWikiLink($link)
+    protected function getWikiLink(string $link): string
     {
         $parts = explode('#', $link);
         $parts[0] = urlencode($parts[0]);
@@ -231,7 +261,7 @@ class Wiki extends \Ufw1\Service
         return $link;
     }
 
-    protected function parseMapItems($source)
+    protected function parseMapItems(string $source): array
     {
         $items = [];
         $last = [];
@@ -292,7 +322,7 @@ class Wiki extends \Ufw1\Service
     /**
      * Рендеринг карт.
      **/
-    protected function processMaps($source)
+    protected function processMaps(string $source): string
     {
         $idx = 0;
 
@@ -306,7 +336,7 @@ class Wiki extends \Ufw1\Service
         return $source;
     }
 
-    protected function processPhotoAlbums($source)
+    protected function processPhotoAlbums(string $source): string
     {
         $out = [];
         $album = [];
@@ -350,9 +380,9 @@ class Wiki extends \Ufw1\Service
      * @param string $source Source code.
      * @return string Updated source code.
      **/
-    protected function processWikiLinks($source)
+    protected function processWikiLinks(string $source): string
     {
-        $interwiki = $this->settings['interwiki'] ?: [];
+        $interwiki = $this->settings['interwiki'] ?? [];
 
         $source = preg_replace_callback('@\[\[([^]]+)\]\]@', function ($m) use ($interwiki) {
             // Embed images later.
@@ -410,7 +440,7 @@ class Wiki extends \Ufw1\Service
      * @param  array   $interwiki Interwiki patterns.
      * @return bool               True, if the link was processed.
      **/
-    protected function processInterwiki(&$link, &$label, array $interwiki)
+    protected function processInterwiki(string &$link, string &$label, array $interwiki): bool
     {
         foreach ($interwiki as $re => $format) {
             if (preg_match($re, $link, $m)) {
@@ -427,13 +457,13 @@ class Wiki extends \Ufw1\Service
         return false;
     }
 
-    protected function processImages($html)
+    protected function processImages(string $html): string
     {
         $nodes = $this->node;
 
         $html = preg_replace_callback('@\[\[image:([^]]+)\]\]@', function ($m) use ($nodes, &$res) {
             $parts = explode(":", $m[1]);
-            $fileId = array_shift($parts);
+            $fileId = (int)array_shift($parts);
 
             $info = $this->getFileInfo($fileId);
 
@@ -492,7 +522,7 @@ class Wiki extends \Ufw1\Service
         return $html;
     }
 
-    protected function getFileInfo($id)
+    protected function getFileInfo(int $id): array
     {
         $res = [
             'small' => '/images/placeholder.png',
@@ -505,7 +535,7 @@ class Wiki extends \Ufw1\Service
             'caption' => null,
         ];
 
-        $file = $this->file->get($id);
+        $file = $this->node->get($id);
 
         if (!empty($file)) {
             $res['title'] = $file['title'] ?? $file['name'];
@@ -543,7 +573,7 @@ class Wiki extends \Ufw1\Service
     /**
      * Embed YouTube links.
      **/
-    protected function processYouTube($html)
+    protected function processYouTube(string $html): string
     {
         $lines = explode("\n", $html);
 
@@ -558,7 +588,7 @@ class Wiki extends \Ufw1\Service
         return implode("\n", $lines);
     }
 
-    protected function processHeader($html, array &$res)
+    protected function processHeader(string $html, array &$res): string
     {
         $html = preg_replace_callback('@<h1>(.+)</h1>@', function ($m) use (&$res) {
             $res["title"] = $m[1];
@@ -568,7 +598,7 @@ class Wiki extends \Ufw1\Service
         return $html;
     }
 
-    protected function processSummary($html, array &$res)
+    protected function processSummary(string $html, array &$res): string
     {
         if (empty($res["summary"])) {
             if (preg_match('@<p>(.+?)</p>@', $html, $m)) {
@@ -586,7 +616,7 @@ class Wiki extends \Ufw1\Service
      * @param string $sectionName The name of desired section.
      * @return array Keys: before, wanted, after.
      **/
-    protected function findSection($text, $sectionName)
+    protected function findSection(string $text, string $sectionName): string
     {
         // Simplify line endings.
         $text = str_replace("\r\n", "\n", $text);
@@ -636,7 +666,7 @@ class Wiki extends \Ufw1\Service
      * @param string $source Page source code.
      * @return array Found properties.
      **/
-    protected function extractNodeProperties($source)
+    protected function extractNodeProperties(string $source): array
     {
         $props = [];
 
@@ -667,7 +697,7 @@ class Wiki extends \Ufw1\Service
      * @param array $user Current editor.
      * @return array $node Modified node (saves editor info).
      **/
-    protected function notifyEdits(array $node, array $user)
+    protected function notifyEdits(array $node, array $user): array
     {
         if (!empty($node['last_editor']) and $node['last_editor'] != $user['id']) {
             $this->taskq->add('notify-wiki-edit', [
@@ -681,7 +711,7 @@ class Wiki extends \Ufw1\Service
         return $node;
     }
 
-    protected function getImageSize($fileId)
+    protected function getImageSize(int $fileId): array
     {
         $files = $this->file;
         $logger = $this->logger;
@@ -721,7 +751,7 @@ class Wiki extends \Ufw1\Service
         throw new \RuntimeException("file not found");
     }
 
-    protected function getSnippet($html)
+    protected function getSnippet(string $html): ?string
     {
         // strip_tags mishandles scripts, and we use them heavily for microdata,
         // so just strip them off in advance.
@@ -744,9 +774,10 @@ class Wiki extends \Ufw1\Service
      * Makes sure that sections are separated by double blank lines.
      *
      * @param  string $source Page source.
-     * @return string         Updated source.
+     *
+     * @return string Updated source.
      **/
-    protected function fixSectionSpaces($source)
+    protected function fixSectionSpaces(string $source): string
     {
         $dst = [];
 
@@ -775,7 +806,7 @@ class Wiki extends \Ufw1\Service
         return $source;
     }
 
-    protected function renderFigure(array $info)
+    protected function renderFigure(array $info): string
     {
         // TODO: add lazy loading.
         // Have a 8x8 version of image in the node,

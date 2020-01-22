@@ -4,37 +4,61 @@
  * Upload files using S3.
  **/
 
+declare(strict_types=1);
+
 namespace Ufw1\Services;
 
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
-class S3 extends \Ufw1\Service
+class S3
 {
-    protected $container;
+    /**
+     * @var array
+     **/
+    protected $settings;
 
-    protected $config;
+    /**
+     * @var LoggerInterface
+     **/
+    protected $logger;
 
-    public function __construct(ContainerInterface $container)
+    /**
+     * FIXME!  Does not belong here.
+     * @var NodeFactory
+     **/
+    protected $node;
+
+    /**
+     * @var TaskQueue
+     **/
+    protected $taskq;
+
+    public function __construct(array $settings, LoggerInterface $logger, NodeFactory $node, TaskQueue $taskq)
     {
-        parent::__construct($container);
-
-        $config = $this->settings;
-
-        if (empty($config["S3"])) {
+        if (empty($settings["S3"])) {
             throw new \RuntimeException("S3 not configured, at all");
         }
 
         $keys = ['bucket', 'bucket_region', 'acl', 'secret_key', 'access_key', 'endpoint'];
         foreach ($keys as $key) {
-            if (empty($config["S3"][$key])) {
+            if (empty($settings["S3"][$key])) {
                 throw new \RuntimeException("S3 not configured: {$key} not set");
             }
         }
 
-        $this->config = array_merge([
-            "service" => "s3",
-            "debug" => true,
-        ], $config["S3"]);
+        $settings['S3'] = array_replace([
+            'service' => 's3',
+            'debug' => true,
+        ], $settings['S3']);
+
+        $this->settings = $settings;
+
+        $this->logger = $logger;
+
+        $this->node = $node;
+
+        $this->taskq = $taskq;
     }
 
     /**
@@ -45,8 +69,8 @@ class S3 extends \Ufw1\Service
         $files = [];
 
         $time = time();
-        $bucket = $this->config["bucket"];
-        $endpoint = $this->config["endpoint"];
+        $bucket = $this->settings['S3']["bucket"];
+        $endpoint = $this->settings['S3']["endpoint"];
 
         $url = "https://" . $endpoint . "/" . $bucket;
         $res = $this->doRequest("GET", $url);
@@ -113,7 +137,7 @@ class S3 extends \Ufw1\Service
 
         $props = array_merge(array(
             "type" => null,
-            "acl" => $this->config["acl"],
+            "acl" => $this->settings['S3']["acl"],
             "storage_class" => "STANDARD",
             ), $props);
 
@@ -134,7 +158,7 @@ class S3 extends \Ufw1\Service
             "x-amz-storage-class" => $props["storage_class"],
             );
 
-        $res = $this->doRequest("PUT", $_url = "https://{$this->config["bucket"]}.{$this->config["endpoint"]}{$dst}", $headers, $data);
+        $res = $this->doRequest("PUT", $_url = "https://{$this->settings['S3']["bucket"]}.{$this->settings['S3']["endpoint"]}{$dst}", $headers, $data);
 
         if ($res[0]['status'] != 200) {
             $_url = null;
@@ -185,7 +209,7 @@ class S3 extends \Ufw1\Service
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
 
-        if ($this->config['debug']) {
+        if ($this->settings['S3']['debug']) {
             $this->logger->debug("S3: performing {method} request to {url}, headers: {headers}", [
                 "method" => $method,
                 "url" => $url,
@@ -199,7 +223,7 @@ class S3 extends \Ufw1\Service
             if (preg_match('@^HTTP/[0-9.]+ (\d+) .+@', $header, $m)) {
                 $resHeaders["status"] = $m[1];
 
-                if ($this->config['debug']) {
+                if ($this->settings['S3']['debug']) {
                     $this->logger->debug("S3: response status: {status}", [
                         "status" => $m[1],
                     ]);
@@ -209,14 +233,14 @@ class S3 extends \Ufw1\Service
                 $v = trim($parts[1]);
                 $resHeaders[$k] = $v;
 
-                if ($this->config['debug']) {
+                if ($this->settings['S3']['debug']) {
                     $this->logger->debug("S3: response header: {k} = {v}", [
                         "k" => $k,
                         "v" => $v,
                     ]);
                 }
             } elseif (false) {
-                if ($this->config['debug']) {
+                if ($this->settings['S3']['debug']) {
                     $this->logger->debug("S3: unrecognized header: {header}", [
                         "header" => trim($header),
                     ]);
@@ -243,7 +267,7 @@ class S3 extends \Ufw1\Service
 
                 $total = $ult;
 
-                if ($this->config['debug']) {
+                if ($this->settings['S3']['debug']) {
                     $this->logger->debug("S3: sent {sent} of {total} KB ({percent}%), rate: {rate} KB/sec.", [
                         "sent" => round($ul / 1024),
                         "total" => round($ult / 1024),
@@ -262,7 +286,7 @@ class S3 extends \Ufw1\Service
         $dur = $now - $reqts;
         $rate = $total / $dur;
 
-        if ($this->config['debug']) {
+        if ($this->settings['S3']['debug']) {
             $this->logger->debug("S3: file {name} sent ({size} KB), overall rate: {rate} KB/sec.", [
                 "name" => basename($url),
                 "size" => round($total / 1024),
@@ -379,7 +403,7 @@ class S3 extends \Ufw1\Service
 
         $sts = "AWS4-HMAC-SHA256\n"
              . "{$date}\n"
-             . "{$ymd}/{$this->config["bucket_region"]}/{$this->config["service"]}/aws4_request\n"
+             . "{$ymd}/{$this->settings['S3']["bucket_region"]}/{$this->settings['S3']["service"]}/aws4_request\n"
              . hash("sha256", $res["CanonicalRequest"]);
 
         return $sts;
@@ -393,10 +417,10 @@ class S3 extends \Ufw1\Service
      **/
     protected function getSigningKey(array $headers)
     {
-        $kSecret = $this->config["secret_key"];
+        $kSecret = $this->settings['S3']["secret_key"];
         $Date = substr($this->getDate($headers), 0, 8);
-        $Region = $this->config["bucket_region"];
-        $Service = $this->config["service"];
+        $Region = $this->settings['S3']["bucket_region"];
+        $Service = $this->settings['S3']["service"];
 
         $kDate = $this->hmac("AWS4" . $kSecret, $Date);
         $kRegion = $this->hmac($kDate, $Region);
@@ -409,7 +433,7 @@ class S3 extends \Ufw1\Service
     protected function getAuthorization(array $headers, $signature)
     {
         $date = substr($this->getDate($headers), 0, 8);
-        $Credential = "{$this->config["access_key"]}/{$date}/{$this->config["bucket_region"]}/{$this->config["service"]}/aws4_request";
+        $Credential = "{$this->settings['S3']["access_key"]}/{$date}/{$this->settings['S3']["bucket_region"]}/{$this->settings['S3']["service"]}/aws4_request";
 
         $sh = array();
         foreach ($headers as $k => $v) {
@@ -453,9 +477,9 @@ class S3 extends \Ufw1\Service
 
     public function test1()
     {
-        $this->config["secret_key"] = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY";
-        $this->config["bucket_region"] = "us-east-1";
-        $this->config["service"] = "iam";
+        $this->settings['S3']["secret_key"] = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY";
+        $this->settings['S3']["bucket_region"] = "us-east-1";
+        $this->settings['S3']["service"] = "iam";
 
         $kSigning = $this->getSigningKey(array(
             "X-Amz-Date" => "20150830T123600Z",
@@ -564,7 +588,7 @@ class S3 extends \Ufw1\Service
                     ]);
 
                     $file["storage"] = "s3";
-                    $file["url"] = "https://{$this->config['bucket']}.{$this->config['endpoint']}{$rpath}";
+                    $file["url"] = "https://{$this->settings['S3']['bucket']}.{$this->settings['S3']['endpoint']}{$rpath}";
 
                     $unlink[] = $src;
                 }

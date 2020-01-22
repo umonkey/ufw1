@@ -6,23 +6,38 @@
  * TODO: read profiles from settings.
  **/
 
+declare(strict_types=1);
+
 namespace Ufw1\Services;
 
-class Thumbnailer extends \Ufw1\Service
+use Psr\Log\LoggerInterface;
+
+class Thumbnailer
 {
+    /**
+     * @var LoggerInterface
+     **/
+    protected $logger;
+
+    /**
+     * @var array
+     **/
+    protected $config;
+
+    public function __construct(array $config, LoggerInterface $logger)
+    {
+        $this->config = $config;
+        $this->logger = $logger;
+    }
+
     /**
      * Add missing thumbnails to a file node.
      *
      * @param array $node Source file node.
      * @return array Modified node.
      **/
-    public function updateNode(array $node, $force = false)
+    public function updateNode(array $node, bool $force = false): array
     {
-        /*
-        if (php_sapi_name() == 'apache2handler')
-            return $node;
-        */
-
         $logger = $this->logger;
 
         if ($node["type"] != "file") {
@@ -35,7 +50,7 @@ class Thumbnailer extends \Ufw1\Service
             return $node;
         }
 
-        if (!($config = @$this->settings["thumbnails"])) {
+        if (!($config = $this->config)) {
             $logger->debug('thumbnailer: not configured.');
             return $node;
         }
@@ -117,7 +132,7 @@ class Thumbnailer extends \Ufw1\Service
         return $node;
     }
 
-    public function createDefault($imageBody)
+    public function createDefault(string $imageBody): string
     {
         $img = @imageCreateFromString($imageBody);
         if (false === $img) {
@@ -136,7 +151,7 @@ class Thumbnailer extends \Ufw1\Service
         return $res;
     }
 
-    protected function readImageFromString($blob)
+    protected function readImageFromString(string $blob)
     {
         $img = @imagecreatefromstring($blob);
 
@@ -147,7 +162,7 @@ class Thumbnailer extends \Ufw1\Service
         return $img;
     }
 
-    protected function readImageFromFile($src)
+    protected function readImageFromFile(string $src)
     {
         $data = file_get_contents($src);
         $img = imagecreatefromstring($data);
@@ -155,7 +170,7 @@ class Thumbnailer extends \Ufw1\Service
         return $img;
     }
 
-    protected function getImagePNG($img)
+    protected function getImagePNG($img): string
     {
         ob_start();
         imagepng($img, null, 9);
@@ -163,7 +178,7 @@ class Thumbnailer extends \Ufw1\Service
         return $res;
     }
 
-    protected function getImageJPEG($img)
+    protected function getImageJPEG($img): string
     {
         ob_start();
         imagejpeg($img, null, 85);
@@ -171,7 +186,7 @@ class Thumbnailer extends \Ufw1\Service
         return $res;
     }
 
-    protected function getImageWebP($img)
+    protected function getImageWebP($img): string
     {
         ob_start();
         imagewebp($img, null);
@@ -226,7 +241,7 @@ class Thumbnailer extends \Ufw1\Service
         return $img;
     }
 
-    protected function getImageSize($img)
+    protected function getImageSize($img): array
     {
         $w = imagesx($img);
         $h = imagesy($img);
@@ -274,7 +289,7 @@ class Thumbnailer extends \Ufw1\Service
         }
     }
 
-    protected function resizeImage($img, $nw, $nh)
+    protected function resizeImage($img, int $nw, int $nh)
     {
         list($iw, $ih) = $this->getImageSize($img);
 
@@ -291,12 +306,12 @@ class Thumbnailer extends \Ufw1\Service
         return $img;
     }
 
-    protected function destroyImage($img)
+    protected function destroyImage($img): void
     {
         imagedestroy($img);
     }
 
-    protected function getSourcePath(array $file, $key)
+    protected function getSourcePath(array $file, string $key): string
     {
         $logger = $this->logger;
 

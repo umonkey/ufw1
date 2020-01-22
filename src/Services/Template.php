@@ -1,22 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ufw1\Services;
 
 use Psr\Container\ContainerInterface;
 use Slim\Http\Response;
 use Ufw1\Util;
 
-class Template extends \Ufw1\Service
+class Template
 {
+    /**
+     * @var array
+     **/
+    protected $settings;
+
     protected $twig;
 
     protected $defaults;
 
-    public function __construct(ContainerInterface $container)
+    public function __construct(array $settings)
     {
-        parent::__construct($container);
-
-        $settings = $this->settings["templates"];
+        $this->settings = $settings;
 
         $this->defaults = isset($settings["defaults"])
             ? $settings["defaults"]
@@ -30,13 +35,13 @@ class Template extends \Ufw1\Service
         $this->setupFilters();
     }
 
-    public function render($fileName, array $data = array())
+    public function render(string $fileName, array $data = array()): string
     {
         $html = $this->renderFile($fileName, $data);
         return $html;
     }
 
-    public function renderFile($fileName, array $data)
+    public function renderFile(string $fileName, array $data): string
     {
         $data = $this->addDefaults($data);
         $data = array_merge($this->defaults, $data);
@@ -52,7 +57,7 @@ class Template extends \Ufw1\Service
         return $html;
     }
 
-    public static function extractProperties($pageName, $text)
+    public static function extractProperties(string $pageName, string $text): array
     {
         $props = array(
             "language" => "ru",
@@ -76,7 +81,7 @@ class Template extends \Ufw1\Service
     /**
      * Adds default strings, read from the settings.
      **/
-    protected function addDefaults(array $data)
+    protected function addDefaults(array $data): array
     {
         $lang = $data['language'] ?? 'en';
         $strings = $this->settings['templates']['strings'][$lang] ?? [];
@@ -84,21 +89,21 @@ class Template extends \Ufw1\Service
         return $data;
     }
 
-    protected function fixHTML($html)
+    protected function fixHTML(string $html): string
     {
         $html = Util::cleanHtml($html);
         return $html;
     }
 
-    protected function parseTimestamp($value)
+    protected function parseTimestamp(string $value): int
     {
         if (is_numeric($value)) {
-            return $value;
+            return (int)$value;
         }
         return strtotime($value);
     }
 
-    protected function processTypography($text)
+    protected function processTypography(string $text): string
     {
         $patterns = [
             '@<p>(.+?)</p>@ms',
@@ -115,7 +120,7 @@ class Template extends \Ufw1\Service
         return $text;
     }
 
-    protected function setupFilters()
+    protected function setupFilters(): void
     {
         // Custom date format:
         // {{ node.created|date('%Y-%m-%d %H:%M:%S') }}

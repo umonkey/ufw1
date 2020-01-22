@@ -1,43 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Ufw1;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
+use Ufw1\Controller;
 
-class CommonHandler
+class CommonHandler extends Controller
 {
-    protected $container;
-
-    /**
-     * Set up the handler.
-     **/
-    public function __construct($container)
-    {
-        $this->container = $container;
-    }
-
-    public function __get($key)
-    {
-        switch ($key) {
-            case "db":
-                return $this->container->get("database");
-            case "file":
-                return $this->container->get("file");
-            case "fts":
-                return $this->container->get('fts');
-            case "logger":
-                return $this->container->get("logger");
-            case "node":
-                return $this->container->get("node");
-            case "template":
-                return $this->container->get("template");
-            case "taskq":
-                return $this->container->get("taskq");
-        }
-    }
-
-    public function __invoke(Request $request, Response $response, array $args)
+    public function __invoke(Request $request, Response $response, array $args): Response
     {
         switch ($request->getMethod()) {
             case "GET":
@@ -49,7 +22,7 @@ class CommonHandler
         }
     }
 
-    protected function requireRole(Request $request, $role)
+    protected function requireRole(Request $request, string $role): bool
     {
         if (empty($role)) {
             return true;
@@ -74,7 +47,7 @@ class CommonHandler
      * @param Request $request Request to get the session from.
      * @return array|null User info, if found and valid, or null.
      **/
-    protected function getUser(Request $request)
+    protected function getUser(Request $request): ?array
     {
         $session = $this->sessionGet($request);
         if (empty($session)) {
@@ -85,7 +58,7 @@ class CommonHandler
             return null;
         }
 
-        $user = $this->node->get($session["user_id"]);
+        $user = $this->node->get((int)$session["user_id"]);
         if (empty($user)) {
             return null;
         }
@@ -101,7 +74,7 @@ class CommonHandler
         return $user;
     }
 
-    protected function requireUser(Request $request)
+    protected function requireUser(Request $request): array
     {
         $user = $this->getUser($request);
         if (empty($user)) {
@@ -115,7 +88,7 @@ class CommonHandler
         return $user;
     }
 
-    protected function requireAdmin(Request $request)
+    protected function requireAdmin(Request $request): array
     {
         $user = $this->requireUser($request);
 
@@ -130,7 +103,7 @@ class CommonHandler
         return $user;
     }
 
-    protected function isAdmin(Request $request)
+    protected function isAdmin(Request $request): array
     {
         $user = $this->getUser($request);
 
@@ -153,7 +126,7 @@ class CommonHandler
         return true;
     }
 
-    protected function sessionGetId(Request $request)
+    protected function sessionGetId(Request $request): string
     {
         $res = $request->getCookieParam("session_id");
         return $res;
@@ -167,7 +140,7 @@ class CommonHandler
      * @param Request $request Request to extract the session id from.
      * @return array|null Session contents.
      **/
-    public function sessionGet(Request $request)
+    public function sessionGet(Request $request): ?array
     {
         $id = $this->sessionGetId($request);
         if ($id) {
@@ -186,7 +159,7 @@ class CommonHandler
      * @param Request $request Request to get the session id from.
      * @param array $data New session contents.
      **/
-    protected function sessionSave(Request $request, array $data)
+    protected function sessionSave(Request $request, array $data): string
     {
         $sid = $this->sessionGetId($request);
 
@@ -222,7 +195,7 @@ class CommonHandler
      * @param mixed $callback Data editor.
      * @return void
      **/
-    protected function sessionEdit(Request $request, $callback)
+    protected function sessionEdit(Request $request, $callback): void
     {
         if ($sid = $this->sessionGetId($request)) {
             $cell = $this->db->fetchcell("SELECT `data` FROM `sessions` WHERE `id` = ?", [$sid]);
@@ -261,114 +234,14 @@ class CommonHandler
      * Deletes session contents.  The cookie remains in place, so the session
      * could be reopened later.
      **/
-    protected function sessionDelete(Request $request)
+    protected function sessionDelete(Request $request): void
     {
         if ($sid = $this->sessionGetId($request)) {
             $this->db->query("DELETE FROM `sessions` WHERE `id` = ?", [$sid]);
         }
     }
 
-    /**
-     * Renders the page using a template.
-     *
-     * Calls renderHTML(), then wraps the result in a Response(200).
-     *
-     * @param Request $request Request info, used to get host, path information, etc.
-     * @param string $templateName File name, e.g. "pages.twig".
-     * @param array $data Template variables.
-     * @return Response ready to use response.
-     **/
-    protected function render(Request $request, $templateName, array $data = [])
-    {
-        if (empty($data["breadcrumbs"])) {
-            $data["breadcrumbs"] = $this->getBreadcrumbs($request, $data);
-        }
-
-        $html = $this->renderHTML($request, $templateName, $data);
-
-        $response = new Response(200);
-        $response->getBody()->write($html);
-        return $response->withHeader("content-type", "text/html; chaset=utf-8");
-    }
-
-    /**
-     * Renders the page using a template.
-     *
-     * @param Request $request Request info, used to get host, path information, etc.
-     * @param string $templateName File name, e.g. "pages.twig".
-     * @param array $data Template variables.
-     * @return Response ready to use response.
-     **/
-    protected function renderHTML(Request $request, $templateName, array $data = [])
-    {
-        $defaults = [
-            "language" => "ru",
-        ];
-
-        $data = array_merge($defaults, $data);
-
-        $data["request"] = [
-            "base" => $request->getUri()->getBaseUrl(),
-            "host" => $request->getUri()->getHost(),
-            "path" => $request->getUri()->getPath(),
-            "uri" => strval($request->getUri()),
-            "get" => $request->getQueryParams(),
-        ];
-
-        if ($user = $this->getUser($request)) {
-            $data["user"] = $user;
-            $data["is_admin"] = $user["role"] == "admin";
-            unset($data["user"]["password"]);
-        } else {
-            $data["user"] = null;
-            $data["is_admin"] = false;
-        }
-
-        $lang = $data["language"];
-
-        $html = $this->template->render($templateName, $data);
-        $html = $this->fixAssetsCache($request, $html);
-
-        return $html;
-    }
-
-    protected function renderXML(Request $request, $templateName, array $data)
-    {
-        $def = $this->container->get("settings")["templates"];
-        if (!empty($def["defaults"])) {
-            $data = array_merge($def["defaults"], $data);
-        }
-
-        $xml = $this->template->render($templateName, $data);
-
-        $xml = preg_replace('@>\s*<@', "><", $xml);
-
-        $response = new Response(200);
-        $response->getBody()->write($xml);
-        return $response->withHeader("Content-Type", "text/xml; charset=utf-8");
-    }
-
-    protected function renderRSS(Request $request, array $channel, array $items)
-    {
-        $proto = $request->getServerParam("HTTPS") == "https" ? "https" : "http";
-        $host = $request->getUri()->getHost();
-        $base = $proto . "://" . $host;
-
-        $settings = $this->container->get("settings");
-
-        return $this->renderXML($request, "rss.twig", [
-            "request" => [
-                "host" => $host,
-                "base" => $base,
-                "path" => $request->getUri()->getPath(),
-            ],
-            "site_name" => @$settings["site_name"],
-            "channel" => $channel,
-            "items" => $items,
-        ]);
-    }
-
-    protected function search($query)
+    protected function search(string $query): array
     {
         return array_map(function ($em) {
             if (!($name = $em['meta']['title'])) {
@@ -395,109 +268,13 @@ class CommonHandler
 
     /**
      * Schedule task for background execution.
+     *
+     * TODO: delete.
      **/
-    protected function taskq($action, array $data = [], $priority = 0)
+    protected function taskq(string $action, array $data = [], int $priority = 0): int
     {
         $tq = $this->container->get('taskq');
         return $tq->add($action, $data, $priority);
-    }
-
-    protected function sendFromCache(Request $request, $callback, $key = null)
-    {
-        if ($key === null) {
-            $key = $request->getUri()->getPath();
-        }
-
-        $ckey = md5($key);
-
-        $cc = $request->getServerParam("HTTP_CACHE_CONTROL");
-        $refresh = $cc == "no-cache";
-
-        if ($request->getQueryParam("debug") == "tpl") {
-            $refresh = true;
-        }
-
-        $row = $refresh ? null : $this->db->fetchOne("SELECT * FROM `cache` WHERE `key` = ?", [$ckey]);
-        if (empty($row)) {
-            $_tmp = $callback($request);
-            if (!is_array($_tmp)) {
-                return $_tmp;
-            }
-
-            list($type, $body) = $_tmp;
-
-            $added = time();
-
-            $this->db->query("DELETE FROM `cache` WHERE `key` = ?", [$ckey]);
-
-            $this->db->insert("cache", [
-                "key" => $ckey,
-                "added" => $added,
-                "value" => $type . "|" . $body,
-            ]);
-        } else {
-            $added = (int)$row["added"];
-            list($type, $body) = explode("|", $row["value"], 2);
-        }
-
-        if ($key[0] == "/") {
-            $path = $_SERVER["DOCUMENT_ROOT"] . $key;
-            $folder = dirname($path);
-            if (file_exists($folder) and is_dir($folder) and is_writable($folder)) {
-                file_put_contents($path, $body);
-            }
-        }
-
-        return $this->sendCached($request, $body, $type, $added);
-    }
-
-    protected function sendCached(Request $request, $body, $type, $lastmod)
-    {
-        $etag = sprintf("\"%x-%x\"", $lastmod, strlen($body));
-
-        $response = new Response(200);
-
-        if ($lastmod) {
-            if (!is_numeric($lastmod)) {
-                $lastmod = strtotime($lastmod);
-            }
-
-            $ts = gmstrftime("%a, %d %b %Y %H:%M:%S %z", $lastmod);
-            $response = $response->withHeader("Last-Modified", $ts);
-        }
-
-        $headers = $request->getHeaders();
-        if (($headers["HTTP_IF_NONE_MATCH"][0] ?? null) == $etag) {
-            return $response->withStatus(304)
-                ->withHeader("ETag", $etag)
-                ->withHeader("Cache-Control", "public, max-age=31536000");
-        }
-
-        $response = $response->withHeader("Content-Type", $type)
-            ->withHeader("ETag", $etag)
-            ->withHeader("Content-Length", strlen($body))
-            ->withHeader("Cache-Control", "public, max-age=31536000");
-        $response->getBody()->write($body);
-
-        return $response;
-    }
-
-    protected function fixAssetsCache(Request $request, $html)
-    {
-        $root = $request->getServerParam("DOCUMENT_ROOT");
-
-        $html = preg_replace_callback('@(src|href)="([^"]+\.(css|js))"@', function ($m) use ($root) {
-            $path = $root . $m[2];
-
-            if (!file_exists($path)) {
-                return $m[0];
-            }
-
-            $etag = sprintf("%x-%x", filemtime($path), filesize($path));
-            return sprintf('%s="%s?etag=%s"', $m[1], $m[2], $etag);
-        }, $html);
-
-        return $html;
     }
 
     /**
@@ -507,38 +284,9 @@ class CommonHandler
      * @param array $data Template data.
      * @return array Breadcrumbs info.
      **/
-    public function getBreadcrumbs(Request $request, array $data)
+    public function getBreadcrumbs(Request $request, array $data): array
     {
         return [];
-    }
-
-    protected function forbidden()
-    {
-        throw new \Ufw1\Errors\Forbidden();
-    }
-
-    protected function unauthorized()
-    {
-        throw new \Ufw1\Errors\Unauthorized();
-    }
-
-    protected function notfound($message = null)
-    {
-        if ($message) {
-            throw new Errors\NotFound($message);
-        } else {
-            throw new Errors\NotFound();
-        }
-    }
-
-    protected function unavailable($message = null)
-    {
-        throw new \Ufw1\Errors\Unavailable($message);
-    }
-
-    protected function fail($message)
-    {
-        throw new \Ufw1\Errors\UserFailure($message);
     }
 
     /**
@@ -546,7 +294,7 @@ class CommonHandler
      *
      * @param string $name File name, eg: "1/12/12345".
      **/
-    protected function fsget($name)
+    protected function fsget(string $name): string
     {
         $st = $this->container->get("settings");
 
@@ -563,7 +311,7 @@ class CommonHandler
         return file_get_contents($path);
     }
 
-    protected function fsput($body)
+    protected function fsput(string $body): string
     {
         $hash = md5($body);
 

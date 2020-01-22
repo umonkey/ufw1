@@ -4,7 +4,7 @@
  * Wiki pages.
  **/
 
-namespace Ufw1\Handlers;
+namespace Ufw1\Controllers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
@@ -17,7 +17,7 @@ class Wiki extends CommonHandler
      *
      * TODO: не кэшировать если вики закрытая.
      **/
-    public function onRead(Request $request, Response $response, array $args)
+    public function onRead(Request $request, Response $response, array $args): Response
     {
         $name = $request->getQueryParam("name");
 
@@ -30,11 +30,12 @@ class Wiki extends CommonHandler
         return $this->showPageByName($request, $response, $name);
     }
 
-    protected function showPageByName($request, $response, $name)
+    protected function showPageByName(Request $request, Response $response, string $name): Response
     {
-        $wiki = $this->container->get('wiki');
+        $wiki = $this->wiki;
 
         $user = $this->getUser($request);
+
         if (!$wiki->canReadPages($user)) {
             if ($user) {
                 $this->forbidden();
