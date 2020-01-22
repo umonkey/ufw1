@@ -139,7 +139,7 @@ class Search
         // TODO: only configured types.
 
         if ($node['type'] == 'wiki') {
-            return $this->reindexWikiNode($node);
+            $this->reindexWikiNode($node);
         } else {
             $this->logger->debug("search: don't know how to reindex node of type {0}", [$node['type']]);
         }
