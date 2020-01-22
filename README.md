@@ -1,12 +1,9 @@
-To use this library:
+# Website parts
 
-(1) Add this repository to your composer.json:
+This projects contains components which I frequently reuse on my websites.  It's based on [Slim Framework][1].
 
-    "repositories": [{
-        "type": "hg",
-        "url": "/home/hex/src/ufw1"
-    }],
-
-(2) Require this project:
+## Installing
 
 $ composer require umonkey/ufw1:dev-default
+
+[1]: https://www.slimframework.com/
