@@ -19,7 +19,8 @@ Custom services are configured in [config/services.php][2], standard services ar
 | Key | Class | Description |
 |-----|-------|-------------|
 | `db` | [Database][5] | Raw database access.  Wraps around PDO.  Has no query builder or anything, designed to use with SQL.  Has some fetch, insert and update helpers, transactional block.  Detailed docs are [here][4]. |
-| `file` | [FileFactory][14] | File storage interface.  Represents files stored in the database (as nodes).  Files can have multiple versions (thumbnails), can be stored locally or on S3.  Detailed docs are [here][15].  |
+| `file` | [FileFactory][14] | File storage interface.  Represents files stored in the database (as nodes).  Files can have multiple versions (thumbnails), can be stored locally or on S3.  Detailed docs are [here][15]. |
+| `fts` | [Search][16] | Full text document index.  Usess MySQL and SQLite built in functions and a custom stemmer.  Detailed docs are [here][17]. |
 | `logger` | [Logger][6] | Simple file logger, implements [PSR-3][8].  Files can have date based names.  Details [here][7]. |
 | `node` | [NodeFactory][9] | Document storage.  Stores documents as "nodes", in the `nodes` table, Drupal style.  Nodes are of various types, have indexes etc.  Detailed docs are [here][10]. |
 
@@ -54,3 +55,5 @@ Custom services are configured in [config/services.php][2], standard services ar
 [13]: https://www.drupal.org/docs/7/nodes-content-types-and-fields/about-nodes
 [14]: src/Services/FileFactory.php
 [15]: docs/HOWTO-files.php
+[16]: src/Services/Search.php
+[17]: docs/HOWTO-search.md

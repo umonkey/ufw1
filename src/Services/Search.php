@@ -10,14 +10,22 @@
  * To update the whole database, use reindexAll().
  **/
 
+declare(strict_types=1);
+
 namespace Ufw1\Services;
 
 use Psr\Log\LoggerInterface;
 
 class Search
 {
+    /**
+     * @var Database
+     **/
     protected $database;
 
+    /**
+     * @var LoggerInterface
+     **/
     protected $logger;
 
     private static $stopWords = ["а", "и", "о", "об", "в", "на", "под", "из"];
