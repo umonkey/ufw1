@@ -10,3 +10,4 @@ LESS compiler: https://github.com/leafo/lessphp
 https://scrutinizer-ci.com/docs/tools/php/php-scrutinizer/
 
 - [ ] SPA: link rel=edit is not updated.
+- [ ] Hierarchy: use ancestors tables, dump lb/rb.
