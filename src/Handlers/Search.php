@@ -26,14 +26,14 @@ class Search extends CommonHandler
                 "results" => count($results),
             ]);
 
-            return $this->render($request, "search.twig", [
+            return $this->render($request, "pages/search.twig", [
                 "query" => $query,
                 "wiki" => $this->findWikiPage($query),
                 "results" => $results,
                 "edit_link" => "/wiki/edit?name=" . urlencode($query),
             ]);
         } else {
-            return $this->render($request, "search.twig", []);
+            return $this->render($request, "pages/search.twig", []);
         }
     }
 
@@ -95,7 +95,7 @@ class Search extends CommonHandler
 
         $rows = $this->db->fetch("SELECT * FROM `search_log` ORDER BY `date` DESC LIMIT 100");
 
-        return $this->render($request, "search-log.twig", [
+        return $this->render($request, "pages/search-log.twig", [
             "entries" => $rows,
         ]);
     }

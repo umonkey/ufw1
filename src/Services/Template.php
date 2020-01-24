@@ -11,12 +11,24 @@ use Ufw1\Util;
 class Template
 {
     /**
+     * Настройки рендеринга.
+     *
      * @var array
      **/
     protected $settings;
 
+    /**
+     * Движок Twig.
+     *
+     * @var Twig\Environment
+     **/
     protected $twig;
 
+    /**
+     * Данные для шаблонов.
+     *
+     * @var array
+     **/
     protected $defaults;
 
     public function __construct(array $settings)
@@ -35,10 +47,33 @@ class Template
         $this->setupFilters();
     }
 
-    public function render(string $fileName, array $data = array()): string
+    /**
+     * Рендеринг шаблона.
+     *
+     * Находит первый существующий шаблон и использует его.
+     *
+     * @param string|array $templates Список шаблонов, в порядке предпочтения.
+     * @param array        $data      Данные для шаблона.
+     *
+     * @return string Результат обработки.
+     **/
+    public function render($templates, array $data = array()): string
     {
-        $html = $this->renderFile($fileName, $data);
-        return $html;
+        if (!is_array($templates)) {
+            $templates = [$templates];
+        }
+
+        foreach ($templates as $template) {
+            foreach ($this->settings['template_path'] as $root) {
+                $path = $root . '/' . $template;
+                if (is_readable($path)) {
+                    return $this->renderFile($template, $data);
+                }
+            }
+        }
+
+        $names = implode(", ", $templates);
+        throw new \Twig\Error\LoaderError("unable to find template {$names}");
     }
 
     public function renderFile(string $fileName, array $data): string
@@ -46,7 +81,7 @@ class Template
         $data = $this->addDefaults($data);
         $data = array_merge($this->defaults, $data);
 
-        if (isset($_GET['debug']) and $_GET['debug'] == 'tpl') {
+        if (($data['request']['get']['debug'] ?? null) == 'tpl') {
             debug($fileName, $data);
         }
 

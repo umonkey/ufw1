@@ -69,7 +69,13 @@ class Wiki extends CommonHandler
                 $res['author'] = $this->container->get('settings')['wiki']['default_author'] ?: null;
             }
 
-            return $this->render($request, 'wiki-page.twig', [
+            $templates = [
+                "pages/node-{$node['id']}.twig",
+                "pages/node-wiki.twig",
+                "pages/node.twig",
+            ];
+
+            return $this->render($request, $templates, [
                 'user' => $user,
                 'language' => $res['language'],
                 'page' => $res,
@@ -82,7 +88,7 @@ class Wiki extends CommonHandler
                 ]),
             ]);
         } else {
-            return $this->render($request, 'wiki-nopage.twig', [
+            return $this->render($request, 'pages/notfound.twig', [
                 'user' => $user,
                 'page' => ['name' => $name],
                 'edit_link' => $canEdit ? '/wiki/edit?name=' . urlencode($name) : null,

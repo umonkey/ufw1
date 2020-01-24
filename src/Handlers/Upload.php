@@ -21,7 +21,7 @@ class Upload extends CommonHandler
     {
         $this->requireAdmin($request);
 
-        return $this->template->render($response, "upload.twig");
+        return $this->template->render($response, "pages/upload.twig");
     }
 
     public function onPost(Request $request, Response $response)

@@ -62,7 +62,7 @@ class Shortener extends \Ufw1\CommonHandler
         $src = $request->getParam('url');
         $dst = $request->getUri()->getBaseUrl() . $this->shorten($src);
 
-        return $this->render($request, 'shortener.twig', [
+        return $this->render($request, 'pages/shortener.twig', [
             'user' => $user,
             'src' => $src,
             'dst' => $dst,
