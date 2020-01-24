@@ -51,7 +51,7 @@ class TaskQ extends CommonHandler
 
         $settings = $this->getSettings($request);
 
-        return $this->render($request, "taskq.twig", [
+        return $this->render($request, "pages/taskq.twig", [
             "tab" => "taskq",
             "tasks" => $tasks,
             "user" => $user,

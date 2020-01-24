@@ -54,19 +54,19 @@ abstract class Controller
      *
      * Calls renderHTML(), then wraps the result in a Response(200).
      *
-     * @param Request $request      Request info, used to get host, path information, etc.
-     * @param string  $templateName File name, e.g. "pages.twig".
-     * @param array   $data         Template variables.
+     * @param Request      $request      Request info, used to get host, path information, etc.
+     * @param string|array $templateName File name, e.g. "pages.twig".
+     * @param array        $data         Template variables.
 
      * @return Response ready to use response.
      **/
-    protected function render(Request $request, string $templateName, array $data = []): Response
+    protected function render(Request $request, $template, array $data = []): Response
     {
         if (empty($data['breadcrumbs'])) {
             $data['breadcrumbs'] = $this->getBreadcrumbs($request, $data);
         }
 
-        $html = $this->renderHTML($request, $templateName, $data);
+        $html = $this->renderHTML($request, $template, $data);
 
         $response = new Response(200);
         $response->getBody()->write($html);
@@ -76,13 +76,13 @@ abstract class Controller
     /**
      * Renders the page using a template.
      *
-     * @param Request $request      Request info, used to get host, path information, etc.
-     * @param string  $templateName File name, e.g. "pages.twig".
-     * @param array   $data         Template variables.
+     * @param Request      $request  Request info, used to get host, path information, etc.
+     * @param string|array $template File name, e.g. "pages.twig".
+     * @param array        $data     Template variables.
      *
      * @return Response ready to use response.
      **/
-    protected function renderHTML(Request $request, string $templateName, array $data = []): string
+    protected function renderHTML(Request $request, $template, array $data = []): string
     {
         $data = array_replace([
             'language' => 'ru',
@@ -96,7 +96,7 @@ abstract class Controller
             'get' => $request->getQueryParams(),
         ];
 
-        $html = $this->template->render($templateName, $data);
+        $html = $this->template->render($template, $data);
         $html = $this->fixAssetsCache($request, $html);
 
         return $html;

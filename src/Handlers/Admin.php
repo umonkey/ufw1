@@ -19,7 +19,7 @@ class Admin extends CommonHandler
         $user = $this->requireAdmin($request);
         $warnings = $this->getWarnings();
 
-        return $this->render($request, 'admin-dashboard.twig', [
+        return $this->render($request, 'pages/admin-dashboard.twig', [
             'user' => $user,
             'warnings' => $warnings,
         ]);
@@ -61,7 +61,7 @@ class Admin extends CommonHandler
 
         $types = $this->getNodeTypes();
 
-        return $this->render($request, 'admin-nodes.twig', [
+        return $this->render($request, 'pages/admin-nodes.twig', [
             'user' => $user,
             'nodes' => $nodes,
             'types' => $types,
@@ -105,7 +105,7 @@ class Admin extends CommonHandler
 
         $types = $this->getNodeTypes();
 
-        return $this->render($request, 'admin-nodes.twig', [
+        return $this->render($request, 'pages/admin-nodes.twig', [
             'user' => $user,
             'nodes' => $nodes,
             'types' => $types,
@@ -122,7 +122,7 @@ class Admin extends CommonHandler
 
         $node = json_encode($node, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-        return $this->render($request, 'admin-dump.twig', [
+        return $this->render($request, 'pages/admin-dump.twig', [
             'user' => $user,
             'node' => $node,
         ]);
@@ -149,7 +149,7 @@ class Admin extends CommonHandler
             $this->unavailable();
         }
 
-        return $this->render($request, 'admin-edit-node.twig', [
+        return $this->render($request, 'pages/admin-edit-node.twig', [
             'user' => $user,
             'node' => $node,
             'form' => $form,
@@ -172,7 +172,7 @@ class Admin extends CommonHandler
         $code = json_encode($node, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $code = str_replace('\r', '\n', $code);
 
-        return $this->render($request, 'admin-edit-raw.twig', [
+        return $this->render($request, 'pages/admin-edit-raw.twig', [
             'user' => $user,
             'node' => $node,
             'code' => $code,
@@ -326,7 +326,7 @@ class Admin extends CommonHandler
     {
         $user = $this->requireAdmin($request);
 
-        return $this->render($request, 'admin-dbstats.twig', [
+        return $this->render($request, 'pages/admin-dbstats.twig', [
             'dbtype' => $this->db->getConnectionType(),
             'tables' => $this->db->getStats(),
         ]);
@@ -368,7 +368,7 @@ class Admin extends CommonHandler
 
         $settings = $this->container->get('settings')['taskq'] ?? [];
 
-        return $this->render($request, 'admin-taskq.twig', [
+        return $this->render($request, 'pages/admin-taskq.twig', [
             'tab' => 'taskq',
             'tasks' => $tasks,
             'user' => $user,
@@ -397,7 +397,7 @@ class Admin extends CommonHandler
             $this->forbidden();
         }
 
-        return $this->render($request, 'admin-submit.twig', [
+        return $this->render($request, 'pages/admin-submit.twig', [
             'user' => $user,
             'types' => $types,
         ]);
@@ -413,7 +413,7 @@ class Admin extends CommonHandler
                 $this->notfound();
             }
 
-            return $this->render($request, 'admin-submit-node.twig', [
+            return $this->render($request, 'pages/admin-submit-node.twig', [
                 'user' => $user,
                 'type' => $args['type'],
                 'form' => $form,
@@ -434,7 +434,7 @@ class Admin extends CommonHandler
         $files = $s3->getFileList();
         $config = $this->container->get("settings")["S3"];
 
-        return $this->render($request, "admin-s3.twig", [
+        return $this->render($request, "pages/admin-s3.twig", [
             "files" => $files,
             "config" => $config,
         ]);
@@ -485,7 +485,7 @@ class Admin extends CommonHandler
             $session = $this->sessionGet($request);
             $session = json_encode($session, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-            return $this->render($request, 'admin-session-editor.twig', [
+            return $this->render($request, 'pages/admin-session-editor.twig', [
                 'user' => $user,
                 'session' => $session,
             ]);

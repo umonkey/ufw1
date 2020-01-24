@@ -26,7 +26,7 @@ class Files extends CommonHandler
             ];
         });
 
-        return $this->render($request, "files.twig", [
+        return $this->render($request, "pages/files.twig", [
             "files" => $recent,
         ]);
     }
@@ -41,7 +41,7 @@ class Files extends CommonHandler
         $folders = $this->dbGetFolders($folder);
         $files = $this->dbGetFilesByFolder($folder);
 
-        return $this->render($response, "admin-files.twig", [
+        return $this->render($response, "pages/admin-files.twig", [
             "folder_id" => $folder,
             "folders" => $folders,
             "files" => $files,
@@ -86,7 +86,7 @@ class Files extends CommonHandler
             $bydate[$row["date"]][] = $row;
         }
 
-        return $this->render($response, "admin-photos.twig", [
+        return $this->render($response, "pages/admin-photos.twig", [
             "photos" => $bydate,
         ]);
     }
@@ -96,7 +96,7 @@ class Files extends CommonHandler
         $id = $args["id"];
         $file = $this->node->get($id);
 
-        return $this->render($response, "admin-file.twig", [
+        return $this->render($response, "pages/admin-file.twig", [
             "file" => $file,
         ]);
     }
@@ -199,7 +199,7 @@ class Files extends CommonHandler
 
         krsort($dates);
 
-        return $this->render($response, "files-recent.twig", [
+        return $this->render($response, "pages/files-recent.twig", [
             "kind" => $kind,
             "recent" => $recent,
             "bydate" => $dates,
@@ -215,7 +215,7 @@ class Files extends CommonHandler
             return $this->notfound($response);
         }
 
-        return $this->render($response, "files-show.twig", [
+        return $this->render($response, "pages/files-show.twig", [
             "file" => $file,
         ]);
     }

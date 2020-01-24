@@ -24,7 +24,7 @@ class Database extends CommonHandler
             $length += $t["length"];
         }
 
-        return $this->render($request, "dbstats.twig", [
+        return $this->render($request, "pages/dbstats.twig", [
             "dbtype" => $this->db->getConnectionType(),
             "tables" => $tables,
             "db_rows" => $rows,

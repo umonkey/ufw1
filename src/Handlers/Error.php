@@ -14,9 +14,10 @@ class Error extends CommonHandler
 {
     public function __invoke(Request $request, Response $response, array $args)
     {
+        debug(1);
         $e = $args["exception"];
 
-        $tpl = "error.twig";
+        $tpl = "errors/default.twig";
         $status = 500;
         $data = [];
         $data["path"] = $request->getUri()->getPath();
@@ -34,15 +35,15 @@ class Error extends CommonHandler
         $log = true;
 
         if ($e instanceof \Ufw1\Errors\Unauthorized) {
-            $tpl = "unauthorized.twig";
+            $tpl = "errors/unauthorized.twig";
             $status = 401;
             $log = false;
         } elseif ($e instanceof \Ufw1\Errors\Forbidden) {
-            // $tpl = "forbidden.twig";
+            // $tpl = "errors/forbidden.twig";
             $status = 403;
             $log = false;
         } elseif ($e instanceof \Ufw1\Errors\NotFound) {
-            $tpl = "notfound.twig";
+            $tpl = "errors/notfound.twig";
             $status = 404;
             $log = false;
         }

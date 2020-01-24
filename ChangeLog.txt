@@ -1,3 +1,7 @@
+2020-01-24:
+- Organize templates in folders: layouts, pages, errors.
+- Support for template variants: [node-1.twig, node-wiki.twig, node.twig].
+
 2020-01-22:
 - SPA fixes.
 - PHP code style fixes.

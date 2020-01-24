@@ -16,7 +16,7 @@ class Account extends CommonHandler
 {
     public function onGetLoginForm(Request $request, Response $response, array $args)
     {
-        return $this->render($request, "login.twig", [
+        return $this->render($request, "pages/login.twig", [
             "title" => "Идентификация",
         ]);
     }
@@ -87,7 +87,7 @@ class Account extends CommonHandler
             return $response->withRedirect($back);
         }
 
-        return $this->render($request, "register.twig");
+        return $this->render($request, "pages/register.twig");
     }
 
     public function onRegisterNew(Request $request, Response $response, array $args)
