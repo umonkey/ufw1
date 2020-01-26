@@ -157,7 +157,7 @@ class AuthService
      **/
     public function requireAdmin(Request $request): array
     {
-        return $this->requireRoles($request, ['admin']);
+        return $this->requireRole($request, ['admin']);
     }
 
     /**
@@ -166,16 +166,16 @@ class AuthService
      * @param Request $request User information.
      * @param array   $roles   Roles, one of which must exist.
      **/
-    public function requireRole(Request $request, array $roles): void
+    public function requireRole(Request $request, array $roles): array
     {
-        if (empty($roles)) {
-            return;
-        }
-
         $user = $this->requireUser($request);
 
+        if (empty($roles)) {
+            return $user;
+        }
+
         if (isset($user['role']) and in_array($user['role'], $roles)) {
-            return;
+            return $user;
         }
 
         throw new \Ufw1\Errors\Forbidden();
