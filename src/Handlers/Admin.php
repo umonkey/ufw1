@@ -16,7 +16,7 @@ class Admin extends CommonHandler
 {
     public function onDashboard(Request $request, Response $response, array $args)
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
         $warnings = $this->getWarnings();
 
         return $this->render($request, 'pages/admin-dashboard.twig', [
@@ -27,7 +27,7 @@ class Admin extends CommonHandler
 
     public function onNodeList(Request $request, Response $response, array $args)
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
 
         $st = $this->container->get('settings')['node_forms'] ?? null;
         if (empty($st)) {
@@ -71,7 +71,7 @@ class Admin extends CommonHandler
 
     public function onNodeListOne(Request $request, Response $response, array $args)
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
 
         $st = $this->container->get('settings')['node_forms'] ?? null;
         if (empty($st)) {
@@ -115,7 +115,7 @@ class Admin extends CommonHandler
 
     public function onDumpNode(Request $request, Response $response, array $args)
     {
-        $user = $this->requireUser($request);
+        $user = $this->auth->requireUser($request);
 
         $id = $args["id"];
         $node = $this->node->get($id);
@@ -133,7 +133,7 @@ class Admin extends CommonHandler
      **/
     public function onEditNode(Request $request, Response $response, array $args): Response
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
 
         $id = (int)$args['id'];
 
@@ -161,7 +161,7 @@ class Admin extends CommonHandler
      **/
     public function onEditRawNode(Request $request, Response $response, array $args): Response
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
 
         $id = (int)$args['id'];
 
@@ -186,7 +186,7 @@ class Admin extends CommonHandler
     {
         $this->db->beginTransaction();
 
-        $user = $this->requireUser($request);
+        $user = $this->auth->requireUser($request);
 
         $form = $request->getParam('node');
         $next = $request->getParam('next');
@@ -240,7 +240,7 @@ class Admin extends CommonHandler
     {
         $this->db->beginTransaction();
 
-        $user = $this->requireUser($request);
+        $user = $this->auth->requireUser($request);
 
         $id = (int)$request->getParam('id');
         $deleted = (int)$request->getParam('deleted');
@@ -283,7 +283,7 @@ class Admin extends CommonHandler
     {
         $this->db->beginTransaction();
 
-        $user = $this->requireUser($request);
+        $user = $this->auth->requireUser($request);
 
         $id = (int)$request->getParam('id');
         $published = (int)$request->getParam('published');
@@ -324,7 +324,7 @@ class Admin extends CommonHandler
      **/
     public function onDatabaseStatus(Request $request, Response $response, array $args)
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
 
         return $this->render($request, 'pages/admin-dbstats.twig', [
             'dbtype' => $this->db->getConnectionType(),
@@ -337,7 +337,7 @@ class Admin extends CommonHandler
      **/
     public function onTaskQ(Request $request, Response $response, array $args)
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
 
         $tasks = $this->db->fetch("SELECT * FROM `taskq` ORDER BY `id` DESC", [], function ($row) {
             $payload = unserialize($row["payload"]);
@@ -378,7 +378,7 @@ class Admin extends CommonHandler
 
     public function onSubmitList(Request $request, Response $response, array $args)
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
 
         $st = $this->container->get('settings')['node_forms'];
 
@@ -405,7 +405,7 @@ class Admin extends CommonHandler
 
     public function onSubmit(Request $request, Response $response, array $args)
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
 
         if (isset($args['type'])) {
             $form = $this->container->get('settings')['node_forms'][$args['type']] ?? null;
@@ -428,7 +428,7 @@ class Admin extends CommonHandler
      **/
     public function onS3(Request $request, Response $response, array $args)
     {
-        $this->requireAdmin($request);
+        $this->auth->requireAdmin($request);
 
         $s3 = $this->container->get("S3");
         $files = $s3->getFileList();
@@ -448,7 +448,7 @@ class Admin extends CommonHandler
      **/
     public function onScheduleS3(Request $request, Response $response, array $args)
     {
-        $this->requireAdmin($request);
+        $this->auth->requireAdmin($request);
 
         $this->db->beginTransaction();
 
@@ -466,15 +466,13 @@ class Admin extends CommonHandler
 
     public function onEditSession(Request $request, Response $response, array $args)
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
 
         if ($request->getMethod() == 'POST') {
             $code = $request->getParam('session');
             $update = json_decode($code, true);
 
-            $this->sessionEdit($request, function ($data) use ($update) {
-                return $update;
-            });
+            $this->session->set($request, $update);
 
             $next = $request->getParam('next');
 
@@ -482,7 +480,7 @@ class Admin extends CommonHandler
                 'redirect' => $next,
             ]);
         } else {
-            $session = $this->sessionGet($request);
+            $session = $this->session->get($request);
             $session = json_encode($session, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
             return $this->render($request, 'pages/admin-session-editor.twig', [
@@ -497,24 +495,14 @@ class Admin extends CommonHandler
      **/
     public function onSudo(Request $request, Response $response, array $args)
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
 
-        $node = $this->node->get($args["id"]);
+        $node = $this->node->get((int)$args["id"]);
         if (empty($node) or $node['type'] != 'user') {
             $this->notfound();
         }
 
-        $this->sessionEdit($request, function ($data) use ($node) {
-            $data['user_stack'][] = [
-                'id' => $data['user_id'],
-                'password' => $data['password'],
-            ];
-
-            $data['user_id'] = (int)$node['id'];
-            $data['password'] = $node['password'];
-
-            return $data;
-        });
+        $this->auth->push((int)$node['id']);
 
         $next = $request->getParam('next');
 
@@ -543,7 +531,7 @@ class Admin extends CommonHandler
             $this->forbidden();
         }
 
-        $user = $this->requireUser($request);
+        $user = $this->auth->requireUser($request);
         if (!in_array($user['role'], $roles)) {
             $this->forbidden();
         }

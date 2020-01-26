@@ -34,7 +34,7 @@ class Wiki extends CommonHandler
     {
         $wiki = $this->wiki;
 
-        $user = $this->getUser($request);
+        $user = $this->auth->getUser($request);
 
         if (!$wiki->canReadPages($user)) {
             if ($user) {
@@ -66,7 +66,7 @@ class Wiki extends CommonHandler
             }
 
             if (!($author = $res['author'] ?? null)) {
-                $res['author'] = $this->container->get('settings')['wiki']['default_author'] ?: null;
+                $res['author'] = $this->container->get('settings')['wiki']['default_author'] ?? null;
             }
 
             $templates = [
@@ -128,7 +128,8 @@ class Wiki extends CommonHandler
 
         $wiki = $this->container->get('wiki');
 
-        $user = $this->getUser($request);
+        $user = $this->auth->getUser($request);
+
         if (!$wiki->canEditPages($user)) {
             if ($user) {
                 $this->forbidden();
@@ -158,7 +159,7 @@ class Wiki extends CommonHandler
 
         $wiki = $this->container->get('wiki');
 
-        $user = $this->getUser($request);
+        $user = $this->auth->getUser($request);
 
         $node = $wiki->updatePage($name, $source, $user, $section);
         $node = $this->node->save($node);
@@ -196,7 +197,7 @@ class Wiki extends CommonHandler
      **/
     public function onUpload(Request $request, Response $response, array $args)
     {
-        $user = $this->requireUser($request);
+        $user = $this->auth->requireUser($request);
 
         $wiki = $this->container->get('wiki');
         if (!$wiki->canEditPages($user)) {
@@ -577,7 +578,7 @@ class Wiki extends CommonHandler
      **/
     public function onReindex(Request $request, Response $response, array $args)
     {
-        $this->requireAdmin($request);
+        $this->auth->requireAdmin($request);
 
         $sel = $this->db->query("SELECT `id` FROM `nodes` WHERE `type` = 'wiki' ORDER BY `updated` DESC");
         while ($id = $sel->fetchColumn(0)) {

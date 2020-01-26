@@ -19,7 +19,7 @@ class TaskQ extends CommonHandler
      **/
     public function onShow(Request $request, Response $response, array $args)
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
 
         $tasks = $this->db->fetch("SELECT * FROM `taskq` ORDER BY `id` DESC", [], function ($row) {
             $payload = unserialize($row["payload"]);

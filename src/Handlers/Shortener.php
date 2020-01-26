@@ -17,7 +17,7 @@ class Shortener extends \Ufw1\CommonHandler
      **/
     public function onShorten(Request $request, Response $response, array $args)
     {
-        $user = $this->requireAdmin($request);
+        $user = $this->auth->requireAdmin($request);
 
         $link = $request->getParam('target');
         $key = md5($link);
@@ -57,7 +57,7 @@ class Shortener extends \Ufw1\CommonHandler
      **/
     public function onPreview(Request $request, Response $response, array $args)
     {
-        $user = $this->requireUser($request);
+        $user = $this->auth->requireUser($request);
 
         $src = $request->getParam('url');
         $dst = $request->getUri()->getBaseUrl() . $this->shorten($src);

@@ -16,7 +16,7 @@ class NodeFactory
     /**
      * @var Database
      **/
-    protected $database;
+    protected $db;
 
     /**
      * @var LoggerInterface
@@ -28,10 +28,10 @@ class NodeFactory
      **/
     protected $settings;
 
-    public function __construct(array $settings, Database $database, LoggerInterface $logger)
+    public function __construct(array $settings, Database $db, LoggerInterface $logger)
     {
         $this->settings = $settings;
-        $this->database = $database;
+        $this->db = $db;
         $this->logger = $logger;
     }
 
@@ -39,7 +39,7 @@ class NodeFactory
     {
         $query = "SELECT * FROM `nodes` WHERE " . $conditions;
 
-        $res = $this->database->fetch($query, $params, function (array $row) {
+        $res = $this->db->fetch($query, $params, function (array $row) {
             $row = $this->unpack($row);
             return $row;
         });
@@ -53,7 +53,7 @@ class NodeFactory
 
     public function get(int $id): ?array
     {
-        $row = $this->database->fetchone("SELECT * FROM `nodes` WHERE `id` = ?", [$id]);
+        $row = $this->db->fetchone("SELECT * FROM `nodes` WHERE `id` = ?", [$id]);
         if ($row) {
             return $this->unpack($row);
         } else {
@@ -63,7 +63,7 @@ class NodeFactory
 
     public function getByKey(string $key): ?array
     {
-        $tmp = $this->database->fetchOne("SELECT * FROM `nodes` WHERE `key` = ? ORDER BY `id` LIMIT 1", [$key]);
+        $tmp = $this->db->fetchOne("SELECT * FROM `nodes` WHERE `key` = ? ORDER BY `id` LIMIT 1", [$key]);
         if ($tmp) {
             return $this->unpack($tmp);
         } else {
@@ -73,9 +73,6 @@ class NodeFactory
 
     public function save(array $node): array
     {
-        $db = $this->database;
-        $logger = $this->logger;
-
         $this->saveCurrent($node);
 
         $now = strftime("%Y-%m-%d %H:%M:%S");
@@ -88,7 +85,7 @@ class NodeFactory
         $node['deleted'] = empty($node['deleted']) ? 0 : 1;
 
         if (empty($node["lb"])) {
-            $last = (int)$db->fetchcell("SELECT MAX(`rb`) FROM `nodes`");
+            $last = (int)$this->db->fetchcell("SELECT MAX(`rb`) FROM `nodes`");
             $node["lb"] = $last + 1;
             $node["rb"] = $last + 2;
         }
@@ -100,24 +97,24 @@ class NodeFactory
             $id = $_row["id"];
             unset($_row["id"]);
 
-            $count = $db->update("nodes", $_row, [
+            $count = $this->db->update("nodes", $_row, [
                 "id" => $id,
             ]);
 
             if ($count != 0) {
                 $this->indexUpdate($node);
-                $logger->debug("node {id} updated.", [
+                $this->logger->debug("node {id} updated.", [
                     "id" => $node["id"],
                 ]);
                 return $node;
             }
         } else {
-            $node["id"] = $db->insert("nodes", $row);
+            $node["id"] = $this->db->insert("nodes", $row);
         }
 
         $this->indexUpdate($node);
 
-        $logger->debug("node {id} created.", [
+        $this->logger->debug("node {id} created.", [
             "id" => $node["id"],
         ]);
 
@@ -155,7 +152,7 @@ class NodeFactory
             $compression = null;
         }
 
-        $old = $this->get($node['id']);
+        $old = $this->get((int)$node['id']);
 
         if ($compression == 'gzip') {
             $item = 'g' . gzcompress(serialize($old));
@@ -165,7 +162,7 @@ class NodeFactory
             $item = '-' . serialize($old);
         }
 
-        $db->insert('nodes_history', [
+        $this->db->insert('nodes_history', [
             'id' => $node['id'],
             'updated' => $old['updated'],
             'contents' => $item,
@@ -228,16 +225,14 @@ class NodeFactory
      **/
     protected function indexUpdate(array $node): void
     {
-        $db = $this->database;
         $settings = $this->settings;
-        $logger = $this->logger;
 
         $type = $node["type"];
         if (!empty($settings["indexes"][$type])) {
             $fields = $settings["indexes"][$type];
 
             if (!is_array($fields)) {
-                $logger->warning("node: nodes_idx for type {type} is not an array.", [
+                $this->logger->warning("node: nodes_idx for type {type} is not an array.", [
                     "type" => $type,
                 ]);
 
@@ -255,8 +250,8 @@ class NodeFactory
 
             $table = "nodes_{$type}_idx";
 
-            $db->query("DELETE FROM `{$table}` WHERE `id` = ?", [$row["id"]]);
-            $db->insert($table, $row);
+            $this->db->query("DELETE FROM `{$table}` WHERE `id` = ?", [$row["id"]]);
+            $this->db->insert($table, $row);
         }
     }
 }

@@ -108,6 +108,13 @@ class Util
 
     public static function containerSetup(ContainerInterface $container): void
     {
+        $container['auth'] = function ($c) {
+            $session = $c->get('session');
+            $logger = $c->get('logger');
+            $node = $c->get('node');
+            return new Services\AuthService($session, $logger, $node);
+        };
+
         $container['db'] = function ($c) {
             $dsn = $c->get('settings')['dsn'];
             return new Services\Database($dsn);
@@ -147,6 +154,12 @@ class Util
             $node = $c->get('node');
             $taskq = $c->get('taskq');
             return new Services\S3($config, $logger, $node, $taskq);
+        };
+
+        $container['session'] = function ($c) {
+            $db = $c->get('db');
+            $logger = $c->get('logger');
+            return new Services\SessionService($db, $logger);
         };
 
         $container['stemmer'] = function ($c) {
@@ -206,6 +219,13 @@ class Util
     public static function installErrorHandler(ContainerInterface $container): void
     {
         $container['errorHandler'] = function ($c) {
+            return function ($request, $response, $e) use ($c) {
+                $h = new Handlers\Error($c);
+                return $h($request, $response, ['exception' => $e]);
+            };
+        };
+
+        $container['phpErrorHandler'] = function ($c) {
             return function ($request, $response, $e) use ($c) {
                 $h = new Handlers\Error($c);
                 return $h($request, $response, ['exception' => $e]);

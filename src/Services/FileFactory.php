@@ -222,7 +222,7 @@ class FileFactory
     {
         $path = $this->settings['path'] ?? null;
 
-        if (empty($path) {
+        if (empty($path)) {
             throw new \RuntimeException("file storage path not set");
         }
 

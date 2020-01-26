@@ -34,29 +34,7 @@ class Account extends CommonHandler
             $password = $request->getParam("password");
             $next = $request->getParam("next");
 
-            $nodes = $this->node->where("`type` = 'user' AND `deleted` = 0 AND `id` IN (SELECT `id` FROM `nodes_user_idx` WHERE `email` = ?) ORDER BY `id`", [$email]);
-
-            if (empty($nodes)) {
-                $this->fail("Нет пользователя с таким адресом.");
-            }
-
-            $user = $nodes[0];
-
-            if (!password_verify($password, $user["password"])) {
-                $hash = password_hash($password, PASSWORD_DEFAULT);
-
-                $this->logger->debug("login: correct hash for password {password} would be {hash}.", [
-                    "password" => $password,
-                    "hash" => $hash,
-                ]);
-
-                $this->fail("Пароль не подходит.");
-            }
-
-            $this->sessionSave($request, [
-                "user_id" => $user["id"],
-                "password" => $user["password"],
-            ]);
+            $user = $this->auth->logIn($request, $email, $password);
 
             $user["last_login"] = strftime("%Y-%m-%d %H:%M:%S");
             $this->node->save($user);
@@ -76,7 +54,7 @@ class Account extends CommonHandler
      **/
     public function onRegister(Request $request, Response $response, array $args)
     {
-        $user = $this->getUser($request);
+        $user = $this->auth->getUser($request);
 
         if ($request->getMethod() == "POST") {
             return $this->onRegisterNew($request, $response, $args);
@@ -130,9 +108,7 @@ class Account extends CommonHandler
 
         $node = $this->node->save($node);
 
-        $this->sessionSave($request, [
-            "user_id" => $node["id"],
-        ]);
+        $this->auth->push((int)$node['id']);
 
         $this->notifyAdmin($request, $node);
 

@@ -19,14 +19,14 @@ class Upload extends CommonHandler
 {
     public function onGet(Request $request, Response $response, array $args)
     {
-        $this->requireAdmin($request);
+        $this->auth->requireAdmin($request);
 
         return $this->template->render($response, "pages/upload.twig");
     }
 
     public function onPost(Request $request, Response $response)
     {
-        $this->requireAdmin($request);
+        $this->auth->requireAdmin($request);
 
         $info = $this->getFile($request);
         if ($info === false) {

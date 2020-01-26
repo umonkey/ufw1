@@ -12,9 +12,8 @@ use Ufw1\CommonHandler;
 
 class Error extends CommonHandler
 {
-    public function __invoke(Request $request, Response $response, array $args)
+    public function __invoke(Request $request, Response $response, array $args): Response
     {
-        debug(1);
         $e = $args["exception"];
 
         $tpl = "errors/default.twig";

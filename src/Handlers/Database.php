@@ -14,7 +14,7 @@ class Database extends CommonHandler
 {
     public function onStatus(Request $request, Response $response, array $args)
     {
-        $this->requireAdmin($request);
+        $this->auth->requireAdmin($request);
 
         $tables = $this->getStats();
 
