@@ -103,6 +103,9 @@ class AuthService
         $session['user_id'] = (int)$node['id'];
         $this->session->set($request, $session);
 
+        $node['last_login'] = strftime('%Y-%m-%d %H:%M:%S');
+        $this->node->save($node);
+
         return $node;
     }
 

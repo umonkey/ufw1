@@ -25,7 +25,7 @@ class App extends \Slim\App
      **/
     public static function installAccount(App $app): void
     {
-        Handlers\Account::setupRoutes($app);
+        Controllers\AccountController::setupRoutes($app);
     }
 
     public static function installAdmin(App $app): void

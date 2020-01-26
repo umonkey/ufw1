@@ -6,13 +6,15 @@
  * Lets users log in.
  **/
 
-namespace Ufw1\Handlers;
+declare(strict_types=1);
+
+namespace Ufw1\Controllers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
 
-class Account extends CommonHandler
+class AccountController extends CommonHandler
 {
     public function onGetLoginForm(Request $request, Response $response, array $args)
     {
@@ -35,9 +37,6 @@ class Account extends CommonHandler
             $next = $request->getParam("next");
 
             $user = $this->auth->logIn($request, $email, $password);
-
-            $user["last_login"] = strftime("%Y-%m-%d %H:%M:%S");
-            $this->node->save($user);
 
             return $response->withJSON([
                 "redirect" => $next ? $next : "/",
