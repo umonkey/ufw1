@@ -19,6 +19,58 @@ class App extends \Slim\App
         parent::__construct($container);
     }
 
+
+    /**
+     * Install user account routes: login, logout etc.
+     **/
+    public static function installAccount(App $app): void
+    {
+        Handlers\Account::setupRoutes($app);
+    }
+
+    public static function installAdmin(App $app): void
+    {
+        Handlers\Admin::setupRoutes($app);
+    }
+
+    public static function installFiles(App $app): void
+    {
+        Handlers\Files::setupRoutes($app);
+    }
+
+    public static function installSearch(App $app): void
+    {
+        $app->get('/search', '\Ufw1\Handlers\Search:onGet');
+        $app->get('/search.xml', '\Ufw1\Handlers\Search:onGetXML');
+        $app->get('/search/suggest', '\Ufw1\Handlers\Search:onSuggest');
+    }
+
+    public static function installTaskQ(App $app): void
+    {
+        $class = Handlers\TaskQ::class;
+
+        $app->get('/taskq/list', $class . ':onList');
+        $app->any('/taskq/{id:[0-9]+}/run', $class . ':onRun');
+    }
+
+    public static function installWiki(App $app): void
+    {
+        $class = Controllers\Wiki::class;
+
+        $app->get('/wiki', $class . ':onRead');
+        $app->get('/wiki/edit', $class . ':onEdit');
+        $app->post('/wiki/edit', $class . ':onSave');
+        $app->post('/wiki/embed-clipboard', $class . ':onEmbedClipboard');
+        $app->get('/wiki/index', $class . ':onIndex');
+        $app->get('/wiki/recent', $class . ':onRecent');
+        $app->get('/wiki/recent-files.json', $class . ':onRecentFiles');
+        $app->get('/wiki/reindex', $class . ':onReindex');
+        $app->any('/wiki/upload', $class . ':onUpload');
+    }
+
+    /**
+     * Register all built in services.
+     **/
     protected function setupContainer(Container $container)
     {
         $container['auth'] = function ($c) {
