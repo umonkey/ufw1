@@ -62,9 +62,11 @@ class App extends \Slim\App
     public static function installTaskQ(App $app): void
     {
         $class = Controllers\TaskQueueController::class;
+    }
 
-        $app->get('/taskq/list', $class . ':onList');
-        $app->any('/taskq/{id:[0-9]+}/run', $class . ':onRun');
+    public static function installUpload(App $app): void
+    {
+        $class = Controllers\UploadController::class;
     }
 
     public static function installWiki(App $app): void

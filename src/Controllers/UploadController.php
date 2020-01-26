@@ -8,23 +8,25 @@
  * This is used by the photo upload script in the page editor.
  **/
 
-namespace Ufw1\Handlers;
+declare(strict_types=1);
+
+namespace Ufw1\Controllers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Slim\Http\UploadedFile;
 use Ufw1\CommonHandler;
 
-class Upload extends CommonHandler
+class UploadController extends CommonHandler
 {
-    public function onGet(Request $request, Response $response, array $args)
+    public function onGet(Request $request, Response $response, array $args): Response
     {
         $this->auth->requireAdmin($request);
 
-        return $this->template->render($response, "pages/upload.twig");
+        return $this->template->render($response, 'pages/upload.twig');
     }
 
-    public function onPost(Request $request, Response $response)
+    public function onPost(Request $request, Response $response, array $args): Response
     {
         $this->auth->requireAdmin($request);
 
@@ -45,7 +47,7 @@ class Upload extends CommonHandler
         ]);
     }
 
-    protected function getFile(Request $request)
+    protected function getFile(Request $request): ?array
     {
         $link = $request->getParam("link");
         if (!empty($link)) {
@@ -70,13 +72,42 @@ class Upload extends CommonHandler
             }
         }
 
-        return false;
+        return null;
+    }
+
+    protected function getFileName($link, array $file): string
+    {
+        if (!empty($file["headers"]["content-disposition"])) {
+            if (preg_match('@filename="([^"]+)"@', $file["headers"]["content-disposition"], $m)) {
+                return $m[1];
+            }
+        }
+
+        $url = parse_url($link);
+        $name = basename($url["path"]);
+
+        if (!($ext = pathinfo($name, PATHINFO_EXTENSION))) {
+            switch ($file["headers"]["content-type"]) {
+                case "image/png":
+                    $name .= ".png";
+                    break;
+                case "image/jpg":
+                case "image/jpeg":
+                    $name .= ".jpg";
+                    break;
+                case "image/gif":
+                    $name .= ".gif";
+                    break;
+            }
+        }
+
+        return $name;
     }
 
     /**
      * Receive the uploaded file and save it.
      **/
-    protected function receiveFile(UploadedFile $file)
+    protected function receiveFile(UploadedFile $file): array
     {
         $res = array(
             "name" => $file->getClientFilename(),
@@ -105,34 +136,5 @@ class Upload extends CommonHandler
         $res["id"] = $id;
 
         return $res;
-    }
-
-    protected function getFileName($link, array $file)
-    {
-        if (!empty($file["headers"]["content-disposition"])) {
-            if (preg_match('@filename="([^"]+)"@', $file["headers"]["content-disposition"], $m)) {
-                return $m[1];
-            }
-        }
-
-        $url = parse_url($link);
-        $name = basename($url["path"]);
-
-        if (!($ext = pathinfo($name, PATHINFO_EXTENSION))) {
-            switch ($file["headers"]["content-type"]) {
-                case "image/png":
-                    $name .= ".png";
-                    break;
-                case "image/jpg":
-                case "image/jpeg":
-                    $name .= ".jpg";
-                    break;
-                case "image/gif":
-                    $name .= ".gif";
-                    break;
-            }
-        }
-
-        return $name;
     }
 }
