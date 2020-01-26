@@ -74,6 +74,8 @@ class ErrorController extends CommonHandler
 
         if (!empty($node)) {
             return "/wiki?name=" . urlencode($node[0]['name']);
+        } else {
+            return null;
         }
     }
 
