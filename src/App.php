@@ -35,7 +35,7 @@ class App extends \Slim\App
 
     public static function installFiles(App $app): void
     {
-        Handlers\Files::setupRoutes($app);
+        Controllers\FileController::setupRoutes($app);
     }
 
     public static function installSearch(App $app): void
