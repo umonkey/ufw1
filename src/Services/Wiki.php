@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Ufw1\Services;
 
 use Psr\Log\LoggerInterface;
+use Ufw1\Util;
 
 class Wiki
 {
@@ -223,13 +224,13 @@ class Wiki
         $source = $this->processImages($source);
         $source = $this->processYouTube($source);
 
-        $html = \Ufw1\Common::renderMarkdown($source);
-        $html = \Ufw1\Common::renderTOC($html);
+        $html = Util::renderMarkdown($source);
+        $html = Util::renderTOC($html);
         $html = $this->processHeader($html, $res);
         $html = $this->processSummary($html, $res);
         $html = $this->processImages($html);
 
-        $html = \Ufw1\Util::cleanHtml($html);
+        $html = Util::cleanHtml($html);
         $res["html"] = $html;
 
         $res['snippet'] = $this->getSnippet($html);

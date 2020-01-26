@@ -248,7 +248,7 @@ class Template
 
         // Convert markdown to html
         $this->twig->addFilter(new \Twig\TwigFilter("markdown", function ($src) {
-            $html = \Ufw1\Common::renderMarkdown($src);
+            $html = Util::renderMarkdown($src);
             return $html;
         }, array("is_safe" => array("html"))));
 

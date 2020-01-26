@@ -9,6 +9,7 @@ namespace Ufw1\Controllers;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
+use Ufw1\Util;
 
 class Wiki extends CommonHandler
 {
@@ -207,7 +208,7 @@ class Wiki extends CommonHandler
         $comment = null;
 
         if ($link = $request->getParam("link")) {
-            $file = \Ufw1\Common::fetch($link);
+            $file = Util::fetch($link);
             if ($file["status"] == 200) {
                 $name = basename(explode("?", $link)[0]);
                 $type = $file["headers"]["content-type"];
@@ -397,7 +398,7 @@ class Wiki extends CommonHandler
         } elseif ($text = $request->getParam("text")) {
             if (preg_match('@^https?://[^\s]+$@', $text, $m)) {
                 $url = $m[0];
-                $doc = \Ufw1\Common::fetch($url);
+                $doc = Util::fetch($url);
 
                 if (!empty($doc["error"])) {
                     $this->logger->error("wiki: error embedding {url}, error={error}", [
