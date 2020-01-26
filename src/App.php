@@ -30,7 +30,7 @@ class App extends \Slim\App
 
     public static function installAdmin(App $app): void
     {
-        Handlers\Admin::setupRoutes($app);
+        Controllers\AdminController::setupRoutes($app);
     }
 
     public static function installFiles(App $app): void
