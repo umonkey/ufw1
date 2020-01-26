@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="{% if page.lang %}{{ page.lang }}{% else %}ru{% endif %}" prefix="og: http://ogp.me/ns#">
+    <head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+        <meta charset="utf-8"/>
+
+        <meta name="viewport" content="width=device-width"/>
+
+        <link rel="stylesheet" type="text/css" href="/css/libs.min.css"/>
+        <link rel="stylesheet" type="text/css" href="/css/app.min.css"/>
+
+        {% if edit_link %}
+            <link rel="edit" title="{{ strings.edit_page or 'Edit page' }}" href="{{ edit_link }}"/>
+            <link rel="alternate" type="application/x-wiki" title="{{ strings.edit_page or 'Edit page' }}" href="{{ edit_link }}"/>
+        {% endif %}
+
+        {% if canonical_link %}
+            <link rel="canonical" href="{{ canonical_link }}"/>
+        {% endif %}
+
+        {% if strings.site_name %}
+            <meta name="og:site_name" content="{{ strings.site_name }}"/>
+        {% endif %}
+
+        {% block more_head %}{% endblock %}
+
+        <title>{% block page_title %}{% if title %}{{ title }}{% else %}Wiki{% endif %} — {{ strings.site_name }}{% endblock %}</title>
+    </head>
+    <body>
+        <div class='{% block body_class %}{{ body_class }}{% endblock %} spa-container{% if page.splash %} with-splash{% endif %}'>
+            <header>
+                {% block page_header %}
+                    <div class='page-header'>
+                        <h1>It Works!</h1>
+                    </div>
+                {% endblock %}
+            </header>
+
+            <main>
+                <div class='container'>
+                    {% include 'parts/breadcrumbs.twig' %}
+
+                    <article>
+                        {% block page_contents %}
+                            <p>This page is empty.</p>
+                        {% endblock %}
+                    </article>
+                </div>
+            </main>
+
+            {% block page_footer %}
+                <footer>
+                    <div class='container'>
+                        <p>&copy; 2020 Some Person</p>
+                    </div>
+                </footer>
+            {% endblock %}
+
+            <div id="block" style="display: none"></div>
+        </div>{# .spa-container #}
+
+        {% include 'parts/chat-widget.twig' %}
+
+        {##
+         # jsdata is where controllers pass data for the scripts.
+         ##}
+        {% if jsdata %}<script>window.jsdata = {{ jsdata|raw }};</script>{% endif %}
+
+        <script type="text/javascript" src="/js/libs.min.js"></script>
+
+        {% if environment == "dev" %}
+            <script type="text/javascript" src="/js/app.js"></script>
+        {% else %}
+            <script type="text/javascript" src="/js/app.min.js"></script>
+        {% endif %}
+
+        {% include "parts/counters.twig" %}
+    </body>
+</html>

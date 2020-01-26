@@ -1,0 +1,21 @@
+{##
+ # Templates for the [:VIM_EVAL:]expand('%:p:t:r')[:END_EVAL:] node list.
+ #}
+<table class="table lines hover compact nodes">
+    <thead>
+        <tr>
+            <th/>
+            <th>Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for n in nodes %}
+            <tr class='{% if n.published %}published{% else %}unpublished{% endif %}{% if request.get.edited == n.id %} edited{% endif %}'>
+                <td/>
+                <td><a href="/admin/nodes/{{ n.id }}/edit">{% if n.name %}{{ n.name }}{% else %}(no name){% endif %}</a></td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class='msgbox'></div>

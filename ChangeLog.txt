@@ -1,3 +1,7 @@
+2020-01-26:
+- Added vim snippets for new files.
+- Added snippets for most files.
+
 2020-01-24:
 - Organize templates in folders: layouts, pages, errors.
 - Support for template variants: [node-1.twig, node-wiki.twig, node.twig].
