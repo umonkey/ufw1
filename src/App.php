@@ -47,6 +47,11 @@ class App extends \Slim\App
         $app->get('/search/suggest', $class . ':onSuggest');
     }
 
+    public static function installShortener(App $app): void
+    {
+        Controllers\ShortenerController::setupRoutes($app);
+    }
+
     public static function installSitemap(App $app): void
     {
         $class = Controllers\SitemapController::class;

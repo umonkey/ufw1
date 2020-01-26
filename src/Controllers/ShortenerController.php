@@ -4,58 +4,20 @@
  * URL shortener.
  **/
 
-namespace Ufw1\Handlers;
+declare(strict_types=1);
+
+namespace Ufw1\Controllers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
 
-class Shortener extends \Ufw1\CommonHandler
+class ShortenerController extends CommonHandler
 {
-    /**
-     * Process a single link.
-     **/
-    public function onShorten(Request $request, Response $response, array $args)
-    {
-        $user = $this->auth->requireAdmin($request);
-
-        $link = $request->getParam('target');
-        $key = md5($link);
-
-        $this->db->beginTransaction();
-
-        $node = $this->node->getByKey($key);
-
-        if ($node and $node['type'] != 'sokr') {
-            $this->fail('Невозможно создать ссылку: коллизия.');
-        }
-
-        $node = array_merge($node, [
-            'type' => 'sokr',
-            'key' => $key,
-            'name' => null,
-            'target' => $link,
-            'published' => 1,
-            'deleted' => 0,
-        ]);
-
-        $node = $this->node->save($node);
-
-        $node['name'] = '/l/' . base_convert($node['id'], 10, 36);
-
-        $node = $this->node->save($node);
-
-        $this->db->commit();
-
-        return $response->withJSON([
-            'refresh' => true,
-        ]);
-    }
-
     /**
      * Display shortener UI.
      **/
-    public function onPreview(Request $request, Response $response, array $args)
+    public function onPreview(Request $request, Response $response, array $args): Response
     {
         $user = $this->auth->requireUser($request);
 
@@ -72,7 +34,7 @@ class Shortener extends \Ufw1\CommonHandler
     /**
      * Handle a redirect.
      **/
-    public function onRedirect(Request $request, Response $response, array $args)
+    public function onRedirect(Request $request, Response $response, array $args): Response
     {
         $link = $args['link'];
         $id = intval($link, 36);
@@ -97,11 +59,52 @@ class Shortener extends \Ufw1\CommonHandler
     }
 
     /**
+     * Process a single link.
+     **/
+    public function onShorten(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->requireAdmin($request);
+
+        if ($link = $request->getParam('target')) {
+            $key = md5($link);
+
+            $this->db->beginTransaction();
+
+            $node = $this->node->getByKey($key);
+
+            if ($node and $node['type'] != 'sokr') {
+                $this->fail('Невозможно создать ссылку: коллизия.');
+            }
+
+            $node = array_merge($node, [
+                'type' => 'sokr',
+                'key' => $key,
+                'name' => null,
+                'target' => $link,
+                'published' => 1,
+                'deleted' => 0,
+            ]);
+
+            $node = $this->node->save($node);
+
+            $node['name'] = '/l/' . base_convert($node['id'], 10, 36);
+
+            $node = $this->node->save($node);
+
+            $this->db->commit();
+        }
+
+        return $response->withJSON([
+            'refresh' => true,
+        ]);
+    }
+
+    /**
      * Add handlers to the routing table.
      *
      * Call this from within src/routes.php
      **/
-    public static function setupRoutes(&$app)
+    public static function setupRoutes(&$app): void
     {
         $class = get_called_class();
 
@@ -110,7 +113,7 @@ class Shortener extends \Ufw1\CommonHandler
         $app->get('/shorten', $class . ':onPreview');
     }
 
-    protected function shorten($link)
+    protected function shorten(string $link): string
     {
         $key = md5($link);
 
