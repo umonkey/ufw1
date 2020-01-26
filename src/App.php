@@ -47,6 +47,13 @@ class App extends \Slim\App
         $app->get('/search/suggest', $class . ':onSuggest');
     }
 
+    public static function installSitemap(App $app): void
+    {
+        $class = Controllers\SitemapController::class;
+
+        $app->get('/sitemap.xml', $class . ':onGet');
+    }
+
     public static function installTaskQ(App $app): void
     {
         $class = Controllers\TaskQueueController::class;

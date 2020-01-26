@@ -4,15 +4,17 @@
  * Handle sitemap.
  **/
 
-namespace Ufw1\Handlers;
+declare(strict_types=1);
+
+namespace Ufw1\Controllers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
 
-class Sitemap extends CommonHandler
+class SitemapController extends CommonHandler
 {
-    public function onGet(Request $request, Response $response, array $args)
+    public function onGet(Request $request, Response $response, array $args): Response
     {
         return $this->sendFromCache($request, function () use ($request) {
             $host = $request->getServerParam("HTTP_HOST");
