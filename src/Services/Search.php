@@ -28,12 +28,18 @@ class Search
      **/
     protected $logger;
 
+    /**
+     * @var Stemmer
+     **/
+    protected $stemmer;
+
     private static $stopWords = ["а", "и", "о", "об", "в", "на", "под", "из"];
 
-    public function __construct(Database $database, LoggerInterface $logger)
+    public function __construct(Database $database, LoggerInterface $logger, Stemmer $stemmer)
     {
         $this->database = $database;
         $this->logger = $logger;
+        $this->stemmer = $stemmer;
     }
 
     public function search(string $query, int $limit = 100): array

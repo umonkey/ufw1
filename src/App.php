@@ -40,14 +40,16 @@ class App extends \Slim\App
 
     public static function installSearch(App $app): void
     {
-        $app->get('/search', '\Ufw1\Handlers\Search:onGet');
-        $app->get('/search.xml', '\Ufw1\Handlers\Search:onGetXML');
-        $app->get('/search/suggest', '\Ufw1\Handlers\Search:onSuggest');
+        $class = Controllers\SearchController::class;
+
+        $app->get('/search', $class . ':onGet');
+        $app->get('/search.xml', $class . ':onGetXML');
+        $app->get('/search/suggest', $class . ':onSuggest');
     }
 
     public static function installTaskQ(App $app): void
     {
-        $class = Handlers\TaskQ::class;
+        $class = Controllers\TaskQueueController::class;
 
         $app->get('/taskq/list', $class . ':onList');
         $app->any('/taskq/{id:[0-9]+}/run', $class . ':onRun');
@@ -55,7 +57,7 @@ class App extends \Slim\App
 
     public static function installWiki(App $app): void
     {
-        $class = Controllers\Wiki::class;
+        $class = Controllers\WikiController::class;
 
         $app->get('/wiki', $class . ':onRead');
         $app->get('/wiki/edit', $class . ':onEdit');
@@ -100,7 +102,10 @@ class App extends \Slim\App
         };
 
         $container['fts'] = function ($c) {
-            return new Services\Search($c);
+            $db = $c->get('db');
+            $logger = $c->get('logger');
+            $stemmer = $c->get('stemmer');
+            return new Services\Search($db, $logger, $stemmer);
         };
 
         $container['logger'] = function ($c) {

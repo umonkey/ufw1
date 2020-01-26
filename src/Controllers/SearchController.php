@@ -5,35 +5,35 @@
  * Currently only renders the template, we're using Yandex search.
  **/
 
-namespace Ufw1\Handlers;
+declare(strict_types=1);
+
+namespace Ufw1\Controllers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
 
-class Search extends CommonHandler
+class SearchController extends CommonHandler
 {
-    public function onGet(Request $request, Response $response, array $args)
+    public function onGet(Request $request, Response $response, array $args): Response
     {
-        $query = trim($request->getParam("query"));
+        if ($query = $request->getParam('query')) {
+            $results = $this->search(trim($query));
 
-        if ($query) {
-            $results = $this->search($query);
-
-            $this->db->insert("search_log", [
-                "date" => strftime("%Y-%m-%d %H:%M:%S"),
-                "query" => $query,
-                "results" => count($results),
+            $this->db->insert('search_log', [
+                'date' => strftime('%Y-%m-%d %H:%M:%S'),
+                'query' => $query,
+                'results' => count($results),
             ]);
 
-            return $this->render($request, "pages/search.twig", [
-                "query" => $query,
-                "wiki" => $this->findWikiPage($query),
-                "results" => $results,
-                "edit_link" => "/wiki/edit?name=" . urlencode($query),
+            return $this->render($request, 'pages/search.twig', [
+                'query' => $query,
+                'wiki' => $this->findWikiPage($query),
+                'results' => $results,
+                'edit_link' => '/wiki/edit?name=' . urlencode($query),
             ]);
         } else {
-            return $this->render($request, "pages/search.twig", []);
+            return $this->render($request, 'pages/search.twig', []);
         }
     }
 
@@ -43,17 +43,16 @@ class Search extends CommonHandler
      * https://developer.mozilla.org/en-US/docs/Web/OpenSearch
      * https://developer.mozilla.org/en-US/docs/Archive/Add-ons/Supporting_search_suggestions_in_search_plugins
      **/
-    public function onGetXML(Request $request, Response $response, array $args)
+    public function onGetXML(Request $request, Response $response, array $args): Response
     {
-        $settings = @$this->container->get("settings");
-        $settings = $settings["opensearch"] ?? [];
+        $settings = $this->settings['opensearch'] ?? [];
 
         $host = $request->getUri()->getHost();
-        $https = $request->getServerParam("HTTPS") == "on";
-        $proto = $https ? "https" : "http";
+        $https = $request->getServerParam('HTTPS') == 'on';
+        $proto = $https ? 'https' : 'http';
 
-        $name = $settings["name"] ?? $host;
-        $desc = $settings["description"] ?? "Поиск по сайту {$host}";
+        $name = $settings['name'] ?? $host;
+        $desc = $settings['description'] ?? 'Поиск по сайту {$host}';
 
         $xml = "<OpenSearchDescription xmlns='http://a9.com/-/spec/opensearch/1.1/' xmlns:moz='http://www.mozilla.org/2006/browser/search/'>\n";
         $xml .= "<ShortName>{$name}</ShortName>";
@@ -65,13 +64,24 @@ class Search extends CommonHandler
         $xml .= "</OpenSearchDescription>";
 
         $response->getBody()->write($xml);
-        return $response->withHeader("content-type", "application/xml");
+        return $response->withHeader('content-type', 'application/xml');
+    }
+
+    public function onLog(Request $request, Response $response, array $args): Response
+    {
+        $this->auth->requireAdmin($request);
+
+        $rows = $this->db->fetch("SELECT * FROM `search_log` ORDER BY `date` DESC LIMIT 100");
+
+        return $this->render($request, "pages/search-log.twig", [
+            "entries" => $rows,
+        ]);
     }
 
     /**
      * Search suggestions, according to OpenSearch specs.
      **/
-    public function onSuggest(Request $request, Response $response, array $args)
+    public function onSuggest(Request $request, Response $response, array $args): Response
     {
         $query = $request->getParam("query");
 
@@ -89,24 +99,13 @@ class Search extends CommonHandler
         return $response->withHeader("Content-Type", "application/x-suggestions+json");
     }
 
-    public function onLog(Request $request, Response $response, array $args)
-    {
-        $this->auth->requireAdmin($request);
-
-        $rows = $this->db->fetch("SELECT * FROM `search_log` ORDER BY `date` DESC LIMIT 100");
-
-        return $this->render($request, "pages/search-log.twig", [
-            "entries" => $rows,
-        ]);
-    }
-
     /**
      * Finds whether there's a wiki page by that name.
      *
      * @param string $query Search query.
      * @return array|null Page meta if wiki's enabled.
      **/
-    protected function findWikiPage($query)
+    protected function findWikiPage($query): ?array
     {
         $key = md5(mb_strtolower(trim($query)));
         if ($node = $this->node->getByKey($key)) {
