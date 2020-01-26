@@ -2,6 +2,7 @@
 - Added vim snippets for new files.
 - Added snippets for most files.
 - Moved session and auth code to SessionService and AuthService.
+- Moved container setup to Ufw1\App.
 
 2020-01-24:
 - Organize templates in folders: layouts, pages, errors.
