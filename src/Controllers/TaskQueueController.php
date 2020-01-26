@@ -4,63 +4,17 @@
  * Background task handler.
  **/
 
-namespace Ufw1\Handlers;
+declare(strict_types=1);
+
+namespace Ufw1\Controllers;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
 
-class TaskQ extends CommonHandler
+class TaskQueueController extends CommonHandler
 {
-    /**
-     * List pending tasks.
-     *
-     * TODO: override and add ACL.
-     **/
-    public function onShow(Request $request, Response $response, array $args)
-    {
-        $user = $this->auth->requireAdmin($request);
-
-        $tasks = $this->db->fetch("SELECT * FROM `taskq` ORDER BY `id` DESC", [], function ($row) {
-            $payload = unserialize($row["payload"]);
-            unset($row["payload"]);
-
-            $row["action"] = $payload["__action"];
-
-            $ts = strtotime($row["added"]);
-            $age = time() - $ts;
-
-            if ($age >= 86400) {
-                $age = sprintf("%02u d", $age / 86400);
-            } elseif ($age >= 3600) {
-                $age = sprintf("%02u h", $age / 3600);
-            } elseif ($age >= 60) {
-                $age = sprintf("%02u m", $age / 60);
-            } else {
-                $age = sprintf("%02u s", $age);
-            }
-
-            return [
-                "id" => $row["id"],
-                "age" => $age,
-                "action" => $payload["__action"],
-                "attempts" => $row["attempts"],
-                "priority" => $row["priority"],
-            ];
-        });
-
-        $settings = $this->getSettings($request);
-
-        return $this->render($request, "pages/taskq.twig", [
-            "tab" => "taskq",
-            "tasks" => $tasks,
-            "user" => $user,
-            "domain" => $domain,
-            "settings" => $settings,
-        ]);
-    }
-
-    public function onList(Request $request, Response $response, array $args)
+    public function onList(Request $request, Response $response, array $args): Response
     {
         $settings = $this->getSettings($request);
 
@@ -82,7 +36,7 @@ class TaskQ extends CommonHandler
     /**
      * Run one task with the given id.
      **/
-    public function onRun(Request $request, Response $response, array $args)
+    public function onRun(Request $request, Response $response, array $args): Response
     {
         $method = $request->getMethod();
 
@@ -145,7 +99,72 @@ class TaskQ extends CommonHandler
         }
     }
 
-    protected function handleTask($action, array $payload)
+    /**
+     * List pending tasks.
+     *
+     * TODO: override and add ACL.
+     **/
+    public function onShow(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->requireAdmin($request);
+
+        $tasks = $this->db->fetch("SELECT * FROM `taskq` ORDER BY `id` DESC", [], function ($row) {
+            $payload = unserialize($row["payload"]);
+            unset($row["payload"]);
+
+            $row["action"] = $payload["__action"];
+
+            $ts = strtotime($row["added"]);
+            $age = time() - $ts;
+
+            if ($age >= 86400) {
+                $age = sprintf("%02u d", $age / 86400);
+            } elseif ($age >= 3600) {
+                $age = sprintf("%02u h", $age / 3600);
+            } elseif ($age >= 60) {
+                $age = sprintf("%02u m", $age / 60);
+            } else {
+                $age = sprintf("%02u s", $age);
+            }
+
+            return [
+                "id" => $row["id"],
+                "age" => $age,
+                "action" => $payload["__action"],
+                "attempts" => $row["attempts"],
+                "priority" => $row["priority"],
+            ];
+        });
+
+        $settings = $this->getSettings($request);
+
+        return $this->render($request, "admin/taskq.twig", [
+            "tab" => "taskq",
+            "tasks" => $tasks,
+            "user" => $user,
+            "domain" => $domain,
+            "settings" => $settings,
+        ]);
+    }
+
+    /**
+     * Adds admin UI to the touring table.
+     **/
+    public static function setupRoutes(&$app): void
+    {
+        $class = get_called_class();
+
+        $app->get('/taskq/list', $class . ':onList');
+        $app->any('/taskq/{id:[0-9]+}/run', $class . ':onRun');
+    }
+
+    protected function getSettings(Request $request): array
+    {
+        $settings = $this->container->get("settings")["taskq"];
+        return $settings;
+    }
+
+    protected function handleTask($action, array $payload): void
     {
         $parts = explode('.', $action);
         if (count($parts) == 2) {
@@ -153,36 +172,48 @@ class TaskQ extends CommonHandler
                 $obj = $this->container->get($parts[0]);
                 if (method_exists($obj, $parts[1])) {
                     $this->logger->info('taskq: calling {0}', [$action]);
-                    return call_user_func([$obj, $parts[1]], $payload);
+                    call_user_func([$obj, $parts[1]], $payload);
                 } else {
                     $this->logger->warning('taskq: dependency method not found, action={0}', [$action]);
-                    return;
                 }
             } else {
                 $this->logger->warning('taskq: dependency not found, action={0}', [$action]);
-                return;
             }
         } elseif ($action == 'update-node-thumbnail') {
-            return $this->onUpdateNodeThumbnail($payload['id']);
+            $this->onUpdateNodeThumbnail((int)$payload['id']);
         } elseif ($action == 'telega') {
-            return $this->onTelega($payload['message']);
+            $this->onTelega($payload['message']);
         } elseif ($action == 'handle-file-upload') {
-            return $this->onHandleFileUpload($payload['id']);
+            $this->onHandleFileUpload((int)$payload['id']);
+        } else {
+            $this->logger->warning("taskq: unhandled task with action={action}, payload={payload}.", [
+                'action' => $action,
+                'payload' => $payload,
+            ]);
+        }
+    }
+
+    protected function onHandleFileUpload(int $id): void
+    {
+        if (!($node = $this->node->get($id))) {
+            $this->logger->debug('taskq: node {0} not found.', [$id]);
+            return;
         }
 
-        $this->logger->warning("taskq: unhandled task with action={action}, payload={payload}.", [
-            'action' => $action,
-            'payload' => $payload,
-        ]);
+        if (isset($this->thumbnailer)) {
+            $node = $this->thumbnailer->updateNode($node);
+            $node = $this->node->save($node);
+        }
+
+        $this->S3->autoUploadNode($node);
     }
 
-    protected function getSettings(Request $request)
+    protected function onTelega(string $message): void
     {
-        $settings = $this->container->get("settings")["taskq"];
-        return $settings;
+        $this->telega->sendMessage($message);
     }
 
-    protected function onUpdateNodeThumbnail($id)
+    protected function onUpdateNodeThumbnail(int $id): void
     {
         if (!($node = $this->node->get($id))) {
             $this->logger->debug('taskq: update-node-thumbnail: node {0} not found.', [$id]);
@@ -194,37 +225,5 @@ class TaskQ extends CommonHandler
         $node = $this->node->save($node);
 
         $this->container->get('S3')->autoUploadNode($node);
-    }
-
-    protected function onTelega($message)
-    {
-        $this->container->get('telega')->sendMessage($message);
-    }
-
-    protected function onHandleFileUpload($id)
-    {
-        if (!($node = $this->node->get($id))) {
-            $this->logger->debug('taskq: node {0} not found.', [$id]);
-            return;
-        }
-
-        if ($this->container->has('thumbnailer')) {
-            $tn = $this->container->get('thumbnailer');
-            $node = $tn->updateNode($node);
-            $node = $this->node->save($node);
-        }
-
-        $this->container->get('S3')->autoUploadNode($node);
-    }
-
-    /**
-     * Adds admin UI to the touring table.
-     **/
-    public static function setupRoutes(&$app)
-    {
-        $class = get_called_class();
-
-        $app->get('/taskq/list', $class . ':onList');
-        $app->any('/taskq/{id:[0-9]+}/run', $class . ':onRun');
     }
 }
