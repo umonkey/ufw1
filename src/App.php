@@ -87,7 +87,7 @@ class App extends \Slim\App
 
         $container['errorHandler'] = function ($c) {
             return function ($request, $response, $e) use ($c) {
-                $h = new Handlers\Error($c);
+                $h = new Controllers\ErrorController($c);
                 return $h($request, $response, ['exception' => $e]);
             };
         };
@@ -109,7 +109,7 @@ class App extends \Slim\App
 
         $container['notFoundHandler'] = function ($c) {
             return function ($request, $response) use ($c) {
-                throw new \Ufw1\Errors\NotFound();
+                throw new Errors\NotFound();
             };
         };
 
@@ -122,7 +122,7 @@ class App extends \Slim\App
 
         $container['phpErrorHandler'] = function ($c) {
             return function ($request, $response, $e) use ($c) {
-                $h = new Handlers\Error($c);
+                $h = new Controllers\ErrorController($c);
                 return $h($request, $response, ['exception' => $e]);
             };
         };
