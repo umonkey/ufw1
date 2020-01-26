@@ -4,6 +4,8 @@
  * Wiki pages.
  **/
 
+declare(strict_types=1);
+
 namespace Ufw1\Controllers;
 
 use Slim\Http\Request;
@@ -11,7 +13,7 @@ use Slim\Http\Response;
 use Ufw1\CommonHandler;
 use Ufw1\Util;
 
-class Wiki extends CommonHandler
+class WikiController extends CommonHandler
 {
     /**
      * Display a single page.
@@ -23,7 +25,7 @@ class Wiki extends CommonHandler
         $name = $request->getQueryParam("name");
 
         if (empty($name)) {
-            $st = $this->container->get('settings')['wiki']['home_page'] ?? 'Welcome';
+            $st = $this->settings['wiki']['home_page'] ?? 'Welcome';
             $next = '/wiki?name=' . urlencode($st);
             return $response->withRedirect($next);
         }
@@ -48,7 +50,7 @@ class Wiki extends CommonHandler
         $canEdit = $wiki->canEditPages($user);
 
         if (preg_match('@^File:(\d+)$@', $name, $m)) {
-            return $this->onReadFilePage($request, $name, $m[1]);
+            return $this->onReadFilePage($request, $name, (int)$m[1]);
         }
 
         $node = $wiki->getPageByName($name);
@@ -97,7 +99,7 @@ class Wiki extends CommonHandler
         }
     }
 
-    protected function onReadFilePage(Request $request, $pageName, $fileId)
+    protected function onReadFilePage(Request $request, string $pageName, int $fileId): Response
     {
         $file = $this->container->get('file')->get($fileId);
 
@@ -118,7 +120,7 @@ class Wiki extends CommonHandler
     /**
      * Show page editor.
      **/
-    public function onEdit(Request $request, Response $response, array $args)
+    public function onEdit(Request $request, Response $response, array $args): Response
     {
         $pageName = $request->getQueryParam("name");
         $sectionName = $request->getQueryParam("section");
@@ -152,7 +154,7 @@ class Wiki extends CommonHandler
     /**
      * Update page contents.
      **/
-    public function onSave(Request $request, Response $response, array $args)
+    public function onSave(Request $request, Response $response, array $args): Response
     {
         $name = $request->getParam("page_name");
         $source = $request->getParam("page_source");
@@ -196,11 +198,12 @@ class Wiki extends CommonHandler
     /**
      * Handle file uploads.
      **/
-    public function onUpload(Request $request, Response $response, array $args)
+    public function onUpload(Request $request, Response $response, array $args): Response
     {
         $user = $this->auth->requireUser($request);
 
-        $wiki = $this->container->get('wiki');
+        $wiki = $this->wiki;
+
         if (!$wiki->canEditPages($user)) {
             return $this->forbidden();
         }
@@ -301,23 +304,22 @@ class Wiki extends CommonHandler
      * @param string $body Содержимое файла.
      * @return string Код для встраивания, например: [[image:123]]
      **/
-    protected function addFile($name, $type, $body, $comment = null)
+    protected function addFile(string $name, string $type, string $body, string $comment = null): string
     {
         $file = $this->file->add($name, $type, $body);
         $fid = $file["id"];
 
-        if ($this->container->has('thumbnailer')) {
-            $tn = $this->container->get('thumbnailer');
-            $file = $tn->updateNode($file);
+        if (isset($this->thumbnailer)) {
+            $file = $this->thumbnailer->updateNode($file);
             $file = $this->node->save($file);
         }
 
-        $this->container->get('S3')->autoUploadNode($file);
+        $this->S3->autoUploadNode($file);
 
         return "[[image:{$fid}]]";
     }
 
-    public function onRecentRSS(Request $request, Response $response, array $args)
+    public function onRecentRSS(Request $request, Response $response, array $args): Response
     {
         $items = $this->node->where("`type` = 'wiki' AND `published` = 1 ORDER BY `created` DESC LIMIT 100", [], function ($node) {
             if (preg_match('@^(File|wiki):@', $node["name"])) {
@@ -355,7 +357,7 @@ class Wiki extends CommonHandler
      *
      * Detects links to images, replaces with an [[image:N]], returns replacement text.
      **/
-    public function onEmbedClipboard(Request $request, Response $response, array $args)
+    public function onEmbedClipboard(Request $request, Response $response, array $args): Response
     {
         $res = [
             "type" => null,
@@ -449,7 +451,7 @@ class Wiki extends CommonHandler
     /**
      * Display full list of wiki pages.
      **/
-    public function onIndex(Request $request, Response $response, array $args)
+    public function onIndex(Request $request, Response $response, array $args): Response
     {
         $pages = array_filter($this->node->where("`type` = 'wiki'", [], function ($node) {
             $name = $node["name"];
@@ -496,7 +498,7 @@ class Wiki extends CommonHandler
     /**
      * Display full list of wiki pages.
      **/
-    public function onRecent(Request $request, Response $response, array $args)
+    public function onRecent(Request $request, Response $response, array $args): Response
     {
         $since = strftime("%Y-%m-%d %H:%M:%S", time() - 86400 * 30);
 
@@ -547,7 +549,7 @@ class Wiki extends CommonHandler
      *
      * Used in the file upload dialog.
      **/
-    public function onRecentFiles(Request $request, Response $response, array $args)
+    public function onRecentFiles(Request $request, Response $response, array $args): Response
     {
         $files = $this->node->where("`type` = 'file' AND `published` = 1 AND `deleted` = 0 ORDER BY `created` DESC LIMIT 50");
 
@@ -577,7 +579,7 @@ class Wiki extends CommonHandler
     /**
      * Update the search index.
      **/
-    public function onReindex(Request $request, Response $response, array $args)
+    public function onReindex(Request $request, Response $response, array $args): Response
     {
         $this->auth->requireAdmin($request);
 
@@ -599,7 +601,7 @@ class Wiki extends CommonHandler
      * @param Request $request Request.
      * @return bool True if refresh was requested.
      **/
-    protected function refresh(Request $request)
+    protected function refresh(Request $request): bool
     {
         if ($request->getParam("debug")) {
             return true;
@@ -622,7 +624,7 @@ class Wiki extends CommonHandler
         return false;
     }
 
-    protected function pageGetText(array $page)
+    protected function pageGetText(array $page): string
     {
         $html = $page["html"];
 
@@ -635,7 +637,7 @@ class Wiki extends CommonHandler
         return $text;
     }
 
-    protected function pageGetSnippet(array $page)
+    protected function pageGetSnippet(array $page): ?string
     {
         $html = $page["html"];
 
@@ -654,7 +656,7 @@ class Wiki extends CommonHandler
         return null;
     }
 
-    protected function getPageImage(array $page)
+    protected function getPageImage(array $page): ?string
     {
         $image = null;
 
@@ -679,14 +681,14 @@ class Wiki extends CommonHandler
      * @param string $name Page name.
      * @return array|null Node contents.
      **/
-    protected function pageGet($name)
+    protected function pageGet(string $name): ?array
     {
         $key = md5(mb_strtolower(trim($name)));
         $node = $this->node->getByKey($key);
         return $node;
     }
 
-    protected function pageGetTemplate($name)
+    protected function pageGetTemplate(string $name): string
     {
         if ($tmap = $this->pageGet("wiki:templates")) {
             $lines = explode("\n", str_replace("\r", "", $tmap["source"]));
@@ -718,7 +720,7 @@ class Wiki extends CommonHandler
      *
      * Call this from within src/routes.php
      **/
-    public static function setupRoutes(&$app)
+    public static function setupRoutes(&$app): void
     {
         $class = get_called_class();
 
@@ -733,9 +735,9 @@ class Wiki extends CommonHandler
         $app->any('/wiki/upload', $class . ':onUpload');
     }
 
-    private function isS3AutoUploadEnabled()
+    private function isS3AutoUploadEnabled(): bool
     {
-        $st = $this->container->get('settings');
-        return $st['S3']['auto_upload'] ?? false;
+        $st = $this->settings['S3']['auto_upload'] ?? false;
+        return (bool)$st;
     }
 }
