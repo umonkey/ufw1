@@ -25,7 +25,7 @@ class S3
 
     /**
      * FIXME!  Does not belong here.
-     * @var NodeFactory
+     * @var NodeRepository
      **/
     protected $node;
 
@@ -34,7 +34,7 @@ class S3
      **/
     protected $taskq;
 
-    public function __construct(array $settings, LoggerInterface $logger, NodeFactory $node, TaskQueue $taskq)
+    public function __construct(array $settings, LoggerInterface $logger, NodeRepository $node, TaskQueue $taskq)
     {
         if (empty($settings["S3"])) {
             throw new \RuntimeException("S3 not configured, at all");

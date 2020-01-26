@@ -17,7 +17,7 @@ namespace Ufw1\Services;
 
 use Psr\Log\LoggerInterface;
 
-class FileFactory
+class FileRepository
 {
     /**
      * @var LoggerInterface
@@ -25,7 +25,7 @@ class FileFactory
     protected $logger;
 
     /**
-     * @var NodeFactory
+     * @var NodeRepository
      **/
     protected $node;
 
@@ -34,7 +34,7 @@ class FileFactory
      **/
     protected $settings;
 
-    public function __construct(LoggerInterface $logger, NodeFactory $node, array $settings)
+    public function __construct(LoggerInterface $logger, NodeRepository $node, array $settings)
     {
         $this->logger = $logger;
 

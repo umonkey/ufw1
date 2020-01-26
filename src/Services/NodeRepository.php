@@ -11,7 +11,7 @@ namespace Ufw1\Services;
 use Ufw1\Services\Database;
 use Psr\Log\LoggerInterface;
 
-class NodeFactory
+class NodeRepository
 {
     /**
      * @var Database

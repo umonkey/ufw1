@@ -112,7 +112,7 @@ class App extends \Slim\App
             $logger = $c->get('logger');
             $node = $c->get('node');
             $settings = $c->get('settings');
-            return new Services\FileFactory($logger, $node, $settings);
+            return new Services\FileRepository($logger, $node, $settings);
         };
 
         $container['fts'] = function ($c) {
@@ -136,7 +136,7 @@ class App extends \Slim\App
             $db = $c->get('db');
             $logger = $c->get('logger');
             $settings = $c->get('settings')['node'];
-            return new Services\NodeFactory($settings, $db, $logger);
+            return new Services\NodeRepository($settings, $db, $logger);
         };
 
         $container['phpErrorHandler'] = function ($c) {

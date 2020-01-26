@@ -16,7 +16,7 @@ use Ufw1\Util;
 class Wiki
 {
     /**
-     * @var NodeFactory
+     * @var NodeRepository
      **/
     protected $node;
 
@@ -30,7 +30,7 @@ class Wiki
      **/
     protected $settings;
 
-    public function __construct(array $settings, NodeFactory $node, LoggerInterface $logger)
+    public function __construct(array $settings, NodeRepository $node, LoggerInterface $logger)
     {
         $this->settings = $settings;
         $this->node = $node;

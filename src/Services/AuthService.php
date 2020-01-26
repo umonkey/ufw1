@@ -29,11 +29,11 @@ class AuthService
     private $session;
 
     /**
-     * @var NodeFactory
+     * @var NodeRepository
      **/
     private $node;
 
-    public function __construct(SessionService $session, LoggerInterface $logger, NodeFactory $node)
+    public function __construct(SessionService $session, LoggerInterface $logger, NodeRepository $node)
     {
         $this->session = $session;
         $this->logger = $logger;
