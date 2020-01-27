@@ -57,6 +57,12 @@ class AuthService
         return $node;
     }
 
+    public function getUserByEmail(string $email): ?array
+    {
+        $nodes = $this->node->where('`type` = \'user\' AND `id` IN (SELECT `id` FROM `nodes_user_idx` WHERE `email` = ?) ORDER BY `id` LIMIT 1', [$email]);
+        return $nodes ? $nodes[0] : null;
+    }
+
     public function isAdmin(Request $request): bool
     {
         $user = $this->getUser($request);
@@ -141,11 +147,14 @@ class AuthService
     {
         $session = $this->session->get($request);
 
-        if (empty($session['user_stack'])) {
-            $session['user_stack'] = [];
+        if (!empty($session['user_id'])) {
+            if (empty($session['user_stack'])) {
+                $session['user_stack'] = [];
+            }
+
+            $session['user_stack'][] = $session['user_id'];
         }
 
-        $session['user_stack'][] = $session['user_id'];
         $session['user_id'] = $userId;
 
         $this->session->set($request, $session);
