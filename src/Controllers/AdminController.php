@@ -173,6 +173,51 @@ class AdminController extends CommonHandler
         }
     }
 
+    /**
+     * List all installed routes, for debug purpose.
+     **/
+    public function onListRoutes(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->requireAdmin($request);
+
+        $routes = $this->container->get('router')->getRoutes();
+
+        $routes = array_map(function ($route) {
+            $item = [
+                'methods' => $route->getMethods(),
+                'pattern' => $route->getPattern(),
+                'class' => null,
+                'method' => null,
+            ];
+
+            $callable = $route->getCallable();
+
+            if (is_string($callable)) {
+                $parts = explode(':', $callable);
+                if (count($parts) == 1) {
+                    $parts[] = '__invoke';
+                }
+                list($item['class'], $item['method']) = $parts;
+            }
+
+            elseif (is_array($callable) and count($callable) == 2 and is_object($callable[0])) {
+                $item['class'] = get_class($callable[0]);
+                $item['method'] = $callable[1];
+            }
+
+            else {
+                debug($callable);
+            }
+
+            return $item;
+        }, array_values($routes));
+
+        return $this->render($request, ['admin/routes.twig'], [
+            'user' => $user,
+            'routes' => $routes,
+        ]);
+    }
+
     public function onNodeList(Request $request, Response $response, array $args): Response
     {
         $user = $this->auth->requireAdmin($request);
@@ -548,6 +593,7 @@ class AdminController extends CommonHandler
         $app->get('/admin/nodes/{id:[0-9]+}/dump', $class . ':onDumpNode');
         $app->post('/admin/nodes/{id:[0-9]+}/sudo', $class . ':onSudo');
         $app->post('/admin/nodes/{id:[0-9]+}/upload-s3', $class . ':onUploadS3');
+        $app->get('/admin/routes', $class . ':onListRoutes');
         $app->get('/admin/s3', $class . ':onS3');
         $app->post('/admin/s3', $class . ':onScheduleS3');
         $app->any('/admin/session', $class . ':onEditSession');
