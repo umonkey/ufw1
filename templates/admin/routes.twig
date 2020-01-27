@@ -34,7 +34,13 @@
                 <tr>
                     <td>{{ 'GET' in r.methods ? 'G' : '-' }}</td>
                     <td>{{ 'POST' in r.methods ? 'P' : '-' }}</td>
-                    <td>{{ r.pattern }}</td>
+                    <td>
+                        {% if 'GET' in r.methods and '{' not in r.pattern %}
+                            <a href='{{ r.pattern }}'>{{ r.pattern }}</a>
+                        {% else %}
+                            {{ r.pattern }}
+                        {% endif %}
+                    </td>
                     <td>{{ r.class }}</td>
                     <td>{{ r.method }}</td>
                 </tr>
