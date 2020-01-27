@@ -13,6 +13,11 @@
 {% endblock %}
 
 {% block page_contents %}
+    {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+        'label': 'Маршруты',
+        'link': request.get.path,
+    }]} %}
+
     <p>Маршруты выведены в порядке регистрации и обработки.</p>
 
     <table class='table grid hover mono'>
