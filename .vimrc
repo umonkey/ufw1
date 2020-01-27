@@ -13,3 +13,5 @@ augroup templates
 
   autocmd BufNewFile *.php,*.twig %substitute#\[:VIM_EVAL:\]\(.\{-\}\)\[:END_EVAL:\]#\=eval(submatch(1))#ge
 augroup END
+
+au FileType php set foldmethod=syntax
