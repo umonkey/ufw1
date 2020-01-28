@@ -2,6 +2,7 @@
 - Fixed special wiki pages using wrong templates.
 - Fixed passing strings to templates.
 - Compressor can now blacklist files.
+- Added dependency injection for controllers.
 
 2020-01-26:
 - Added vim snippets for new files.
