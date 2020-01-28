@@ -119,7 +119,7 @@ class Template
     protected function addDefaults(array $data): array
     {
         $lang = $data['language'] ?? 'en';
-        $strings = $this->settings['templates']['strings'][$lang] ?? [];
+        $strings = $this->settings['strings'][$lang] ?? [];
         $data['strings'] = $strings;
         return $data;
     }
