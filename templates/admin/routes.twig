@@ -1,0 +1,50 @@
+{##
+ # This is a dummy template.
+ # Please expand it.
+ #}
+{% extends 'layouts/admin.twig' %}
+
+{% block page_title %}Маршрутизация{% endblock %}
+
+{% block page_header %}
+    <div class='page-header'>
+        <h1>Таблица маршрутизации</h1>
+    </div>
+{% endblock %}
+
+{% block page_contents %}
+    {% include 'parts/admin-breadcrumbs.twig' with {'path': [{
+        'label': 'Маршруты',
+        'link': request.get.path,
+    }]} %}
+
+    <p>Маршруты выведены в порядке регистрации и обработки.</p>
+
+    <table class='table grid hover mono'>
+        <thead>
+            <tr>
+                <th>G</th>
+                <th>P</th>
+                <th>Class</th>
+                <th>Method</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in routes %}
+                <tr>
+                    <td>{{ 'GET' in r.methods ? 'G' : '-' }}</td>
+                    <td>{{ 'POST' in r.methods ? 'P' : '-' }}</td>
+                    <td>
+                        {% if 'GET' in r.methods and '{' not in r.pattern %}
+                            <a href='{{ r.pattern }}'>{{ r.pattern }}</a>
+                        {% else %}
+                            {{ r.pattern }}
+                        {% endif %}
+                    </td>
+                    <td>{{ r.class }}</td>
+                    <td>{{ r.method }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

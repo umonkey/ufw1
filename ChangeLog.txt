@@ -1,3 +1,7 @@
+2020-01-27:
+- Admin: route list in admin/routes.
+- Auth service improvements, VK api.
+
 2020-01-26:
 - Added vim snippets for new files.
 - Added snippets for most files.

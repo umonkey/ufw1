@@ -25,6 +25,199 @@ class AdminController extends CommonHandler
         ]);
     }
 
+    /**
+     * Display basic database statistics.
+     **/
+    public function onDatabaseStatus(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->requireAdmin($request);
+
+        return $this->render($request, 'admin/dbstats.twig', [
+            'dbtype' => $this->db->getConnectionType(),
+            'tables' => $this->db->getStats(),
+        ]);
+    }
+
+    /**
+     * Delete or undelete a node.
+     **/
+    public function onDeleteNode(Request $request, Response $response, array $args): Response
+    {
+        $this->db->beginTransaction();
+
+        $user = $this->auth->requireUser($request);
+
+        $id = (int)$request->getParam('id');
+        $deleted = (int)$request->getParam('deleted');
+
+        if (!($node = $this->node->get($id))) {
+            $this->fail('Документ не найден.');
+        }
+
+        // Check access.
+        $config = $this->getNodeConfig($node['type']);
+        if ($user['role'] != 'admin' and (empty($config['edit_roles']) or !in_array($user['role'], $config['edit_roles']))) {
+            $this->forbidden();
+        }
+
+        $node['deleted'] = $deleted;
+        $node = $this->node->save($node);
+
+        $this->db->commit();
+
+        if ($node['type'] == 'user' and $deleted) {
+            $message = 'Пользователь удалён.';
+        } elseif ($node['type'] == 'user' and !$deleted) {
+            $message = 'Пользователь восстановлен.';
+        } elseif ($deleted) {
+            $message = 'Документ удалён';
+        } elseif (!$deleted) {
+            $message = 'Документ восстановлен.';
+        }
+
+        return $response->withJSON([
+            'success' => true,
+            'message' => $message,
+        ]);
+    }
+
+    public function onDumpNode(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->requireUser($request);
+
+        $id = $args["id"];
+        $node = $this->node->get($id);
+
+        $node = json_encode($node, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        return $this->render($request, 'admin/dump.twig', [
+            'user' => $user,
+            'node' => $node,
+        ]);
+    }
+
+    /**
+     * Display node edit form.
+     **/
+    public function onEditNode(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->requireAdmin($request);
+
+        $id = (int)$args['id'];
+
+        if (!($node = $this->node->get($id))) {
+            $this->notfound();
+        }
+
+        $st = $this->container->get('settings');
+        $form = $st['node_forms'][$node['type']] ?? null;
+
+        if (empty($form)) {
+            $this->logger->error('admin: node_forms.{0} not defined.', [$node['type']]);
+            $this->unavailable();
+        }
+
+        return $this->render($request, 'admin/edit-node.twig', [
+            'user' => $user,
+            'node' => $node,
+            'form' => $form,
+        ]);
+    }
+
+    /**
+     * Edit raw node contents, in JSON.
+     **/
+    public function onEditRawNode(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->requireAdmin($request);
+
+        $id = (int)$args['id'];
+
+        if (!($node = $this->node->get($id))) {
+            $this->notfound();
+        }
+
+        $code = json_encode($node, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $code = str_replace('\r', '\n', $code);
+
+        return $this->render($request, 'admin/edit-raw.twig', [
+            'user' => $user,
+            'node' => $node,
+            'code' => $code,
+        ]);
+    }
+
+    public function onEditSession(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->requireAdmin($request);
+
+        if ($request->getMethod() == 'POST') {
+            $code = $request->getParam('session');
+            $update = json_decode($code, true);
+
+            $this->session->set($request, $update);
+
+            $next = $request->getParam('next');
+
+            return $response->withJSON([
+                'redirect' => $next,
+            ]);
+        } else {
+            $session = $this->session->get($request);
+            $session = json_encode($session, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+            return $this->render($request, 'admin/session-editor.twig', [
+                'user' => $user,
+                'session' => $session,
+            ]);
+        }
+    }
+
+    /**
+     * List all installed routes, for debug purpose.
+     **/
+    public function onListRoutes(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->requireAdmin($request);
+
+        $routes = $this->container->get('router')->getRoutes();
+
+        $routes = array_map(function ($route) {
+            $item = [
+                'methods' => $route->getMethods(),
+                'pattern' => $route->getPattern(),
+                'class' => null,
+                'method' => null,
+            ];
+
+            $callable = $route->getCallable();
+
+            if (is_string($callable)) {
+                $parts = explode(':', $callable);
+                if (count($parts) == 1) {
+                    $parts[] = '__invoke';
+                }
+                list($item['class'], $item['method']) = $parts;
+            }
+
+            elseif (is_array($callable) and count($callable) == 2 and is_object($callable[0])) {
+                $item['class'] = get_class($callable[0]);
+                $item['method'] = $callable[1];
+            }
+
+            else {
+                debug($callable);
+            }
+
+            return $item;
+        }, array_values($routes));
+
+        return $this->render($request, ['admin/routes.twig'], [
+            'user' => $user,
+            'routes' => $routes,
+        ]);
+    }
+
     public function onNodeList(Request $request, Response $response, array $args): Response
     {
         $user = $this->auth->requireAdmin($request);
@@ -113,69 +306,63 @@ class AdminController extends CommonHandler
         ]);
     }
 
-    public function onDumpNode(Request $request, Response $response, array $args): Response
+    /**
+     * Publish or unpublish a node.
+     **/
+    public function onPublishNode(Request $request, Response $response, array $args): Response
     {
+        $this->db->beginTransaction();
+
         $user = $this->auth->requireUser($request);
 
-        $id = $args["id"];
-        $node = $this->node->get($id);
+        $id = (int)$request->getParam('id');
+        $published = (int)$request->getParam('published');
 
-        $node = json_encode($node, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if (!($node = $this->node->get($id))) {
+            $this->fail('Документ не найден.');
+        }
 
-        return $this->render($request, 'admin/dump.twig', [
-            'user' => $user,
-            'node' => $node,
+        // Check access.
+        $config = $this->getNodeConfig($node['type']);
+        if ($user['role'] != 'admin' and (empty($config['edit_roles']) or !in_array($user['role'], $config['edit_roles']))) {
+            $this->forbidden();
+        }
+
+        $node['published'] = $published;
+        $node = $this->node->save($node);
+
+        $this->db->commit();
+
+        if ($node['type'] == 'user' and $published) {
+            $message = 'Пользователь активирован.';
+        } elseif ($node['type'] == 'user' and !$published) {
+            $message = 'Пользователь заблокирован.';
+        } elseif ($published) {
+            $message = 'Документ опубликован';
+        } elseif (!$published) {
+            $message = 'Документ сокрыт.';
+        }
+
+        return $response->withJSON([
+            'success' => true,
+            'message' => $message,
         ]);
     }
 
     /**
-     * Display node edit form.
+     * Shows the list of remote files.
      **/
-    public function onEditNode(Request $request, Response $response, array $args): Response
+    public function onS3(Request $request, Response $response, array $args): Response
     {
-        $user = $this->auth->requireAdmin($request);
+        $this->auth->requireAdmin($request);
 
-        $id = (int)$args['id'];
+        $s3 = $this->container->get("S3");
+        $files = $s3->getFileList();
+        $config = $this->container->get("settings")["S3"];
 
-        if (!($node = $this->node->get($id))) {
-            $this->notfound();
-        }
-
-        $st = $this->container->get('settings');
-        $form = $st['node_forms'][$node['type']] ?? null;
-
-        if (empty($form)) {
-            $this->logger->error('admin: node_forms.{0} not defined.', [$node['type']]);
-            $this->unavailable();
-        }
-
-        return $this->render($request, 'admin/edit-node.twig', [
-            'user' => $user,
-            'node' => $node,
-            'form' => $form,
-        ]);
-    }
-
-    /**
-     * Edit raw node contents, in JSON.
-     **/
-    public function onEditRawNode(Request $request, Response $response, array $args): Response
-    {
-        $user = $this->auth->requireAdmin($request);
-
-        $id = (int)$args['id'];
-
-        if (!($node = $this->node->get($id))) {
-            $this->notfound();
-        }
-
-        $code = json_encode($node, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        $code = str_replace('\r', '\n', $code);
-
-        return $this->render($request, 'admin/edit-raw.twig', [
-            'user' => $user,
-            'node' => $node,
-            'code' => $code,
+        return $this->render($request, "admin/s3.twig", [
+            "files" => $files,
+            "config" => $config,
         ]);
     }
 
@@ -234,108 +421,101 @@ class AdminController extends CommonHandler
     }
 
     /**
-     * Delete or undelete a node.
+     * Schedule uploading of new files to the S3 cloud, via taskq.
+     *
+     * Does not actually upload anything, so uses a transaction to handle large
+     * number of nodes quicker.
      **/
-    public function onDeleteNode(Request $request, Response $response, array $args)
+    public function onScheduleS3(Request $request, Response $response, array $args): Response
     {
+        $this->auth->requireAdmin($request);
+
         $this->db->beginTransaction();
 
-        $user = $this->auth->requireUser($request);
-
-        $id = (int)$request->getParam('id');
-        $deleted = (int)$request->getParam('deleted');
-
-        if (!($node = $this->node->get($id))) {
-            $this->fail('Документ не найден.');
+        $nodes = $this->node->where('`type` = \'file\' AND `deleted` = 0 ORDER BY `updated`');
+        foreach ($nodes as $node) {
+            $this->container->get('S3')->autoUploadNode($node, true);
         }
-
-        // Check access.
-        $config = $this->getNodeConfig($node['type']);
-        if ($user['role'] != 'admin' and (empty($config['edit_roles']) or !in_array($user['role'], $config['edit_roles']))) {
-            $this->forbidden();
-        }
-
-        $node['deleted'] = $deleted;
-        $node = $this->node->save($node);
 
         $this->db->commit();
 
-        if ($node['type'] == 'user' and $deleted) {
-            $message = 'Пользователь удалён.';
-        } elseif ($node['type'] == 'user' and !$deleted) {
-            $message = 'Пользователь восстановлен.';
-        } elseif ($deleted) {
-            $message = 'Документ удалён';
-        } elseif (!$deleted) {
-            $message = 'Документ восстановлен.';
-        }
-
         return $response->withJSON([
-            'success' => true,
-            'message' => $message,
+            'message' => 'Запланирована фоновая выгрузка.',
         ]);
     }
 
-    /**
-     * Publish or unpublish a node.
-     **/
-    public function onPublishNode(Request $request, Response $response, array $args)
-    {
-        $this->db->beginTransaction();
-
-        $user = $this->auth->requireUser($request);
-
-        $id = (int)$request->getParam('id');
-        $published = (int)$request->getParam('published');
-
-        if (!($node = $this->node->get($id))) {
-            $this->fail('Документ не найден.');
-        }
-
-        // Check access.
-        $config = $this->getNodeConfig($node['type']);
-        if ($user['role'] != 'admin' and (empty($config['edit_roles']) or !in_array($user['role'], $config['edit_roles']))) {
-            $this->forbidden();
-        }
-
-        $node['published'] = $published;
-        $node = $this->node->save($node);
-
-        $this->db->commit();
-
-        if ($node['type'] == 'user' and $published) {
-            $message = 'Пользователь активирован.';
-        } elseif ($node['type'] == 'user' and !$published) {
-            $message = 'Пользователь заблокирован.';
-        } elseif ($published) {
-            $message = 'Документ опубликован';
-        } elseif (!$published) {
-            $message = 'Документ сокрыт.';
-        }
-
-        return $response->withJSON([
-            'success' => true,
-            'message' => $message,
-        ]);
-    }
-
-    /**
-     * Display basic database statistics.
-     **/
-    public function onDatabaseStatus(Request $request, Response $response, array $args)
+    public function onSubmit(Request $request, Response $response, array $args): Response
     {
         $user = $this->auth->requireAdmin($request);
 
-        return $this->render($request, 'admin/dbstats.twig', [
-            'dbtype' => $this->db->getConnectionType(),
-            'tables' => $this->db->getStats(),
+        if (isset($args['type'])) {
+            $form = $this->container->get('settings')['node_forms'][$args['type']] ?? null;
+            if (empty($form)) {
+                $this->notfound();
+            }
+
+            return $this->render($request, 'admin/submit-node.twig', [
+                'user' => $user,
+                'type' => $args['type'],
+                'form' => $form,
+            ]);
+        }
+
+        debug($args);
+    }
+
+    public function onSubmitList(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->requireAdmin($request);
+
+        $st = $this->container->get('settings')['node_forms'];
+
+        $types = [];
+        foreach ($st as $k => $v) {
+            if (isset($v['title'])) {
+                $types[] = [
+                    'name' => $k,
+                    'label' => $v['title'],
+                    'description' => $v['description'] ?? null,
+                ];
+            }
+        }
+
+        if (empty($types)) {
+            $this->forbidden();
+        }
+
+        return $this->render($request, 'admin/submit.twig', [
+            'user' => $user,
+            'types' => $types,
+        ]);
+    }
+
+    /**
+     * Switch to another user.
+     **/
+    public function onSudo(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->requireAdmin($request);
+
+        $node = $this->node->get((int)$args["id"]);
+        if (empty($node) or $node['type'] != 'user') {
+            $this->notfound();
+        }
+
+        $this->auth->push((int)$node['id']);
+
+        $next = $request->getParam('next');
+
+        return $response->withJSON([
+            'redirect' => $next ? $next : '/',
         ]);
     }
 
     /**
      * Display TaskQ status.
      **/
-    public function onTaskQ(Request $request, Response $response, array $args)
+    public function onTaskQ(Request $request, Response $response, array $args): Response
     {
         $user = $this->auth->requireAdmin($request);
 
@@ -376,139 +556,106 @@ class AdminController extends CommonHandler
         ]);
     }
 
-    public function onSubmitList(Request $request, Response $response, array $args)
+    public function onUploadS3(Request $request, Response $response, array $args): Response
     {
-        $user = $this->auth->requireAdmin($request);
+        $id = $args['id'];
+        $node = $this->node->get($id);
 
-        $st = $this->container->get('settings')['node_forms'];
-
-        $types = [];
-        foreach ($st as $k => $v) {
-            if (isset($v['title'])) {
-                $types[] = [
-                    'name' => $k,
-                    'label' => $v['title'],
-                    'description' => $v['description'] ?? null,
-                ];
-            }
-        }
-
-        if (empty($types)) {
-            $this->forbidden();
-        }
-
-        return $this->render($request, 'admin/submit.twig', [
-            'user' => $user,
-            'types' => $types,
-        ]);
-    }
-
-    public function onSubmit(Request $request, Response $response, array $args)
-    {
-        $user = $this->auth->requireAdmin($request);
-
-        if (isset($args['type'])) {
-            $form = $this->container->get('settings')['node_forms'][$args['type']] ?? null;
-            if (empty($form)) {
-                $this->notfound();
-            }
-
-            return $this->render($request, 'admin/submit-node.twig', [
-                'user' => $user,
-                'type' => $args['type'],
-                'form' => $form,
-            ]);
-        }
-
-        debug($args);
-    }
-
-    /**
-     * Shows the list of remote files.
-     **/
-    public function onS3(Request $request, Response $response, array $args)
-    {
-        $this->auth->requireAdmin($request);
-
-        $s3 = $this->container->get("S3");
-        $files = $s3->getFileList();
-        $config = $this->container->get("settings")["S3"];
-
-        return $this->render($request, "admin/s3.twig", [
-            "files" => $files,
-            "config" => $config,
-        ]);
-    }
-
-    /**
-     * Schedule uploading of new files to the S3 cloud, via taskq.
-     *
-     * Does not actually upload anything, so uses a transaction to handle large
-     * number of nodes quicker.
-     **/
-    public function onScheduleS3(Request $request, Response $response, array $args)
-    {
-        $this->auth->requireAdmin($request);
-
-        $this->db->beginTransaction();
-
-        $nodes = $this->node->where('`type` = \'file\' AND `deleted` = 0 ORDER BY `updated`');
-        foreach ($nodes as $node) {
-            $this->container->get('S3')->autoUploadNode($node, true);
-        }
-
-        $this->db->commit();
-
-        return $response->withJSON([
-            'message' => 'Запланирована фоновая выгрузка.',
-        ]);
-    }
-
-    public function onEditSession(Request $request, Response $response, array $args)
-    {
-        $user = $this->auth->requireAdmin($request);
-
-        if ($request->getMethod() == 'POST') {
-            $code = $request->getParam('session');
-            $update = json_decode($code, true);
-
-            $this->session->set($request, $update);
-
-            $next = $request->getParam('next');
-
-            return $response->withJSON([
-                'redirect' => $next,
-            ]);
-        } else {
-            $session = $this->session->get($request);
-            $session = json_encode($session, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-            return $this->render($request, 'admin/session-editor.twig', [
-                'user' => $user,
-                'session' => $session,
-            ]);
-        }
-    }
-
-    /**
-     * Switch to another user.
-     **/
-    public function onSudo(Request $request, Response $response, array $args)
-    {
-        $user = $this->auth->requireAdmin($request);
-
-        $node = $this->node->get((int)$args["id"]);
-        if (empty($node) or $node['type'] != 'user') {
+        if (empty($node)) {
+            $this->notfound();
+        } elseif ($node['type'] != 'file') {
             $this->notfound();
         }
 
-        $this->auth->push((int)$node['id']);
-
-        $next = $request->getParam('next');
+        $this->container->get('taskq')->add('S3.uploadNodeTask', [
+            'id' => $id,
+            'force' => true,
+        ]);
 
         return $response->withJSON([
-            'redirect' => $next ? $next : '/',
+            'message' => 'Upload scheduled.',
         ]);
+    }
+
+    public static function setupRoutes(&$app): void
+    {
+        $class = get_called_class();
+
+        $app->get('/admin', $class . ':onDashboard');
+        $app->get('/admin/database', $class . ':onDatabaseStatus');
+        $app->get('/admin/nodes', $class . ':onNodeList');
+        $app->get('/admin/nodes/{type}', $class . ':onNodeListOne');
+        $app->post('/admin/nodes/delete', $class . ':onDeleteNode');
+        $app->post('/admin/nodes/save', $class . ':onSaveNode');
+        $app->post('/admin/nodes/publish', $class . ':onPublishNode');
+        $app->get('/admin/nodes/{id:[0-9]+}/edit', $class . ':onEditNode');
+        $app->get('/admin/nodes/{id:[0-9]+}/edit-raw', $class . ':onEditRawNode');
+        $app->get('/admin/nodes/{id:[0-9]+}/dump', $class . ':onDumpNode');
+        $app->post('/admin/nodes/{id:[0-9]+}/sudo', $class . ':onSudo');
+        $app->post('/admin/nodes/{id:[0-9]+}/upload-s3', $class . ':onUploadS3');
+        $app->get('/admin/routes', $class . ':onListRoutes');
+        $app->get('/admin/s3', $class . ':onS3');
+        $app->post('/admin/s3', $class . ':onScheduleS3');
+        $app->any('/admin/session', $class . ':onEditSession');
+        $app->get('/admin/submit', $class . ':onSubmitList');
+        $app->get('/admin/submit/{type}', $class . ':onSubmit');
+        $app->get('/admin/taskq', $class . ':onTaskQ');
+    }
+
+    protected function getNodeConfig($type): array
+    {
+        $st = $this->container->get('settings')['node_forms'][$type] ?? null;
+
+        if (empty($st)) {
+            $this->logger->error('admin: node type {0} not configured, type is not editable.', [$type]);
+            $this->unavailable();
+        }
+
+        return $st;
+    }
+
+    protected function getNodeTypes(): array
+    {
+        $st = $this->container->get('settings')['node_forms'] ?? [];
+
+        $types = [];
+        foreach ($st as $k => $v) {
+            $types[$k] = $v['title'] ?? $k;
+        }
+
+        asort($types);
+
+        return $types;
+    }
+
+    /**
+     * Returns status of some systems.
+     **/
+    protected function getWarnings(): array
+    {
+        $res = [];
+
+        try {
+            $limit = strftime('%Y-%m-%d %H:%M:%S', time() - 600);
+            $count = $this->db->fetchcell('SELECT COUNT(1) FROM `taskq` WHERE `added` < ?', [$limit]);
+            if ($count > 0) {
+                $res['taskq_stale'] = $count;
+            }
+        } catch (\Exception $e) {
+            $res['taskq_dberror'] = $e->getMessage();
+        }
+
+        $st = $this->container->get('settings')['taskq'];
+        if (empty($st['ping_url']) or empty($st['exec_pattern'])) {
+            $res['taskq_config'] = true;
+        }
+
+        $st = $this->container->get('settings')['S3'];
+        if (empty($st['access_key'])) {
+            $res['s3_config'] = true;
+        }
+
+        return $res;
     }
 
     /**
@@ -537,106 +684,5 @@ class AdminController extends CommonHandler
         }
 
         return $user;
-    }
-
-    protected function getNodeConfig($type)
-    {
-        $st = $this->container->get('settings')['node_forms'][$type] ?? null;
-
-        if (empty($st)) {
-            $this->logger->error('admin: node type {0} not configured, type is not editable.', [$type]);
-            $this->unavailable();
-        }
-
-        return $st;
-    }
-
-    protected function getNodeTypes()
-    {
-        $st = $this->container->get('settings')['node_forms'] ?? [];
-
-        $types = [];
-        foreach ($st as $k => $v) {
-            $types[$k] = $v['title'] ?? $k;
-        }
-
-        asort($types);
-
-        return $types;
-    }
-
-    /**
-     * Returns status of some systems.
-     **/
-    protected function getWarnings()
-    {
-        $res = [];
-
-        try {
-            $limit = strftime('%Y-%m-%d %H:%M:%S', time() - 600);
-            $count = $this->db->fetchcell('SELECT COUNT(1) FROM `taskq` WHERE `added` < ?', [$limit]);
-            if ($count > 0) {
-                $res['taskq_stale'] = $count;
-            }
-        } catch (\Exception $e) {
-            $res['taskq_dberror'] = $e->getMessage();
-        }
-
-        $st = $this->container->get('settings')['taskq'];
-        if (empty($st['ping_url']) or empty($st['exec_pattern'])) {
-            $res['taskq_config'] = true;
-        }
-
-        $st = $this->container->get('settings')['S3'];
-        if (empty($st['access_key'])) {
-            $res['s3_config'] = true;
-        }
-
-        return $res;
-    }
-
-    public function onUploadS3(Request $request, Response $response, array $args)
-    {
-        $id = $args['id'];
-        $node = $this->node->get($id);
-
-        if (empty($node)) {
-            $this->notfound();
-        } elseif ($node['type'] != 'file') {
-            $this->notfound();
-        }
-
-        $this->container->get('taskq')->add('S3.uploadNodeTask', [
-            'id' => $id,
-            'force' => true,
-        ]);
-
-        return $response->withJSON([
-            'message' => 'Upload scheduled.',
-        ]);
-    }
-
-    public static function setupRoutes(&$app)
-    {
-        $class = get_called_class();
-
-        $app->get('/admin', $class . ':onDashboard');
-        $app->get('/admin/database', $class . ':onDatabaseStatus');
-        $app->get('/admin/nodes', $class . ':onNodeList');
-        $app->get('/admin/nodes/{type}', $class . ':onNodeListOne');
-        $app->post('/admin/nodes/delete', $class . ':onDeleteNode');
-        $app->post('/admin/nodes/save', $class . ':onSaveNode');
-        $app->post('/admin/nodes/publish', $class . ':onPublishNode');
-        $app->get('/admin/nodes/{id:[0-9]+}/edit', $class . ':onEditNode');
-        $app->get('/admin/nodes/{id:[0-9]+}/edit-raw', $class . ':onEditRawNode');
-        $app->get('/admin/nodes/{id:[0-9]+}/dump', $class . ':onDumpNode');
-        $app->post('/admin/nodes/{id:[0-9]+}/sudo', $class . ':onSudo');
-        $app->post('/admin/nodes/{id:[0-9]+}/upload-s3', $class . ':onUploadS3');
-        $app->get('/admin/s3', $class . ':onS3');
-        $app->post('/admin/s3', $class . ':onScheduleS3');
-        $app->any('/admin/session', $class . ':onEditSession');
-        $app->get('/admin/submit', $class . ':onSubmitList');
-        $app->get('/admin/submit/{type}', $class . ':onSubmit');
-        $app->get('/admin/taskq', $class . ':onTaskQ');
     }
 }

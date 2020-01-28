@@ -1,0 +1,18 @@
+{##
+ # Log out confirmation.
+ #}
+{% extends 'layouts/base.twig' %}
+
+{% block page_title %}Выход{% endblock %}
+
+{% block page_header %}
+    <div class='page-header'>
+        <h1>Сеанс окончен</h1>
+    </div>
+{% endblock %}
+
+{% block page_contents %}
+    <p>Сеанс закрыть.</p>
+    <p>Для повторного получения доступа к закрытым областям сайта воспользуйтесь <a href='/login'>формой входа</a>.</p>
+    <div><a href='/'>На главную страницу</a></div>
+{% endblock %}

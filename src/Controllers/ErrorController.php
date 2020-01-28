@@ -53,7 +53,7 @@ class ErrorController extends CommonHandler
         try {
             $response = $this->render($request, $templates, $data);
             return $response->withStatus($data['status']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->logger->error('error rendering error message: {data}, error templates: {templates}', [
                 'data' => $data,
                 'templates' => $templates,

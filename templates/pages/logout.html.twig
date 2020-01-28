@@ -1,0 +1,27 @@
+{##
+ # Display the logout form.
+ #}
+{% extends 'layouts/base.twig' %}
+
+{% block page_title %}Выход{% endblock %}
+
+{% block page_header %}
+    <div class='page-header'>
+        <h1>Выход</h1>
+    </div>
+{% endblock %}
+
+{% block page_contents %}
+    <p>После выхода сессия будет закрыта, доступ к особым функциям сайта пропадёт до повторного входа.</p>
+
+    <p>Текущий логин: {{ user.name ?? user.email }}.</p>
+
+    <form class='async' method='post'>
+        <div class='form-actions'>
+            <button class='btn btn-primary' type='submit'>ОК, закрыть</button>
+        </div>
+
+        <div id='msgbox'></div>
+    </form>
+{% endblock %}
+

@@ -10,14 +10,51 @@ declare(strict_types=1);
 
 namespace Ufw1\Controllers;
 
+use Exception;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
 
 class AccountController extends CommonHandler
 {
+    /**
+     * Display account information.
+     **/
+    public function onAccount(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->getUser($request);
+
+        if (null === $user) {
+            return $response->withRedirect('/login');
+        }
+
+        return $this->render($request, 'pages/account.html.twig', [
+            'user' => $user,
+        ]);
+    }
+
+    /**
+     * Confirm that the user logged out.
+     **/
+    public function onBye(Request $request, Response $response, array $args): Response
+    {
+        $user = $this->auth->getUser($request);
+
+        if (null !== $user) {
+            return $response->withRedirect('/account');
+        }
+
+        return $this->render($request, 'pages/bye.html.twig');
+    }
+
     public function onGetLoginForm(Request $request, Response $response, array $args)
     {
+        $user = $this->auth->getUser($request);
+
+        if (null !== $user) {
+            return $response->withRedirect('/account');
+        }
+
         return $this->render($request, "pages/login.twig", [
             "title" => "Идентификация",
         ]);
@@ -41,9 +78,97 @@ class AccountController extends CommonHandler
             return $response->withJSON([
                 "redirect" => $next ? $next : "/",
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $response->withJSON([
                 "message" => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Log in using vk.com
+     *
+     * @todo Move logic to some AuthService?
+     **/
+    public function onLoginVK(Request $request, Response $response, array $args): Response
+    {
+        $settings = $this->settings['vk'] ?? [];
+
+        if (empty($settings)) {
+            $this->logger->error('vk.com api not configured.');
+            $this->unavailable('vk.com api not configured');
+        }
+
+        if ($code = $request->getParam('code')) {
+            $next = $request->getParam('state');
+            $token = $this->vk->getToken($code);
+
+            $profile = $this->vk->call('users.get', [
+                'lang' => 'ru',
+                'user_ids' => $token['user_id'],
+                'fields' => 'screen_name,nickname,bdate,sex,photo_100,photo_200',
+                'v' => '5.92',
+            ], $token['access_token'])[0];
+
+            $email = $profile['id'] . '@users.vk.com';
+            $user = $this->auth->getUserByEmail($email);
+
+            if (empty($user)) {
+                $user = $this->node->save([
+                    'type' => 'user',
+                    'published' => 1,
+                    'deleted' => 0,
+                    'name' => $profile['first_name'] . ' ' . $profile['last_name'],
+                    'email' => $email,
+                    'role' => $settings['role'] ?? 'nobody',
+                    'userpic' => $profile['photo_200'],
+                ]);
+
+                $this->notifyAdmin($request, $user);
+            }
+
+            $this->auth->push($request, (int)$user['id']);
+
+            $this->logger->info('auth: user {id} logged in using vk.', [
+                'id' => $user['id'],
+            ]);
+
+            return $response->withRedirect($next ? $next : '/');
+        }
+
+        else {
+            $url = $this->vk->getLoginURL('status', $request->getParam('back'));
+
+            $this->logger->debug('auth: redirecting to {url}', [
+                'url' => $url,
+            ]);
+
+            return $response->withRedirect($url);
+        }
+    }
+
+    /**
+     * Display the logout form and handle requests.
+     **/
+    public function onLogout(Request $request, Response $response, array $args): Response
+    {
+        if ($request->getMethod() == 'GET') {
+            $user = $this->auth->getUser($request);
+
+            if (null === $user) {
+                return $response->withRedirect('/account/bye');
+            }
+
+            return $this->render($request, 'pages/logout.html.twig', [
+                'user' => $user,
+            ]);
+        }
+
+        else {
+            $this->auth->logOut($request);
+
+            return $response->withJSON([
+                'redirect' => '/account/bye',
             ]);
         }
     }
@@ -152,7 +277,8 @@ class AccountController extends CommonHandler
     {
         $class = get_called_class();
 
-        $app->get('/account', $class . ':onInfo');
+        $app->get('/account', $class . ':onAccount');
+        $app->get('/account/bye', $class . ':onBye');
         $app->get('/login', $class . ':onGetLoginForm');
         $app->post('/login', $class . ':onLogin');
         $app->get('/login/google', $class . ':onLoginGoogle');

@@ -122,6 +122,11 @@ class App extends \Slim\App
             return new Services\Search($db, $logger, $stemmer);
         };
 
+        $container['http'] = function ($c) {
+            $logger = $c->get('logger');
+            return new Services\HttpService($logger);
+        };
+
         $container['logger'] = function ($c) {
             return new Services\Logger($c->get('settings')['logger']);
         };
@@ -191,6 +196,13 @@ class App extends \Slim\App
             } else {
                 return new Services\Thumbnailer($config, $logger);
             }
+        };
+
+        $container['vk'] = function ($c) {
+            $logger = $c->get('logger');
+            $http = $c->get('http');
+            $settings = $c->get('settings')['vk'];
+            return new Services\VkService($logger, $http, $settings);
         };
 
         $container['wiki'] = function ($c) {
