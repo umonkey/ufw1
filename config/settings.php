@@ -65,11 +65,12 @@ $settings = [
     ],
 ];
 
-$_env = $_ENV['ENVIRONMENT'] ?? 'devel';
-$_private = __DIR__ . "/../.env-{$_env}.php";
+if (is_readable($fn = __DIR__ . '/../.env.php')) {
+    include $fn;
+}
 
-if (is_readable($_private)) {
-    include $_private;
+if (is_readable($fn = __DIR__ . '/../.env.' . $_ENV['APP_ENV'] . '.php')) {
+    include $fn;
 }
 
 return ['settings' => $settings];
