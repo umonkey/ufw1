@@ -136,6 +136,9 @@ class App extends \Slim\App
             $db = $c->get('db');
             $logger = $c->get('logger');
             $settings = $c->get('settings')['node'];
+            if (empty($settings)) {
+                throw new \RuntimeException('node service not configured');
+            }
             return new Services\NodeRepository($settings, $db, $logger);
         };
 
