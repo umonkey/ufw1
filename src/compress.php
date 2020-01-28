@@ -12,11 +12,19 @@ class Compiler
      **/
     protected $map;
 
+    /**
+     * Files to skip.
+     * @var array
+     **/
+    private $blacklist;
+
     public function __construct($src)
     {
         $this->mapPath = $src;
 
         $this->map = include $src;
+
+        $this->loadBlacklist();
     }
 
     public function compile()
@@ -155,11 +163,6 @@ class Compiler
         // return $this->log($message);
     }
 
-    protected function log($message)
-    {
-        printf("assets: %s\n", trim($message));
-    }
-
     protected function isPattern($str)
     {
         if (false !== strpos($str, '*')) {
@@ -169,6 +172,24 @@ class Compiler
         if (false !== strpos($str, '?')) {
             return true;
         }
+    }
+
+    protected function loadBlacklist(): void
+    {
+        $this->blacklist = [];
+
+        if (isset($this->map['blacklist'])) {
+            foreach ($this->map['blacklist'] as $pattern) {
+                $this->blacklist = array_merge($this->blacklist, $this->unroll($pattern));
+            }
+
+            unset($this->map['blacklist']);
+        }
+    }
+
+    protected function log($message)
+    {
+        printf("assets: %s\n", trim($message));
     }
 
     protected function unroll($pattern)
@@ -185,6 +206,11 @@ class Compiler
         } else {
             $files = [$pattern];
         }
+
+        // Exclude blacklisted files.
+        $files = array_filter($files, function ($file) {
+            return !in_array($file, $this->blacklist);
+        });
 
         return $files;
     }

@@ -96,6 +96,10 @@ class App extends \Slim\App
             return new Services\AuthService($session, $logger, $node);
         };
 
+        $container['callableResolver'] = function ($c) {
+            return new CallableResolver($c);
+        };
+
         $container['db'] = function ($c) {
             $dsn = $c->get('settings')['dsn'];
             return new Services\Database($dsn);
@@ -111,7 +115,7 @@ class App extends \Slim\App
         $container['file'] = function ($c) {
             $logger = $c->get('logger');
             $node = $c->get('node');
-            $settings = $c->get('settings');
+            $settings = $c->get('settings')['files'] ?? [];
             return new Services\FileRepository($logger, $node, $settings);
         };
 
@@ -141,6 +145,9 @@ class App extends \Slim\App
             $db = $c->get('db');
             $logger = $c->get('logger');
             $settings = $c->get('settings')['node'];
+            if (empty($settings)) {
+                throw new \RuntimeException('node service not configured');
+            }
             return new Services\NodeRepository($settings, $db, $logger);
         };
 

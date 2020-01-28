@@ -1,3 +1,9 @@
+2020-01-28:
+- Fixed special wiki pages using wrong templates.
+- Fixed passing strings to templates.
+- Compressor can now blacklist files.
+- Added dependency injection for controllers.
+
 2020-01-27:
 - Admin: route list in admin/routes.
 - Auth service improvements, VK api.

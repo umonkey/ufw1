@@ -34,6 +34,10 @@ abstract class Controller
      **/
     public function __get(string $key)
     {
+        if (null === $this->container) {
+            throw new \OutOfBoundsException('container not set');
+        }
+
         if (!$this->container->has($key)) {
             throw new \OutOfBoundsException("service {$key} not found");
         }
