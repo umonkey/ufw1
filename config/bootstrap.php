@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+$_ENV['APP_ENV'] = getenv('APP_ENV') ?: 'dev';
+$_ENV['APP_DEBUG'] = $_ENV['APP_ENV'] == 'dev';
+
 require_once __DIR__ . '/functions.php';
 
 /**
@@ -27,7 +30,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 // Instantiate the app
 $settings = require __DIR__ . '/settings.php';
-$app = new \Slim\App($settings);
+$app = new \Ufw1\App($settings);
 
 // Set up dependencies
 require __DIR__ . '/dependencies.php';
