@@ -104,14 +104,14 @@ class WikiController extends CommonHandler
         $file = $this->container->get('file')->get($fileId);
 
         if (empty($file) or $file['deleted'] == 1) {
-            return $this->render($request, 'wiki-nopage.twig', [
+            return $this->render($request, 'pages/wiki-nopage.twig', [
                 'user' => $user,
                 'page' => ['name' => $pageName],
                 'edit_link' => "/wiki/edit?name=" . urlencode($pageName),
             ]);
         }
 
-        return $this->render($request, 'wiki-file.twig', [
+        return $this->render($request, 'pages/wiki-file.twig', [
             'file' => $file,
             'edit_link' => "/wiki/edit?name=" . urlencode($pageName),
         ]);
@@ -143,7 +143,7 @@ class WikiController extends CommonHandler
 
         $source = $wiki->getPageSource($pageName, $sectionName);
 
-        return $this->render($request, "wiki-edit.twig", [
+        return $this->render($request, "pages/wiki-edit.twig", [
             "page_name" => $pageName,
             "page_section" => $sectionName,
             "page_source" => $source,
@@ -345,7 +345,7 @@ class WikiController extends CommonHandler
             "last_update" => $lastUpdate,
         ], $items);
 
-        return $this->renderXML($request, "wiki-pages-rss.twig", [
+        return $this->renderXML($request, "pages/wiki-pages-rss.twig", [
             "site_name" => $settings["site_name"],
             "pages" => $pages,
             "last_update" => $lastUpdate,
@@ -490,7 +490,7 @@ class WikiController extends CommonHandler
                 });
         }
 
-        return $this->render($request, "wiki-index.twig", [
+        return $this->render($request, "pages/wiki-index.twig", [
             "pages" => $pages,
         ]);
     }
@@ -539,7 +539,7 @@ class WikiController extends CommonHandler
             }
         }
 
-        return $this->render($request, "wiki-recent.twig", [
+        return $this->render($request, "pages/wiki-recent.twig", [
             "pages" => $res,
         ]);
     }

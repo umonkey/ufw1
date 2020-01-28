@@ -1,3 +1,6 @@
+2020-01-28:
+- Fixed special wiki pages using wrong templates.
+
 2020-01-26:
 - Added vim snippets for new files.
 - Added snippets for most files.
