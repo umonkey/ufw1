@@ -40,6 +40,15 @@ Custom services are configured in [config/services.php][2], standard services ar
     $ composer require umonkey/ufw1:dev-default
 
 
+## Problems
+
+### Dependency injection
+
+Currently this code uses a single dependency container, which is set up in [config/dependencies.php](config/dependencies.php), for both dependenc injection and service location.  Services are lazily created by the container, are passed proper constructor arguments.  Services have no access to the container.  This is not automatic injection, but works well as the [single responsibility principle][srp].
+
+However, controllers do receive the container directly and use it as a [service locator][slp].  To change this, I need to get into the Slim callables resolver and use the relection API.  What confuses me currently, is the way to address constructor arguments.  Usually injectors find services by class name, but this way it would be hard to use interfaces or abstract classes in argument lists.  Probably argument names could be used to locate injected services.
+
+
 [1]: https://www.slimframework.com/
 [2]: config/services.php
 [3]: src/Util.php
@@ -57,3 +66,5 @@ Custom services are configured in [config/services.php][2], standard services ar
 [15]: docs/HOWTO-files.php
 [16]: src/Services/Search.php
 [17]: docs/HOWTO-search.md
+[srp]: https://en.wikipedia.org/wiki/Single_responsibility_principle
+[slp]: https://en.wikipedia.org/wiki/Service_locator_pattern
