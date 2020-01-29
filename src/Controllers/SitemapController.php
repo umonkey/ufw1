@@ -17,12 +17,7 @@ class SitemapController extends CommonHandler
     public function onGet(Request $request, Response $response, array $args): Response
     {
         return $this->sendFromCache($request, function () use ($request) {
-            $host = $request->getServerParam("HTTP_HOST");
-
-            $https = $request->getServerParam("HTTPS") == "on";
-            $proto = $https ? "https" : "http";
-
-            $base = $proto . "://" . $host;
+            $base = $request->getUri()->getBaseUrl();
 
             $xml = "<?xml version='1.0' encoding='utf-8'?" . ">\n";
             $xml .= "<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>\n";
@@ -33,7 +28,7 @@ class SitemapController extends CommonHandler
 
                 switch ($node["type"]) {
                     case "wiki":
-                        $link = "/wiki?name=" . urlencode($node["name"]);
+                        $link = $base . "/wiki?name=" . urlencode($node["name"]);
                         break;
 
                     default:

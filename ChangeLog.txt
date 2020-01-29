@@ -1,3 +1,6 @@
+2020-01-29:
+- Fixed base URI in sitemap.xml
+
 2020-01-28:
 - Fixed special wiki pages using wrong templates.
 - Fixed passing strings to templates.
