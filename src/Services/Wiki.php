@@ -617,7 +617,7 @@ class Wiki
      * @param string $sectionName The name of desired section.
      * @return array Keys: before, wanted, after.
      **/
-    protected function findSection(string $text, string $sectionName): string
+    protected function findSection(string $text, string $sectionName): array
     {
         // Simplify line endings.
         $text = str_replace("\r\n", "\n", $text);

@@ -19,7 +19,6 @@ class App extends \Slim\App
         parent::__construct($container);
     }
 
-
     /**
      * Install user account routes: login, logout etc.
      **/
@@ -36,6 +35,11 @@ class App extends \Slim\App
     public static function installFiles(App $app): void
     {
         Controllers\FileController::setupRoutes($app);
+    }
+
+    public static function installHome(App $app): void
+    {
+        $app->get('/', 'Ufw1\Controllers\HomeController:onIndex');
     }
 
     public static function installSearch(App $app): void
@@ -179,7 +183,7 @@ class App extends \Slim\App
         $container['taskq'] = function ($c) {
             $db = $c->get('db');
             $logger = $c->get('logger');
-            $settings = $c->get('settings')['taskq'];
+            $settings = $c->get('settings')['taskq'] ?? [];
             return new Services\TaskQueue($db, $logger, $settings);
         };
 
