@@ -120,7 +120,7 @@ abstract class Controller
 
         $response = new Response(200);
         $response->getBody()->write($xml);
-        return $response->withHeader("Content-Type", "text/xml; charset=utf-8");
+        return $response->withHeader("Content-Type", "text/xml");
     }
 
     protected function renderRSS(Request $request, array $channel, array $items): Response
