@@ -47,7 +47,7 @@ class SitemapController extends CommonHandler
 
             $xml .= "</urlset>\n";
 
-            return ["text/xml; charset=utf-8", $xml];
+            return ["text/xml", $xml];
         });
     }
 }
