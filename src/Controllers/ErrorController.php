@@ -54,7 +54,8 @@ class ErrorController extends CommonHandler
             $response = $this->render($request, $templates, $data);
             return $response->withStatus($data['status']);
         } catch (Throwable $e) {
-            $this->logger->error('error rendering error message: {data}, error templates: {templates}', [
+            $this->logger->error('error {err} rendering error message: {data}, error templates: {templates}', [
+                'err' => $e->getMessage(),
                 'data' => $data,
                 'templates' => $templates,
             ]);
@@ -69,14 +70,8 @@ class ErrorController extends CommonHandler
 
     protected function getRedirect(string $url): ?string
     {
-        $node = $this->node->where("type = 'wiki' AND deleted = 0 "
-            . "AND id IN (SELECT id FROM nodes_wiki_idx WHERE url = ?)", [$url]);
-
-        if (!empty($node)) {
-            return "/wiki?name=" . urlencode($node[0]['name']);
-        } else {
-            return null;
-        }
+        $dst = $this->db->fetchcell('SELECT dst FROM rewrite WHERE src = ?', [$url]);
+        return $dst ?: null;
     }
 
     /**
