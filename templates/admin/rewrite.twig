@@ -1,0 +1,32 @@
+{##
+ # This is a dummy template.
+ # Please expand it.
+ #}
+{% extends 'layouts/admin.twig' %}
+
+{% block page_title %}Редиректы{% endblock %}
+
+{% block page_header %}
+    <div class='page-header'>
+        <h1>Таблица редиректов</h1>
+    </div>
+{% endblock %}
+
+{% block page_contents %}
+    <table class='table grid small'>
+        <thead>
+            <tr>
+                <th>Откуда</th>
+                <th>Куда</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.src }}</td>
+                    <td>{{ row.dst }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

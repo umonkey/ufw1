@@ -22,6 +22,7 @@ class AdminController extends CommonHandler
         return $this->render($request, 'admin/dashboard.twig', [
             'user' => $user,
             'warnings' => $warnings,
+            'blocks' => $this->getDashboardData($request, $user),
         ]);
     }
 
@@ -600,6 +601,55 @@ class AdminController extends CommonHandler
         $app->get('/admin/submit', $class . ':onSubmitList');
         $app->get('/admin/submit/{type}', $class . ':onSubmit');
         $app->get('/admin/taskq', $class . ':onTaskQ');
+    }
+
+    /**
+     * Returns blocks to display on the dashboard.
+     *
+     * Can be overriden in the subclass.
+     **/
+    protected function getDashboardData(Request $request, array $user)
+    {
+        $blocks = [];
+
+        $blocks['recentWiki'] = $this->node->where('type = ? AND deleted = 0 ORDER BY created DESC LIMIT 10', ['wiki'], function (array $node) {
+            return [
+                'id' => (int)$node['id'],
+                'name' => $node['name'],
+                'published' => (bool)(int)$node['published'],
+                'created' => $node['created'],
+            ];
+        });
+
+        $blocks['recentFiles'] = $this->node->where('type = ? AND deleted = 0 ORDER BY created DESC LIMIT 20', ['file'], function (array $node) {
+            $em = [
+                'id' => (int)$node['id'],
+                'name' => $node['name'],
+                'kind' => $node['kind'],
+                'created' => $node['created'],
+            ];
+
+            foreach ($node['files'] as $k => $v) {
+                $em[$k] = $v['url'] ?? "/node/{$node['id']}/download/{$k}";
+            }
+
+            return $em;
+        });
+
+        $blocks['trash'] = $this->node->where('deleted = 1 ORDER BY updated DESC LIMIT 10', [], function (array $node) {
+            return [
+                'id' => (int)$node['id'],
+                'type' => $node['type'],
+                'updated' => $node['updated'],
+                'name' => $node['name'] ?? null,
+            ];
+        });
+
+        $blocks['taskq'] = [
+            'pending' => (int)$this->db->fetchcell('SELECT COUNT(1) FROM taskq'),
+        ];
+
+        return $blocks;
     }
 
     protected function getNodeConfig($type): array

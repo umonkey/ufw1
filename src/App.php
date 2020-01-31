@@ -42,6 +42,12 @@ class App extends \Slim\App
         $app->get('/', 'Ufw1\Controllers\HomeController:onIndex');
     }
 
+    public static function installRewrite(App $app): void
+    {
+        $app->get('/admin/rewrite', 'Ufw1\Controllers\RewriteAdminController:onIndex');
+        $app->any('/admin/rewrite/{id:[0-9]+}/edit', 'Ufw1\Controllers\RewriteAdminController:onEdit');
+    }
+
     public static function installSearch(App $app): void
     {
         $class = Controllers\SearchController::class;

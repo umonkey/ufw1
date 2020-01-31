@@ -1,0 +1,21 @@
+{##
+ # Admin UI: recent files pages (dasboard block).
+ #
+ # Is included from admin/dashboard.twig
+ #}
+{% if data %}
+    <div class='block'>
+        <h2>Свежие файлы</h2>
+
+        <div class='fileTiles'>
+            {% for f in data|slice(0, 12) %}
+                <div class='tile'>
+                    <a href='/admin/nodes/{{ f.id }}/edit?back={{ request.uri }}' data-src='{{ f.large ?? f.original }}' data-fancybox='gallery'>
+                        <img src='{{ f.medium ?? f.small }}'/>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+        <p><a href='/admin/nodes/file'>Открыть полный список</a></p>
+    </div>
+{% endif %}

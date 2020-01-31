@@ -11,39 +11,14 @@
 {% block page_contents %}
     {% include 'parts/admin-breadcrumbs.twig' with {'path': []} %}
 
-    <p>Выбери интересующий раздел:</p>
-
-    <ul>
-        <li><a href='/admin/nodes'>Управление документами</a></li>
-        <li><a href='/admin/nodes/file'>Управление файлами</a></li>
-        <li><a href='/admin/nodes/user'>Управление пользователями</a></li>
-    </ul>
-
-    <p>Справки:</p>
-
-    <ul>
-        <li><a href='/admin/database'>Состояние базы данных</a></li>
-        <li><a href='/admin/taskq'>Очередь задач</a></li>
-        <li><a href='/admin/s3'>Облачное хранилище</a> (S3)</li>
-    </ul>
-
-    {% if warnings %}
-        <h2>Неполадки</h2>
-
-        <ul>
-            {% for k, v in warnings %}
-                {% if k == 'taskq_stale' %}
-                    <li>В <a href='/admin/taskq'>очереди задач</a> есть задачи старше 10 минут.&nbsp; Очередь не работает, либо сломался обработчик задачи.</li>
-                {% elseif k == 'taskq_dberror' %}
-                    <li>Ошибка при работе с <a href='/admin/taskq'>очередью задач</a>: <code>{{ v }}</code></li>
-                {% elseif k == 'taskq_config' %}
-                    <li>Не настроена <a href='/admin/taskq'>очередь задач</a>, фоновые задачи не работают.</li>
-                {% elseif k == 's3_config' %}
-                    <li>Не настроено <a href='/admin/s3'>облако S3</a>, файлы будут занимать место на диске.</li>
-                {% elseif k == 'file_storage' %}
-                    <li>Не настроено файловое хранилище (<code>settings.files.path</code>), загрузка файлов на сайт невозможна.</li>
-                {% endif %}
+    {% if blocks %}
+        <div class='dashboard-blocks'>
+            {% include 'admin/blocks/first.twig' ignore missing %}
+            {% for k, v in blocks %}
+                {% set fname = "admin/blocks/" ~ k ~ ".twig" %}
+                {% include [fname, "admin/blocks/default.twig"] with {'key': k, 'data': v} %}
             {% endfor %}
-        </ul>
+            {% include 'admin/blocks/warnings.twig' with {'data': warnings} %}
+        </div>
     {% endif %}
 {% endblock %}

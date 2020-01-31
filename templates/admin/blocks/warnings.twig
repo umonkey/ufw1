@@ -1,0 +1,22 @@
+{##
+ # Displays recent warnings.
+ #}
+<div class='block'>
+    <h2>Неполадки</h2>
+
+    <ul>
+        {% for k, v in data %}
+            {% if k == 'taskq_stale' %}
+                <li>В <a href='/admin/taskq'>очереди задач</a> есть задачи старше 10 минут.&nbsp; Очередь не работает, либо сломался обработчик задачи.</li>
+            {% elseif k == 'taskq_dberror' %}
+                <li>Ошибка при работе с <a href='/admin/taskq'>очередью задач</a>: <code>{{ v }}</code></li>
+            {% elseif k == 'taskq_config' %}
+                <li>Не настроена <a href='/admin/taskq'>очередь задач</a>, фоновые задачи не работают.</li>
+            {% elseif k == 's3_config' %}
+                <li>Не настроено <a href='/admin/s3'>облако S3</a>, файлы будут занимать место на диске.</li>
+            {% elseif k == 'file_storage' %}
+                <li>Не настроено файловое хранилище (<code>settings.files.path</code>), загрузка файлов на сайт невозможна.</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>

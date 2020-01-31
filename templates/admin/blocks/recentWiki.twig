@@ -1,0 +1,21 @@
+{##
+ # Admin UI: recent wiki pages (dasboard block).
+ #
+ # Is included from admin/dashboard.twig
+ #}
+{% if data %}
+    <div class='block'>
+        <h2>Свежие страницы вики</h2>
+        <table class='table hover'>
+            <tbody>
+                {% for p in data %}
+                    <tr>
+                        <td class='wide'><a href='/wiki/edit?name={{ p.name }}&amp;back={{ request.uri }}'>{{ p.name }}</a></td>
+                        <td>{{ p.created|date('%d.%m') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p><a href='/admin/nodes/wiki'>Открыть полный список</a></p>
+    </div>
+{% endif %}
