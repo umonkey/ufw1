@@ -1,5 +1,6 @@
 2020-01-31:
 - Fixed duplicate charset in content type.
+- S3 file list contains etag.
 
 2020-01-30:
 - Basic HomeController, redirects to wiki or shows home.twig

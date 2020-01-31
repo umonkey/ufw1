@@ -105,6 +105,7 @@ class S3
                 "size" => $em["Size"],
                 "date" => $em["LastModified"],
                 "url" => $em["Key"][-1] == "/" ? null : "https://{$endpoint}/{$bucket}/{$em["Key"]}",
+                "etag" => $em["ETag"],
             ];
         }, $contents);
 
