@@ -158,6 +158,10 @@ jQuery(function ($) {
      * Ignores some special links, like photos in an album -- they pop up.
      **/
     $(document).on('click', 'a', function (e) {
+        if (e.ctrlKey || e.shiftKey) {
+            return;
+        }
+
         // First of all, save current scroll position.
         //
         // This is needed even if we don't load the new page.  For example,
@@ -193,6 +197,7 @@ jQuery(function ($) {
         if (typeof spa_link_filter === 'function') {
             if (!spa_link_filter($(this))) {
                 log('link blacklisted by spa_link_filter');
+                return;
             }
         }
 

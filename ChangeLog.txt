@@ -5,6 +5,7 @@
 - Better rewrite support.
 - Admin UI: dashboard blocks.
 - Admin UI: rewrites editor.
+- SPA: ignore ctrl and shift clicks.
 
 2020-01-30:
 - Basic HomeController, redirects to wiki or shows home.twig
