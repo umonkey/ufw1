@@ -82,7 +82,10 @@ class Template
         $data = array_merge($this->defaults, $data);
 
         if (($data['request']['get']['debug'] ?? null) == 'tpl') {
-            debug($fileName, $data);
+            debug([
+                'template' => $fileName,
+                'variables' => $data,
+            ]);
         }
 
         $template = $this->twig->load($fileName);
