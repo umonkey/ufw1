@@ -3,6 +3,7 @@
 - RSS generator for node types.
 - Wiki: simple source to html rendering method.
 - SPA: better bars spinner animation.
+- Wiki editor update, new file browser.
 
 2020-01-31:
 - Fixed duplicate charset in content type.

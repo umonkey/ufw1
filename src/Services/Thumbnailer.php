@@ -19,15 +19,18 @@ class Thumbnailer
      **/
     protected $logger;
 
+    protected $file;
+
     /**
      * @var array
      **/
     protected $config;
 
-    public function __construct(array $config, LoggerInterface $logger)
+    public function __construct(array $config, LoggerInterface $logger, FileRepository $file)
     {
         $this->config = $config;
         $this->logger = $logger;
+        $this->file = $file;
     }
 
     /**
@@ -223,8 +226,8 @@ class Thumbnailer
             $scale = min($scale, $options['height'] / $ih);
         }
 
-        $nw = round($iw * $scale);
-        $nh = round($ih * $scale);
+        $nw = (int)round($iw * $scale);
+        $nh = (int)round($ih * $scale);
 
         $this->logger->debug('thumbnailer: resizing image from {0}x{1} to {2}x{3}', [$iw, $ih, $nw, $nh]);
 

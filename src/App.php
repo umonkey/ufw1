@@ -212,11 +212,12 @@ class App extends \Slim\App
         $container['thumbnailer'] = function ($c) {
             $config = $c->get('settings')['thumbnails'];
             $logger = $c->get('logger');
+            $file = $c->get('file');
 
             if (class_exists('\Imagickx')) {
-                return new Services\Thumbnailer2($config, $logger);
+                return new Services\Thumbnailer2($config, $logger, $file);
             } else {
-                return new Services\Thumbnailer($config, $logger);
+                return new Services\Thumbnailer($config, $logger, $file);
             }
         };
 

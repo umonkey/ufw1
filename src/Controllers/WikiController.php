@@ -143,11 +143,41 @@ class WikiController extends CommonHandler
 
         $source = $wiki->getPageSource($pageName, $sectionName);
 
+        $settings = $this->settings['wiki'] ?? [];
+        $settings['buttons'] = $settings['buttons'] ?? [[
+            'name' => 'save',
+            'label' => 'Сохранить',
+            'icon' => null,
+        ], [
+            'name' => 'cancel',
+            'icon' => 'times',
+            'hint' => 'Отменить изменения',
+        ], [
+            'name' => 'help',
+            'icon' => 'question-circle',
+            'hint' => 'Открыть подсказку',
+            'link' => '/wiki?name=Памятка редактора',
+        ], /* [
+            'name' => 'map',
+            'icon' => 'map-marker',
+            'hint' => 'Вставить карту',
+            'link' => '/wiki?name=Как вставить карту',
+        ], */ [
+            'name' => 'toc',
+            'icon' => 'list-ol',
+            'hint' => 'Вставить оглавление',
+        ], [
+            'name' => 'upload',
+            'icon' => 'image',
+            'hint' => 'Вставить файл',
+        ]];
+
         return $this->render($request, "pages/wiki-edit.twig", [
             "page_name" => $pageName,
             "page_section" => $sectionName,
             "page_source" => $source,
             "body_class" => "wiki_edit",
+            "settings" => $settings,
         ]);
     }
 
@@ -221,8 +251,9 @@ class WikiController extends CommonHandler
 
                 $code = $this->addFile($name, $type, $body, $comment);
                 if ($code) {
+                    $callback = $request->getParam('callback') ?: 'editor_insert';
                     return $response->withJSON([
-                        "callback" => "editor_insert",
+                        "callback" => $callback,
                         "callback_args" => $code,
                     ]);
                 }
@@ -268,7 +299,7 @@ class WikiController extends CommonHandler
             if (empty($code)) {
                 $res["message"] = "Не удалось загурзить ни один файл.";
             } else {
-                $res["callback"] = "editor_insert";
+                $res["callback"] = $request->getParam('callback') ?: 'editor_insert';
                 $res["callback_args"] = implode("\n", $code);
 
                 if ($errors) {

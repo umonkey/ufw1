@@ -4,27 +4,45 @@
 
 {% block body_class %}wiki_edit{% endblock %}
 
-{% block page_header %}
-    <div class="page-header">
-        <h1>Редактирование</h1>
-    </div>
-{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block footer %}{% endblock %}
 
 {% block page_contents %}
- <form class="pedit async" method="post" action="/wiki/edit">
-  <input type="hidden" name="page_name" value="{{ page_name }}"/>
-  {% if page_section %}
-      <input type="hidden" name="page_section" value="{{ page_section }}"/>
-  {% endif %}
+    <form id='upload' class='upload async' action='/wiki/upload' method='post' style='display: none'>
+        <input id='uploadctl' type='file' name='files[]' multiple accept='image/*' />
+        <input type='hidden' name='callback' value='reload_files'/>
+    </form>
 
-  <textarea class="form-control markdown wiki" name="page_source" autofocus="autofocus">{{ page_source }}</textarea>
+    <form class='wikiedit pedit async' method='post' action='/wiki/edit' data-back='{{ request.base }}/wiki?name={{ page_name|url_encode }}'>
+        <div class='toolbar'>
+            {% for btn in settings.buttons %}
+                <button class='btn btn-default' name='{{ btn.name }}' type='button'{% if btn.hint %} title='{{ btn.hint }}'{% endif %}{% if btn.link %} data-link='{{ btn.link }}'{% endif %}>{% if btn.icon %}<i class='fas fa-{{ btn.icon }}'></i>{% endif %}{% if btn.label %} {{ btn.label }}{% endif %}</button>
+            {% endfor %}
+        </div>
 
-  <div class="form-actions wiki-actions">
-   <button class="btn btn-primary">Сохранить</button>
-   <ul class="buttons wiki_buttons">
-    <li><a class='btn btn-default btn-icon' href="/wiki?name={{ page_name }}" title='Оставить как есть'><i class="fas fa-times"></i></a></li>
-    <li><a class='btn btn-default btn-icon' href="/wiki?name=Памятка+редактора" target="_blank" title='Памятка редактора'><i class="fas fa-question-circle"></i></a></li>
-   </ul>
-  </div>
- </form>
+        <div class='editor'>
+            <input type="hidden" name="page_name" value="{{ page_name }}"/>
+            {% if page_section %}
+                <input type="hidden" name="page_section" value="{{ page_section }}"/>
+            {% endif %}
+
+            <textarea class="form-control markdown wiki" name="page_source" autofocus="autofocus">{{ page_source }}</textarea>
+
+            <div class='files' style='display: none'>
+                <div class='search'>
+                    <input class='fsearch' type='search' name='query' autocomplete='off' placeholder='Поиск по файлам...'/>
+                    <label for='uploadctl' class='btn btn-default upload'><i class="fas fa-cloud-upload-alt"></i></label>
+                </div>
+
+                <div class='tiles'>
+                    <div class='wrap'>
+                        <p>Загружаю список файлов...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 {% endblock %}
