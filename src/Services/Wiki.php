@@ -172,6 +172,66 @@ class Wiki
     }
 
     /**
+     * Render wiki markup.
+     *
+     * Also extracts yaml properties.
+     *
+     * @param string $source Wiki source text.
+     *
+     * @return array Properties, including html.
+     **/
+    public function render(string $source): array
+    {
+        $res = [
+            "source" => $source,
+        ];
+
+        $source = "";
+
+        $lines = explode("\n", str_replace("\r", "", $res['source']));
+        foreach ($lines as $idx => $line) {
+            if ($line == "---") {
+                $lines = array_slice($lines, $idx + 1);
+                $source = implode("\n", $lines);
+                break;
+            }
+
+            if (preg_match('@^([a-z0-9-_]+):\s+(.+)$@', $line, $m)) {
+                $k = $m[1];
+                $v = $m[2];
+
+                if ($k == 'published' or $k == 'deleted') {
+                    $v = (bool)(int)$v;
+                }
+
+                $res[$k] = $v;
+            } else {
+                // wrong format
+                $source = $res['source'];
+            }
+        }
+
+        $source = $this->processPhotoAlbums($source);
+        $source = $this->processMaps($source);
+        $source = $this->processWikiLinks($source);
+        $source = $this->processImages($source);
+        $source = $this->processYouTube($source);
+
+        $html = Util::renderMarkdown($source);
+        $html = Util::renderTOC($html);
+        $html = $this->processHeader($html, $res);
+        $html = $this->processSummary($html, $res);
+        $html = $this->processImages($html);
+
+        $html = Util::cleanHtml($html);
+        $res["html"] = $html;
+
+        $res['snippet'] = $this->getSnippet($html);
+
+        return $res;
+    }
+
+    /**
      * Renders the HTML code of the page.
      *
      * Only the wiki page itself, not the actual HTML page with template stuff.
