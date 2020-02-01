@@ -42,6 +42,11 @@ class App extends \Slim\App
         $app->get('/', 'Ufw1\Controllers\HomeController:onIndex');
     }
 
+    public static function installNode(App $app): void
+    {
+        $app->get('/node/{type:[a-z0-9]+}.xml', 'Ufw1\Controllers\NodeRssController:onIndex');
+    }
+
     public static function installRewrite(App $app): void
     {
         $app->get('/admin/rewrite', 'Ufw1\Controllers\RewriteAdminController:onIndex');

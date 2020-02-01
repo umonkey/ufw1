@@ -108,11 +108,13 @@ abstract class Controller
 
     protected function renderXML(Request $request, string $templateName, array $data = []): Response
     {
-        $def = $this->settings->templates;
-
-        if (!empty($def["defaults"])) {
-            $data = array_merge($def["defaults"], $data);
-        }
+        $data['request'] = [
+            'base' => $request->getUri()->getBaseUrl(),
+            'host' => $request->getUri()->getHost(),
+            'path' => $request->getUri()->getPath(),
+            'uri' => strval($request->getUri()),
+            'get' => $request->getQueryParams(),
+        ];
 
         $xml = $this->template->render($templateName, $data);
 
