@@ -113,7 +113,7 @@ jQuery(function ($) {
      **/
     var openURL = function (link, scrollTop, callback) {
         // Start spinning.
-        var bars = $('a.bars i');
+        var bars = $('header .bars i');
         var cls = bars.attr('class');
         bars.attr('class', 'fas fa-spinner fa-spin');
 
