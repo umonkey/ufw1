@@ -84,6 +84,18 @@ jQuery(function ($) {
     };
 
     /**
+     * Update page title with the one from HTML.
+     **/
+    var update_title = function (html) {
+        var m = html.match(/<title>(.+?)<\/title)/);
+        if (m !== null) {
+            window.title = m[1];
+        } else {
+            log('window title not found.');
+        }
+    };
+
+    /**
      * Open the specified link.
      *
      * 1) Reloads the page if necessary (unless in-page navigation).
@@ -130,6 +142,8 @@ jQuery(function ($) {
                 log('no contents, falling back to page reload');
                 window.location.href = link;
             } else {
+                update_title(res);
+
                 $(SELECTOR).replaceWith(d);
                 $(document).trigger('ufw:reload');
 
