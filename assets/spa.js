@@ -87,7 +87,7 @@ jQuery(function ($) {
      * Update page title with the one from HTML.
      **/
     var update_title = function (html) {
-        var m = html.match(/<title>(.+?)<\/title)/);
+        var m = html.match(/<title>(.+?)<\/title>/);
         if (m !== null) {
             window.title = m[1];
         } else {
