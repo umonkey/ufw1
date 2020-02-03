@@ -5,7 +5,7 @@ This projects contains components which I frequently reuse on my websites.  It's
 
 ## Concepts
 
-Uses [Slim Framework][1], for it's very fast and simple.
+Uses [Slim Framework][1].  It's clean, simple, very fast and easy to understand how everything works.
 
 Uses [dependency injection][11], named after [Symfony services][12].  Services are isolate parts of code which are loaded on demand.  Controllers receive arguments extracted from the container by name.  Built in services include database, logger, node and file factory, S3, search engine, stemmer, task queue, Telegram notifications, Twig template renderer, a thumbnailer and a wiki engine.
 
