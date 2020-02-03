@@ -74,7 +74,7 @@ abstract class Controller
 
         $response = new Response(200);
         $response->getBody()->write($html);
-        return $response->withHeader('content-type', 'text/html; chaset=utf-8');
+        return $response->withHeader('content-type', 'text/html');
     }
 
     /**
