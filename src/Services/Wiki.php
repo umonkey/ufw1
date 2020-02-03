@@ -313,12 +313,20 @@ class Wiki
      * @param  string $link Page name, with section optionally.
      * @return string       Link to the page.
      **/
-    protected function getWikiLink(string $link): string
+    public function getWikiLink(string $link): string
     {
-        $parts = explode('#', $link);
-        $parts[0] = urlencode($parts[0]);
-        $link = implode('#', $parts);
-        $link = '/wiki?name=' . $link;
+        if (true) {
+            $parts = explode('#', $link);
+            $parts[0] = urlencode($parts[0]);
+            $link = implode('#', $parts);
+            $link = '/wiki/?name=' . $link;
+        } else {
+            $parts = explode('#', $link);
+            $parts[0] = str_replace(' ', '_', $parts[0]);
+            $link = implode('#', $parts);
+            $link = '/wiki/' . $link;
+        }
+
         return $link;
     }
 
@@ -588,7 +596,7 @@ class Wiki
         $res = [
             'small' => '/images/placeholder.png',
             'large' => '/images/placeholder.png',
-            'link' => "/wiki?name=File:{$id}",
+            'link' => $this->getWikiLink("File:{$id}"),
             'width' => 600,
             'height' => 600,
             'name' => 'placeholder',

@@ -26,7 +26,7 @@ class WikiController extends CommonHandler
 
         if (empty($name)) {
             $st = $this->settings['wiki']['home_page'] ?? 'Welcome';
-            $next = '/wiki?name=' . urlencode($st);
+            $next = $this->wiki->getWikiLink($st);
             return $response->withRedirect($next);
         }
 
@@ -64,7 +64,7 @@ class WikiController extends CommonHandler
             $res = $wiki->renderPage($node);
 
             if (!empty($res['redirect'])) {
-                $next = '/wiki?name=' . urlencode($res['redirect']);
+                $next = $this->wiki->getWikiLink($res['redirect']);
                 return $response->withRedirect($next);
             }
 
@@ -156,12 +156,12 @@ class WikiController extends CommonHandler
             'name' => 'help',
             'icon' => 'question-circle',
             'hint' => 'Открыть подсказку',
-            'link' => '/wiki?name=Памятка редактора',
+            'link' => $this->wiki->getWikiLink('Памятка редактора'),
         ], /* [
             'name' => 'map',
             'icon' => 'map-marker',
             'hint' => 'Вставить карту',
-            'link' => '/wiki?name=Как вставить карту',
+            'link' => $this->wiki->getWikiLink('Как вставить карту'),
         ], */ [
             'name' => 'toc',
             'icon' => 'list-ol',
@@ -214,7 +214,7 @@ class WikiController extends CommonHandler
 
         $next = isset($node['_url'])
             ? $node['url']
-            : "/wiki?name=" . urlencode($node['name']);
+            : $this->wiki->getWikiLink($node['name']);
 
         if ($section) {
             $next .= '#' . str_replace(' ', '_', mb_strtolower($section));
@@ -363,7 +363,7 @@ class WikiController extends CommonHandler
                 "id" => $node["id"],
                 "title" => $page["title"],
                 "created" => $node["created"],
-                "link" => "/wiki?name=" . urlencode($node["name"]),
+                "link" => $this->wiki->getWikiLink($node["name"]),
                 "html" => $page["html"],
             ];
         });
@@ -463,7 +463,7 @@ class WikiController extends CommonHandler
                         $res["link"] = $url;
                         $res["code"] = "[[image:{$id}]]";
                         $res["image"] = "/node/{$id}/download/small";
-                        $res["page"] = "/wiki?name=File:{$id}";
+                        $res["page"] = $this->wiki->getWikiLink("File:{$id}");
                         $res["title"] = $name;
 
                         if (!($tmp = $this->pageGet("File:{$id}"))) {
