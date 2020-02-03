@@ -1,3 +1,6 @@
+2020-02-03:
+- Twig: use cache_dir, if set.
+
 2020-02-01:
 - SPA: update window title.
 - RSS generator for node types.
