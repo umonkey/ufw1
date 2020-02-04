@@ -319,7 +319,7 @@ class Wiki
             $parts = explode('#', $link);
             $parts[0] = urlencode($parts[0]);
             $link = implode('#', $parts);
-            $link = '/wiki/?name=' . $link;
+            $link = '/wiki?name=' . $link;
         } else {
             $parts = explode('#', $link);
             $parts[0] = str_replace(' ', '_', $parts[0]);
