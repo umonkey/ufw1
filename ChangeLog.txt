@@ -1,3 +1,6 @@
+2020-02-04:
+- SPA: fixed page title update.
+
 2020-02-03:
 - Twig: use cache_dir, if set.
 
