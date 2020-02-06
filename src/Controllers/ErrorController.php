@@ -122,6 +122,8 @@ class ErrorController extends CommonHandler
 
         $data['path'] = $request->getUri()->getPath();
 
+        $data['user'] = $this->auth->getUser($request);
+
         return $data;
     }
 

@@ -1,3 +1,6 @@
+2020-02-06:
+- Fixed missing admin bar on search and error pages.
+
 2020-02-04:
 - SPA: fixed page title update.
 - Wiki: fixed link generation.
