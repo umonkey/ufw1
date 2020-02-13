@@ -72,7 +72,7 @@
                         <td>{{ v.type }}</td>
                         <td class='number'>{{ v.length|filesize }}</td>
                         <td>{% if v.width %}{{ v.width }}×{{ v.height }}{% endif %}</td>
-                        <td><a href='{{ v.url }}'>скачать</a></td>
+                        <td><a href='{% if v.url %}{{ v.url }}{% else %}/node/{{ file.id }}/download/{{ k }}{% endif %}'>скачать</a></td>
                     </tr>
                 {% endfor %}
             </tbody>
