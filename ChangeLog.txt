@@ -2,6 +2,7 @@
 - Wiki: fixed links to local files.
 - Fixed primary button color on hover.
 - Wiki: removed unpublished pages from wiki index.
+- NodeRepo: count nodes, update wiki keys.
 
 2020-02-06:
 - Fixed missing admin bar on search and error pages.
