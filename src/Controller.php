@@ -64,7 +64,7 @@ abstract class Controller
 
      * @return Response ready to use response.
      **/
-    protected function render(Request $request, $template, array $data = []): Response
+    protected function render(Request $request, $template, array $data = [], int $status = 200): Response
     {
         if (empty($data['breadcrumbs'])) {
             $data['breadcrumbs'] = $this->getBreadcrumbs($request, $data);
@@ -72,7 +72,7 @@ abstract class Controller
 
         $html = $this->renderHTML($request, $template, $data);
 
-        $response = new Response(200);
+        $response = new Response($status);
         $response->getBody()->write($html);
         return $response->withHeader('content-type', 'text/html');
     }
