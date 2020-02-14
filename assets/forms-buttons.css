@@ -27,6 +27,7 @@
 }
 .btn-primary:hover {
     background-color: #357ebd;
+    color: #fff;
 }
 .btn-danger {
     background-color: #dc3545;

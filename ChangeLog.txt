@@ -1,5 +1,6 @@
 2020-02-14:
 - Wiki: fixed links to local files.
+- Fixed primary button color on hover.
 
 2020-02-06:
 - Fixed missing admin bar on search and error pages.
