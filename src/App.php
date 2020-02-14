@@ -45,6 +45,7 @@ class App extends \Slim\App
     public static function installNode(App $app): void
     {
         $app->get('/node/{type:[a-z0-9]+}.xml', 'Ufw1\Controllers\NodeRssController:onIndex');
+        $app->post('/admin/nodes.json', 'Ufw1\Controllers\NodeJsonController:onIndex');
     }
 
     public static function installRewrite(App $app): void
@@ -138,7 +139,8 @@ class App extends \Slim\App
             $db = $c->get('db');
             $logger = $c->get('logger');
             $stemmer = $c->get('stemmer');
-            return new Services\Search($db, $logger, $stemmer);
+            $wiki = $c->get('wiki');
+            return new Services\Search($db, $logger, $stemmer, $wiki);
         };
 
         $container['http'] = function ($c) {

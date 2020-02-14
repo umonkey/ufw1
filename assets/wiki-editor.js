@@ -20,18 +20,21 @@ jQuery(function ($) {
     };
 
     $(document).on('click', '.wiki_edit .toolbar button', function (e) {
+        var name, form;
+
         $(this).blur();
 
-        var name = $(this).attr('name');
+        name = $(this).attr('name');
+        form = $('form.wikisource');
 
         if (name == 'save') {
-            $(this).closest('form').submit();
+            form.submit();
             e.preventDefault();
         }
 
         else if (name == 'cancel') {
             e.preventDefault();
-            window.location.href = $(this).closest('form').data('back');
+            window.location.href = $('.wikiedit').data('back');
         }
 
         else if (name == 'toc') {
