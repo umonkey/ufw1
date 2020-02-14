@@ -33,13 +33,19 @@ class Search
      **/
     protected $stemmer;
 
+    /**
+     * @var Wiki
+     **/
+    protected $wiki;
+
     private static $stopWords = ["а", "и", "о", "об", "в", "на", "под", "из"];
 
-    public function __construct(Database $database, LoggerInterface $logger, Stemmer $stemmer)
+    public function __construct(Database $database, LoggerInterface $logger, Stemmer $stemmer, Wiki $wiki)
     {
         $this->database = $database;
         $this->logger = $logger;
         $this->stemmer = $stemmer;
+        $this->wiki = $wiki;
     }
 
     public function search(string $query, int $limit = 100): array
@@ -121,6 +127,7 @@ class Search
      **/
     public function reindexDocument(string $key, string $title, string $body, array $meta = []): void
     {
+        $meta['words'] = count(preg_split('@\s+@', $body, -1, PREG_SPLIT_NO_EMPTY));
         $meta = $meta ? serialize($meta) : null;
 
         $this->database->query("DELETE FROM `search` WHERE `key` = ?", [$key]);
@@ -146,10 +153,8 @@ class Search
      *
      * @param array $args Node spec, in 'id'.
      **/
-    public function reindexNode(array $args): void
+    public function reindexNode(array $node): void
     {
-        $node = $this->node->get($args['id']);
-
         // TODO: only configured types.
 
         if ($node['type'] == 'wiki') {
@@ -185,7 +190,6 @@ class Search
                 'link' => '/wiki?name=' . urlencode($name),
                 'snippet' => $snippet,
                 'updated' => $node['updated'],
-                'words' => count(preg_split('@\s+@', $text, -1, PREG_SPLIT_NO_EMPTY)),
                 'image' => null,
             ];
         }
@@ -193,6 +197,11 @@ class Search
         $this->reindexDocument("node:" . $node["id"], $title, $text, $meta);
     }
 
+    /**
+     * Reindex all documents.
+     *
+     * @todo Move transaction code outside.
+     **/
     public function reindexAll(array $items): void
     {
         $this->logger->debug("search: normalizing {count} documents.", [

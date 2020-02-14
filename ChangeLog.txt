@@ -3,6 +3,7 @@
 - Fixed primary button color on hover.
 - Wiki: removed unpublished pages from wiki index.
 - NodeRepo: count nodes, update wiki keys.
+- Wiki: better page indexing.
 
 2020-02-06:
 - Fixed missing admin bar on search and error pages.
