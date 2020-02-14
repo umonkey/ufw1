@@ -16,8 +16,10 @@
     <div class="formatted" itemprop="articleBody">
         {% if file.description %}
             {{ file.description }}
-        {% else %}
+        {% elseif user.id %}
             <p>Описание файла отсутствует, вы можете <a href='{{ edit_link }}'>добавить его</a>.</p>
+        {% else %}
+            <p>Описание файла отсутствует.</p>
         {% endif %}
     </div>
 
