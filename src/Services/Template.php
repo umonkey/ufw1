@@ -274,7 +274,7 @@ class Template
         }));
 
         $this->twig->addFilter(new \Twig\TwigFilter("price", function ($value) {
-            return number_format($value, 0, ',', ' ');
+            return number_format((float)$value, 0, ',', ' ');
         }));
 
         // Короткое имя.

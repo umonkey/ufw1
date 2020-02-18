@@ -1,6 +1,7 @@
 2020-02-18:
 - Database: fetchk method added.
 - Twig filter short_name is now space proof.
+- Twig filter price converts input to float.
 
 2020-02-01:
 - SPA: update window title.
