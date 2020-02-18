@@ -1,5 +1,6 @@
 2020-02-18:
 - Database: fetchk method added.
+- Twig filter short_name is now space proof.
 
 2020-02-01:
 - SPA: update window title.

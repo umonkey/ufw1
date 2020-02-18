@@ -281,7 +281,7 @@ class Template
         // > Иван Иванов => Инва И.
         // > {{ node.length }} {{ node.length|sklo('байт', 'байта', 'байтов') }}
         $this->twig->addFilter(new \Twig\TwigFilter("short_name", function ($name) {
-            $parts = explode(' ', $name, 2);
+            $parts = preg_split('@\s+@', trim($name), 2, PREG_SPLIT_NO_EMPTY);
             $name = $parts[0] . ' ' . mb_substr($parts[1], 0, 1) . '.';
             return $name;
         }));
