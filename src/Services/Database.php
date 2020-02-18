@@ -125,6 +125,20 @@ class Database
         return $res;
     }
 
+    public function fetchk(string $query, array $params = []): array
+    {
+        $rows = $this->fetch($query, $params);
+
+        $res = [];
+        foreach ($rows as $row) {
+            $row = array_values($row);
+            $key = array_shift($row);
+            $res[$key] = $row;
+        }
+
+        return $res;
+    }
+
     public function fetchkv(string $query, array $params = []): array
     {
         $rows = $this->fetch($query, $params);
@@ -132,7 +146,7 @@ class Database
         $res = [];
         foreach ($rows as $row) {
             $row = array_values($row);
-                $res[$row[0]] = $row[1];
+            $res[$row[0]] = $row[1];
         }
 
         return $res;

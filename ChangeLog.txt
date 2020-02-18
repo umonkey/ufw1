@@ -1,3 +1,6 @@
+2020-02-18:
+- Database: fetchk method added.
+
 2020-02-01:
 - SPA: update window title.
 - RSS generator for node types.
