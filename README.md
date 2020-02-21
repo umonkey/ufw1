@@ -40,6 +40,19 @@ Custom services are configured in [config/services.php][2], standard services ar
     $ composer require umonkey/ufw1:dev-default
 
 
+## TODO
+
+Major:
+
+- [ ] Switch to action-domain-responder.
+- [ ] Uncouple wiki, admin UI, blog etc to separate packages.
+
+Minor:
+
+- [ ] Some common CLI functions.
+- [ ] Better unit test coverage.
+
+
 ## Recommended reading
 
 - [The twelve-factor app](https://www.12factor.net/), best practices for developing web applications.
