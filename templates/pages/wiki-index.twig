@@ -2,13 +2,19 @@
 
 {% block page_title %}Список всех страниц{% endblock %}
 
-{% block page_h1 %}Список всех страниц{% endblock %}
+{% block page_header %}
+    <div class='page-header'>
+        <h1>Список всех страниц вики</h1>
+    </div>
+{% endblock %}
 
 {% block page_contents %}
     <table class="table grid">
         <thead>
             <tr>
+                <th/>
                 <th><a href="/wiki/index">Название</a></th>
+                <th><a href="/wiki/index?sort=title">Заголовок</a></th>
                 <th><a href="/wiki/index?sort=updated">Изменение</a></th>
                 <th><a href="/wiki/index?sort=length">Размер</a></th>
             </tr>
@@ -16,10 +22,12 @@
         <tbody>
             {% for page in pages %}
                 <tr>
+                    <td class='rowid'><a href='/admin/nodes/{{ page.id }}/edit?back=/wiki/index'>{{ page.id }}</a></td>
                     <td>
                         <a href="/wiki?name={{ page.name }}">{{ page.name }}</a>
                     </td>
-                    <td dat-value="{{ page.updated }}">{{ page.updated|date_simple }}</td>
+                    <td>{{ page.title }}</td>
+                    <td dat-value="{{ page.updated }}">{{ page.updated|date('%d.%m.%y') }}</td>
                     <td class="number">{{ page.length }}</td>
                 </tr>
             {% endfor %}

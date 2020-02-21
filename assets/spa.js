@@ -89,7 +89,7 @@ jQuery(function ($) {
     var update_title = function (html) {
         var m = html.match(/<title>(.+?)<\/title>/);
         if (m !== null) {
-            window.title = m[1];
+            window.document.title = m[1];
         } else {
             log('window title not found.');
         }

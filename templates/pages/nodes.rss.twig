@@ -7,16 +7,18 @@
         <generator>umonkey/ufw1</generator>
         <link>{% if feed.link %}{{ feed.link }}{% else %}{{ request.base }}/{% endif %}</link>
         <title>{% if feed.title %}{{ feed.title }}{% else %}Recent documents{% endif %}</title>
-        <pubDate>{{ items[0].created|date_rfc }}</pubDate>
-        <lastBuildDate>{{ items[0].created|date_rfc }}</lastBuildDate>
-        {% for item in items %}
-            <item>
-                <pubDate>{{ item.created|date_rfc }}</pubDate>
-                <title>{{ item.title }}</title>
-                <description>{{ item.description ?: 'No description.' }}</description>
-                <link>{{ item.link }}</link>
-                <guid>{{ item.guid }}</guid>
-            </item>
-        {% endfor %}
+        {% if items %}
+            <pubDate>{{ items[0].created|date_rfc }}</pubDate>
+            <lastBuildDate>{{ items[0].created|date_rfc }}</lastBuildDate>
+            {% for item in items %}
+                <item>
+                    <pubDate>{{ item.created|date_rfc }}</pubDate>
+                    <title>{{ item.title }}</title>
+                    <description>{{ item.description ?: 'No description.' }}</description>
+                    <link>{{ item.link }}</link>
+                    <guid>{{ item.guid }}</guid>
+                </item>
+            {% endfor %}
+        {% endif %}
     </channel>
 </rss>

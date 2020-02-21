@@ -32,7 +32,6 @@ jQuery(function ($) {
     var update = function () {
         var link = $("link[rel=edit]:first");
         if (link.length == 0) {
-            console.log('no edit links');
             return;
         }
 

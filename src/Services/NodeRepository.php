@@ -35,6 +35,15 @@ class NodeRepository
         $this->logger = $logger;
     }
 
+    public function count(string $conditions, array $params = []): int
+    {
+        $query = "SELECT COUNT(1) FROM `nodes` WHERE " . $conditions;
+
+        $count = (int)$this->db->fetchCell($query, $params);
+
+        return $count;
+    }
+
     public function where(string $conditions, array $params = [], $callback = null): array
     {
         $query = "SELECT * FROM `nodes` WHERE " . $conditions;
@@ -80,6 +89,7 @@ class NodeRepository
         if (empty($node["created"])) {
             $node["created"] = $now;
         }
+
         $node["updated"] = $now;
 
         $node['deleted'] = empty($node['deleted']) ? 0 : 1;
@@ -91,6 +101,10 @@ class NodeRepository
         }
 
         $row = $this->packNode($node);
+
+        if ($node['type'] == 'wiki') {
+            $row['key'] = md5(mb_strtolower(trim($node['name'])));
+        }
 
         if (!empty($node["id"])) {
             $_row = $row;

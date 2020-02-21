@@ -66,8 +66,7 @@ class Wiki
             $node = array_merge($node, $props);
         }
 
-        $node['deleted'] = 0;
-        $node['published'] = 1;
+        $node['deleted'] = trim($source) === '';
         $node['key'] = $this->getPageKey($node['name']);
 
         $node = $this->notifyEdits($node, $user);
@@ -137,7 +136,18 @@ class Wiki
 
         $key = $this->getPageKey($name);
         $node = $this->node->where('`type` = \'wiki\' AND `key` = ? ORDER BY `id` LIMIT 1', [$key]);
-        return $node ? $node[0] : null;
+
+        if (empty($node)) {
+            return null;
+        } else {
+            $node = $node[0];
+        }
+
+        if (empty($node['source'])) {
+            return null;
+        }
+
+        return $node;
     }
 
     /**
@@ -169,6 +179,34 @@ class Wiki
         }
 
         return $source;
+    }
+
+    public function getSearchMeta(array $node): ?array
+    {
+        if ((int)$node['deleted'] === 1) {
+            return null;
+        }
+
+        if ((int)$node['published'] === 0) {
+            return null;
+        }
+
+        if (empty($node['source'])) {
+            return null;
+        }
+
+        if (!empty($page['redirect'])) {
+            return null;
+        }
+
+        $page = $this->render($node['source']);
+
+        return [
+            'title' => $page['title'] ?? $node['name'] ?? null,
+            'snippet' => $page['snippet'] ?? null,
+            'link' => $this->getWikiLink($node['name']),
+            'text' => $this->htmlToText($page['html']),
+        ];
     }
 
     /**
@@ -319,7 +357,7 @@ class Wiki
             $parts = explode('#', $link);
             $parts[0] = urlencode($parts[0]);
             $link = implode('#', $parts);
-            $link = '/wiki/?name=' . $link;
+            $link = '/wiki?name=' . $link;
         } else {
             $parts = explode('#', $link);
             $parts[0] = str_replace(' ', '_', $parts[0]);
@@ -478,6 +516,7 @@ class Wiki
             if ($this->processInterwiki($link, $label, $interwiki)) {
                 $cls = 'external';
             } elseif ($tmp = $this->getPageByName($link)) {
+                $title = $tmp['title'] ?? $tmp['name'];
                 if (false and !empty($tmp['url'])) {
                     $link = $tmp['url'];
                 } else {
@@ -873,6 +912,18 @@ class Wiki
         $source = implode("\n", $dst);
 
         return $source;
+    }
+
+    protected function htmlToText(string $html): string
+    {
+        // strip_tags mishandles scripts, and we use them heavily for microdata,
+        // so just strip them off in advance.
+        $html = preg_replace('@<script.*?</script>@', '', $html);
+
+        $html = str_replace("><", "> <", $html);
+        $text = trim(strip_tags($html));
+
+        return $text;
     }
 
     protected function renderFigure(array $info): string

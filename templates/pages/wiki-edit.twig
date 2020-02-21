@@ -16,7 +16,7 @@
         <input type='hidden' name='callback' value='reload_files'/>
     </form>
 
-    <form class='wikiedit pedit async' method='post' action='/wiki/edit' data-back='{{ request.base }}/wiki?name={{ page_name|url_encode }}'>
+    <div class='wikiedit pedit' data-back='{{ request.base }}/wiki?name={{ page_name|url_encode }}'>
         <div class='toolbar'>
             {% for btn in settings.buttons %}
                 <button class='btn btn-default' name='{{ btn.name }}' type='button'{% if btn.hint %} title='{{ btn.hint }}'{% endif %}{% if btn.link %} data-link='{{ btn.link }}'{% endif %}>{% if btn.icon %}<i class='fas fa-{{ btn.icon }}'></i>{% endif %}{% if btn.label %} {{ btn.label }}{% endif %}</button>
@@ -24,25 +24,54 @@
         </div>
 
         <div class='editor'>
-            <input type="hidden" name="page_name" value="{{ page_name }}"/>
-            {% if page_section %}
-                <input type="hidden" name="page_section" value="{{ page_section }}"/>
-            {% endif %}
+            <form class='wikisource async' method='post' action='/wiki/edit'>
+                <input type="hidden" name="page_name" value="{{ page_name }}"/>
+                {% if page_section %}
+                    <input type="hidden" name="page_section" value="{{ page_section }}"/>
+                {% endif %}
 
-            <textarea class="form-control markdown wiki" name="page_source" autofocus="autofocus">{{ page_source }}</textarea>
+                <textarea class="form-control markdown wiki" name="page_source" autofocus="autofocus">{{ page_source }}</textarea>
+            </form>
 
-            <div class='files' style='display: none'>
-                <div class='search'>
-                    <input class='fsearch' type='search' name='query' autocomplete='off' placeholder='Поиск по файлам...'/>
-                    <label for='uploadctl' class='btn btn-default upload'><i class="fas fa-cloud-upload-alt"></i></label>
-                </div>
+            <aside>
+                <div class='files' style='display: none'>
+                    <div class='search'>
+                        <input class='fsearch' type='search' name='query' autocomplete='off' placeholder='Поиск по файлам...'/>
+                        <label for='uploadctl' class='btn btn-default upload'><i class="fas fa-cloud-upload-alt"></i></label>
+                    </div>
 
-                <div class='tiles'>
-                    <div class='wrap'>
-                        <p>Загружаю список файлов...</p>
+                    <div class='tiles'>
+                        <div class='wrap'>
+                            <p>Загружаю список файлов...</p>
+                        </div>
                     </div>
                 </div>
-            </div>
+
+                <form class='fileinfo async' action='/admin/nodes/save' method='post' style='display: none'>
+                    <img class='fsrc' src='/images/placeholder.png'/>
+
+                    <input type='hidden' name='next' value=''/>
+
+                    <div class='form-group'>
+                        <label>Номер файла:</label>
+                        <input class='form-control fid' type='text' name='node[id]' readonly/>
+                    </div>
+
+                    <div class='form-group'>
+                        <label>Заголовок:</label>
+                        <input class='form-control ftitle' type='text' name='node[title]'/>
+                    </div>
+
+                    <div class='form-group'>
+                        <label>Описание:</label>
+                        <textarea class='form-control fcaption' name='node[caption]'></textarea>
+                    </div>
+
+                    <div class='form-actions'>
+                        <button class='btn btn-primary'>Сохранить</button>
+                    </div>
+                </form>
+            </aside>
         </div>
-    </form>
+    </div>
 {% endblock %}

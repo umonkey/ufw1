@@ -44,6 +44,10 @@ class Template
 
         $this->twig = new \Twig\Environment($loader);
 
+        if (!empty($settings['cache_dir'])) {
+            $this->twig->setCache($settings['cache_dir']);
+        }
+
         $this->setupFilters();
     }
 

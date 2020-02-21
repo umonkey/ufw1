@@ -55,6 +55,10 @@ class WikiController extends CommonHandler
 
         $node = $wiki->getPageByName($name);
 
+        if (null === $user and 0 === (int)$node['published']) {
+            $this->forbidden();
+        }
+
         // Fake deleted pages.
         if (empty($node['source'])) {
             $node = null;
@@ -95,7 +99,7 @@ class WikiController extends CommonHandler
                 'user' => $user,
                 'page' => ['name' => $name],
                 'edit_link' => $canEdit ? '/wiki/edit?name=' . urlencode($name) : null,
-            ]);
+            ], 404);
         }
     }
 
@@ -484,8 +488,9 @@ class WikiController extends CommonHandler
      **/
     public function onIndex(Request $request, Response $response, array $args): Response
     {
-        $pages = array_filter($this->node->where("`type` = 'wiki'", [], function ($node) {
+        $pages = array_filter($this->node->where("`type` = 'wiki' AND deleted = 0 AND published = 1", [], function ($node) {
             $name = $node["name"];
+
             if (0 === strpos($name, "File:")) {
                 return null;
             } elseif (0 === strpos($name, "wiki:")) {
@@ -493,9 +498,11 @@ class WikiController extends CommonHandler
             }
 
             return [
-                "name" => $name,
-                "updated" => $node["updated"],
-                "length" => strlen($node["source"]),
+                'id' => (int)$node['id'],
+                'name' => $name,
+                'title' => $node['title'] ?? $node['name'],
+                'updated' => $node['updated'],
+                'length' => isset($node['source']) ? strlen($node['source']) : 0,
             ];
         }));
 

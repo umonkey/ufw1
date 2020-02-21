@@ -1,7 +1,28 @@
+2020-02-21:
+- Recursive dependency injection.
+
 2020-02-18:
 - Database: fetchk method added.
 - Twig filter short_name is now space proof.
 - Twig filter price converts input to float.
+
+2020-02-14:
+- Fixed primary button color on hover.
+- NodeRepo: count nodes, update wiki keys.
+- Wiki: better page indexing.
+- Wiki: embedded file info in age editor.
+- Wiki: fixed links to local files.
+- Wiki: removed unpublished pages from wiki index.
+
+2020-02-06:
+- Fixed missing admin bar on search and error pages.
+
+2020-02-04:
+- SPA: fixed page title update.
+- Wiki: fixed link generation.
+
+2020-02-03:
+- Twig: use cache_dir, if set.
 
 2020-02-01:
 - SPA: update window title.

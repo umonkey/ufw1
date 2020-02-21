@@ -410,7 +410,7 @@ class AdminController extends CommonHandler
             $this->taskq->add('update-node-thumbnail', ['id' => $node['id']]);
         }
 
-        if (empty($next)) {
+        if (null === $next) {
             $next = "/admin/nodes/{$node['type']}?edited={$node['id']}";
         }
 

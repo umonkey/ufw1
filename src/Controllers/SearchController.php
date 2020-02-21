@@ -30,6 +30,7 @@ class SearchController extends CommonHandler
                 'query' => $query,
                 'wiki' => $this->findWikiPage($query),
                 'results' => $results,
+                'user' => $this->auth->getUser($request),
                 'edit_link' => '/wiki/edit?name=' . urlencode($query),
             ]);
         } else {
