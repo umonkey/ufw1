@@ -40,6 +40,11 @@ Custom services are configured in [config/services.php][2], standard services ar
     $ composer require umonkey/ufw1:dev-default
 
 
+## Recommended reading
+
+- [The twelve-factor app](https://www.12factor.net/), best practices for developing web applications.
+
+
 [1]: https://www.slimframework.com/
 [2]: config/services.php
 [3]: src/Util.php
