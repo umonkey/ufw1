@@ -1,3 +1,6 @@
+2020-02-21:
+- Recursive dependency injection.
+
 2020-02-14:
 - Fixed primary button color on hover.
 - NodeRepo: count nodes, update wiki keys.

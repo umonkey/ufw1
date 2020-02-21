@@ -99,7 +99,7 @@ class CallableResolver implements CallableResolverInterface
             throw new RuntimeException(sprintf('Callable %s does not exist', $class));
         }
 
-        $instance = $this->getConstructorArguments($class);
+        $instance = $this->getClassInstanceByName($class);
 
         return [$instance, $method];
     }
@@ -120,32 +120,46 @@ class CallableResolver implements CallableResolverInterface
     }
 
     /**
-     * Returns arguments to create the specified class.
+     * Returns a class instance.
      *
      * @param string $className Class to construct.
      *
      * @return array Constructor arguments.
      **/
-    protected function getConstructorArguments(string $className): object
+    protected function getClassInstanceByName(string $className): object
     {
+        $ref = new \ReflectionClass($className);
+        return $this->getClassInstance($ref);
+    }
+
+    protected function getClassInstance(\ReflectionClass $class): object
+    {
+        $constructor = $class->getConstructor();
+        if (null === $constructor) {
+            $className = $class->getName();
+            return new $className();
+        }
+
         $args = [];
 
-        $ref = new \ReflectionClass($className);
-        $params = $ref->getConstructor()->getParameters();
-
+        $params = $constructor->getParameters();
         foreach ($params as $param) {
             $name = $param->getName();
-            if ($name == 'container')
+
+            if ($name == 'container') {
                 $value = $this->container;
-            elseif ($this->container->has($name))
+            } elseif ($this->container->has($name)) {
                 $value = $this->container->get($name);
-            else
+            } elseif (null !== ($paramClass = $param->getClass())) {
+                $value = $this->getClassInstance($paramClass);
+            } else {
                 $value = null;
+            }
 
             $args[] = $value;
         }
 
-        $obj = $ref->newInstanceArgs($args);
+        $obj = $class->newInstanceArgs($args);
 
         return $obj;
     }
