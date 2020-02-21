@@ -20,6 +20,9 @@ Then you tweak your settings in that file:
 $settings['dsn']['user'] = 'www';
 ```
 
+
+## Ways to pass environment variables
+
 When running from command line, you just set the environment variable:
 
 ```
@@ -38,7 +41,11 @@ If you need to set it in `nginx.conf`, then use `fastcgi_param`.  However, this 
 fastcgi_param APP_ENV prod;
 ```
 
-Finally, you migh want to use [phpdotenv][2], if you're OK with replacing 5 lines of code with 30+ files.
+
+## Alternatives
+
+You migh want to use [phpdotenv][2], if you're OK with replacing 5 lines of code with 30+ files.
+
 
 [1]: config/settings.php
 [2]: https://github.com/vlucas/phpdotenv
