@@ -12,3 +12,4 @@ https://scrutinizer-ci.com/docs/tools/php/php-scrutinizer/
 - [ ] SPA: link rel=edit is not updated.
 - [ ] Hierarchy: use ancestors tables, dump lb/rb.
 - [ ] UI spy: https://statamic.com/
+- [ ] Wiki: control page readers via yaml.
