@@ -13,3 +13,4 @@ https://scrutinizer-ci.com/docs/tools/php/php-scrutinizer/
 - [ ] Hierarchy: use ancestors tables, dump lb/rb.
 - [ ] UI spy: https://statamic.com/
 - [ ] Wiki: control page readers via yaml.
+- [ ] Wiki: refactor WikiService.
