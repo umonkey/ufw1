@@ -4,8 +4,6 @@
  * Authentication service.
  *
  * Handles passwords, etc.
- *
- * TODO: ...
  **/
 
 declare(strict_types=1);

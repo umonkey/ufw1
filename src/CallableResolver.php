@@ -99,7 +99,7 @@ class CallableResolver implements CallableResolverInterface
             throw new RuntimeException(sprintf('Callable %s does not exist', $class));
         }
 
-        $instance = $this->getClassInstanceByName($class);
+        $instance = $this->getClassInstance($class);
 
         return [$instance, $method];
     }
@@ -126,13 +126,13 @@ class CallableResolver implements CallableResolverInterface
      *
      * @return array Constructor arguments.
      **/
-    protected function getClassInstanceByName(string $className): object
+    public function getClassInstance(string $className): object
     {
         $ref = new \ReflectionClass($className);
-        return $this->getClassInstance($ref);
+        return $this->getClassInstanceByRef($ref);
     }
 
-    protected function getClassInstance(\ReflectionClass $class): object
+    protected function getClassInstanceByRef(\ReflectionClass $class): object
     {
         $constructor = $class->getConstructor();
         if (null === $constructor) {
@@ -151,7 +151,7 @@ class CallableResolver implements CallableResolverInterface
             } elseif ($this->container->has($name)) {
                 $value = $this->container->get($name);
             } elseif (null !== ($paramClass = $param->getClass())) {
-                $value = $this->getClassInstance($paramClass);
+                $value = $this->getClassInstanceByRef($paramClass);
             } else {
                 $value = null;
             }

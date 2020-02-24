@@ -86,4 +86,24 @@ class Base extends TestCase
     {
         $this->container['environment']['MOCK_USER_ID'] = $id;
     }
+
+    /**
+     * Create class instance via DI.
+     **/
+    protected function getClassInstance(string $className): object
+    {
+        $resolver = $this->container['callableResolver'];
+        $instance = $resolver->getClassInstance($className);
+        return $instance;
+    }
+
+    protected function beginTransaction(): void
+    {
+        $this->container->db->beginTransaction();
+    }
+
+    protected function rollback(): void
+    {
+        $this->container->db->rollback();
+    }
 }

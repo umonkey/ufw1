@@ -14,7 +14,7 @@ use Slim\Http\Response;
 use Ufw1\CommonHandler;
 use Ufw1\Services\Template;
 use Ufw1\Services\NodeRepository;
-use Ufw1\Services\Wiki;
+use Ufw1\Wiki\WikiService;
 
 class NodeRssController extends CommonHandler
 {
@@ -46,7 +46,7 @@ class NodeRssController extends CommonHandler
      **/
     protected $settings;
 
-    public function __construct(Template $template, NodeRepository $node, Wiki $wiki, LoggerInterface $logger, $settings)
+    public function __construct(Template $template, NodeRepository $node, WikiService $wiki, LoggerInterface $logger, $settings)
     {
         $this->settings = $settings['node']['rss'] ?? [];
         $this->template = $template;

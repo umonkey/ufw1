@@ -87,17 +87,13 @@ class App extends \Slim\App
 
     public static function installWiki(App $app): void
     {
-        $class = Controllers\WikiController::class;
-
-        $app->get('/wiki', $class . ':onRead');
-        $app->get('/wiki/edit', $class . ':onEdit');
-        $app->post('/wiki/edit', $class . ':onSave');
-        $app->post('/wiki/embed-clipboard', $class . ':onEmbedClipboard');
-        $app->get('/wiki/index', $class . ':onIndex');
-        $app->get('/wiki/recent', $class . ':onRecent');
-        $app->get('/wiki/recent-files.json', $class . ':onRecentFiles');
-        $app->get('/wiki/reindex', $class . ':onReindex');
-        $app->any('/wiki/upload', $class . ':onUpload');
+        $app->get ('/wiki',                   'Ufw1\Wiki\Actions\ShowWikiPageAction');
+        $app->get ('/wiki/edit',              'Ufw1\Wiki\Actions\ShowEditorAction');
+        $app->post('/wiki/edit',              'Ufw1\Wiki\Actions\UpdatePageAction');
+        $app->get ('/wiki/index',             'Ufw1\Wiki\Actions\IndexAction');
+        $app->get ('/wiki/recent-files.json', 'Ufw1\Wiki\Actions\RecentFilesAction');
+        $app->get ('/wiki/reindex',           'Ufw1\Wiki\Actions\ReindexAction');
+        $app->any ('/wiki/upload',            'Ufw1\Wiki\Actions\UploadAction');
     }
 
     /**
@@ -234,7 +230,7 @@ class App extends \Slim\App
             $settings = $c->get('settings')['wiki'];
             $node = $c->get('node');
             $logger = $c->get('logger');
-            $t = new Services\Wiki($settings, $node, $logger);
+            $t = new Wiki\WikiService($settings, $node, $logger);
             return $t;
         };
     }

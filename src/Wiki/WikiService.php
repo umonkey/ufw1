@@ -8,12 +8,13 @@
 
 declare(strict_types=1);
 
-namespace Ufw1\Services;
+namespace Ufw1\Wiki;
 
 use Psr\Log\LoggerInterface;
 use Ufw1\Util;
+use Ufw1\Services\NodeRepository;
 
-class Wiki
+class WikiService
 {
     /**
      * @var NodeRepository
@@ -143,6 +144,14 @@ class Wiki
             $node = $node[0];
         }
 
+        if ($node['type'] != 'wiki') {
+            return null;
+        }
+
+        if ((int)$node['deleted'] === 1) {
+            return null;
+        }
+
         if (empty($node['source'])) {
             return null;
         }
@@ -152,6 +161,8 @@ class Wiki
 
     /**
      * Returns source code of the page, if any.
+     *
+     * FIXME: configure otherwise.
      *
      * @param string $name    Page name.
      * @param string $section Section name.
@@ -173,12 +184,12 @@ class Wiki
 
         if ($section) {
             $parts = $this->findSection($source, $section);
-            $source = $parts['wanted'] ?? null;
+            $source = $parts['wanted'] ?? '';
         } else {
             // TODO: apply page templates
         }
 
-        return $source;
+        return trim($source) . "\n";
     }
 
     public function getSearchMeta(array $node): ?array
@@ -815,7 +826,7 @@ class Wiki
             ]);
         }
 
-        $node['last_editor'] = $user['id'];
+        $node['last_editor'] = $user['id'] ?? null;
         return $node;
     }
 

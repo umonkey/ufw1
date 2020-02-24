@@ -18,7 +18,7 @@
 
     <div class='wikiedit pedit' data-back='{{ request.base }}/wiki?name={{ page_name|url_encode }}'>
         <div class='toolbar'>
-            {% for btn in settings.buttons %}
+            {% for btn in wiki_buttons %}
                 <button class='btn btn-default' name='{{ btn.name }}' type='button'{% if btn.hint %} title='{{ btn.hint }}'{% endif %}{% if btn.link %} data-link='{{ btn.link }}'{% endif %}>{% if btn.icon %}<i class='fas fa-{{ btn.icon }}'></i>{% endif %}{% if btn.label %} {{ btn.label }}{% endif %}</button>
             {% endfor %}
         </div>
