@@ -14,3 +14,4 @@ https://scrutinizer-ci.com/docs/tools/php/php-scrutinizer/
 - [ ] UI spy: https://statamic.com/
 - [ ] Wiki: control page readers via yaml.
 - [ ] Wiki: refactor WikiService.
+- [ ] Wiki: add specific admin UI.
