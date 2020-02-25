@@ -199,14 +199,10 @@ class AdminController extends CommonHandler
                     $parts[] = '__invoke';
                 }
                 list($item['class'], $item['method']) = $parts;
-            }
-
-            elseif (is_array($callable) and count($callable) == 2 and is_object($callable[0])) {
+            } elseif (is_array($callable) and count($callable) == 2 and is_object($callable[0])) {
                 $item['class'] = get_class($callable[0]);
                 $item['method'] = $callable[1];
-            }
-
-            else {
+            } else {
                 debug($callable);
             }
 

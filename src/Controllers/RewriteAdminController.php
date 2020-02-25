@@ -38,9 +38,7 @@ class RewriteAdminController extends CommonHandler
             return $response->withJSON([
                 'redirect' => '/admin/rewrite',
             ]);
-        }
-
-        else {
+        } else {
             $row = $this->db->fetchOne('SELECT * FROM rewrite WHERE id = ?', [$args['id']]);
 
             if (null === $row) {

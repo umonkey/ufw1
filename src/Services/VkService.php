@@ -136,11 +136,13 @@ class VkService
 
     public function uploadPhoto(string $path, array $args): array
     {
-        if (!function_exists("curl_init"))
+        if (!function_exists("curl_init")) {
             throw new Unavailable('curl not installed');
+        }
 
-        if (!is_readable($path))
+        if (!is_readable($path)) {
             throw new \RuntimeException('photo is not readable');
+        }
 
         $args = array_merge([
             'album_id' => null,
@@ -210,8 +212,8 @@ class VkService
         }
 
         switch ($res['status']) {
-        case 401:
-            throw new \RuntimeException('bad token or auth code');
+            case 401:
+                throw new \RuntimeException('bad token or auth code');
         }
 
         if ($res['status'] >= 400) {

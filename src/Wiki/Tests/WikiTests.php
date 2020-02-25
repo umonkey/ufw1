@@ -15,7 +15,7 @@ use Ufw1\Wiki\WikiDomain;
 
 class WikiTests extends Base
 {
-    const DOMAIN_CLASS = WikiDomain::class;
+    public const DOMAIN_CLASS = WikiDomain::class;
 
     /**
      * Make sure the wiki redirects to the default page.
@@ -204,7 +204,6 @@ class WikiTests extends Base
             ]);
             $this->assertTrue(empty($res['error']), 'This page MUST be readable.');
             $this->assertFalse(empty($res['response']['edit_link']), 'This page MUST have edit_link.');
-
         } finally {
             $this->rollback();
         }
@@ -443,7 +442,6 @@ class WikiTests extends Base
             // (3) OK, but empty.
             $rd = $domain->upload(null, null, $this->getWriterUser());
             $this->assertTrue(empty($rd['error']), 'MUST NOT fail.');
-
         } finally {
             $this->rollback();
         }

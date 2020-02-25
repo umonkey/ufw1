@@ -134,9 +134,7 @@ class AccountController extends CommonHandler
             ]);
 
             return $response->withRedirect($next ? $next : '/');
-        }
-
-        else {
+        } else {
             $url = $this->vk->getLoginURL('status', $request->getParam('back'));
 
             $this->logger->debug('auth: redirecting to {url}', [
@@ -162,9 +160,7 @@ class AccountController extends CommonHandler
             return $this->render($request, 'pages/logout.html.twig', [
                 'user' => $user,
             ]);
-        }
-
-        else {
+        } else {
             $this->auth->logOut($request);
 
             return $response->withJSON([

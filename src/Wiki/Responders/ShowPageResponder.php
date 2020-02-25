@@ -57,7 +57,7 @@ class ShowPageResponder extends AbstractResponder
     {
         $pageName = $err['pageName'];
 
-        $html = $this->template->render('pages/wiki-notfound.twig', $data =[
+        $html = $this->template->render('pages/wiki-notfound.twig', [
             'user' => $err['user'] ?? null,
             'page' => [
                 'name' => $pageName,
