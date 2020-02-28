@@ -1,3 +1,6 @@
+2020-02-29:
+- Wiki: fixed template errors.
+
 2020-02-27:
 - Search: fixed wiki interaction.
 

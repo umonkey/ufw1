@@ -39,7 +39,7 @@
 
 {% block page_contents %}
     {% if page.meta != 'off' %}
-        <div class='wikimeta'>{{ node.created|date('%d.%m.%Y') }}, <a href='/wiki?name={{ page.author }}'>{{ page.author }}</a>{% if edit_link %} &middot; <a href='{{ edit_link }}'>редактировать</a>{% endif %}</div>
+        <div class='wikimeta'>{% if node.created %}{{ node.created|date('%d.%m.%Y') }}, {% endif %}<a href='/wiki?name={{ page.author }}'>{{ page.author }}</a>{% if edit_link %} &middot; <a href='{{ edit_link }}'>редактировать</a>{% endif %}</div>
     {% endif %}
 
     <div class="formatted" itemprop="articleBody">
@@ -51,7 +51,7 @@
 
         {% if "wiki:" in page.name %}
             <pre>{{ page.text }}</pre>
-        {% else %}
+        {% elseif page.html %}
             {{ page.html|typo|raw }}
         {% endif %}
     </div>
