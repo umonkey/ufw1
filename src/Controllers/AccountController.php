@@ -18,22 +18,6 @@ use Ufw1\CommonHandler;
 class AccountController extends CommonHandler
 {
     /**
-     * Display account information.
-     **/
-    public function onAccount(Request $request, Response $response, array $args): Response
-    {
-        $user = $this->auth->getUser($request);
-
-        if (null === $user) {
-            return $response->withRedirect('/login');
-        }
-
-        return $this->render($request, 'pages/account.html.twig', [
-            'user' => $user,
-        ]);
-    }
-
-    /**
      * Confirm that the user logged out.
      **/
     public function onBye(Request $request, Response $response, array $args): Response
@@ -273,7 +257,7 @@ class AccountController extends CommonHandler
     {
         $class = get_called_class();
 
-        $app->get('/account', $class . ':onAccount');
+        $app->get('/account', 'Ufw1\Accounts\Actions\ProfileAction');
         $app->get('/account/bye', $class . ':onBye');
         $app->get('/login', $class . ':onGetLoginForm');
         $app->post('/login', $class . ':onLogin');
@@ -281,7 +265,7 @@ class AccountController extends CommonHandler
         $app->get('/login/vk', $class . ':onLoginVK');
         $app->any('/logout', $class . ':onLogout');
         $app->get('/logout/bye', $class . ':onLogoutComplete');
-        $app->any('/profile', $class . ':onProfile');
+        $app->any('/profile', 'Ufw1\Accounts\Actions\ProfileAction');
         $app->any('/register', $class . ':onRegister');
     }
 }

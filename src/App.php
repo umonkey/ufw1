@@ -228,7 +228,7 @@ class App extends \Slim\App
         };
 
         $container['wiki'] = function ($c) {
-            $settings = $c->get('settings')['wiki'];
+            $settings = $c->get('settings')['wiki'] ?? [];
             $node = $c->get('node');
             $logger = $c->get('logger');
             $t = new Wiki\WikiService($settings, $node, $logger);
