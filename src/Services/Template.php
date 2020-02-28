@@ -86,10 +86,16 @@ class Template
         $data = array_merge($this->defaults, $data);
 
         if (($data['request']['get']['debug'] ?? null) == 'tpl') {
-            debug([
-                'template' => $fileName,
-                'variables' => $data,
-            ]);
+            $text = sprintf("\n=== template name ===\n\n%s\n\n", $fileName);
+            foreach ($data as $k => $v) {
+                ob_start();
+                var_dump($v);
+                $value = ob_get_clean();
+
+                $text .= sprintf("=== variable: %s ===\n\n%s\n\n", $k, $value);
+            }
+
+            debug($text);
         }
 
         $template = $this->twig->load($fileName);

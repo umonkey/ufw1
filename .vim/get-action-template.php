@@ -88,7 +88,7 @@ if (count($argv) < 2) {
 }
 
 $data = [];
-$data['rootNamespace'] = $argv[2] ?? 'Ufw1';
+$data['rootNamespace'] = get_root_namsepace($argv[2] ?? null);
 $data['filePath'] = $argv[1];
 $data['fileName'] = basename($argv[1]);
 $data['dirName'] = dirname($argv[1]);
@@ -110,3 +110,17 @@ foreach ($data as $k => $v) {
 }
 
 die(rtrim($text));
+
+
+function get_root_namespace(?string $arg)
+{
+    if (null !== $arg) {
+        return $arg;
+    }
+
+    if (file_exists('.root_ns')) {
+        return trmi(file_get_contents('.root_ns'));
+    }
+
+    return 'Ufw1';
+}

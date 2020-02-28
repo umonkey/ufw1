@@ -27,7 +27,7 @@ abstract class AbstractResponder
                 case 403:
                     return $this->getForbidden($response, $data);
                 case 404:
-                    return $this->getForbidden($response, $data);
+                    return $this->getNotFound($response, $data);
                 default:
                     return $this->getError($response, $data);
             }
@@ -47,7 +47,7 @@ abstract class AbstractResponder
         if (isset($responseData['error'])) {
             return $response->withJSON([
                 'message' => $responseData['error']['message'] ?? 'Unknown error.',
-                'error' => $responseData['error']['error'],
+                'error' => $responseData['error']['code'],
             ]);
         }
 
@@ -61,6 +61,15 @@ abstract class AbstractResponder
             'errors/403.twig',
             'errors/default.twig',
         ], $data, 403);
+    }
+
+    protected function getNotFound(Response $response, array $data): Response
+    {
+        return $this->renderResponse($response, [
+            'errors/notfound.twig',
+            'errors/404.twig',
+            'errors/default.twig',
+        ], $data, 404);
     }
 
     protected function getUnauthorized(Response $response, array $data): Response

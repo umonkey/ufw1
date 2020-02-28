@@ -131,7 +131,7 @@ class Database
 
         $res = [];
         foreach ($rows as $row) {
-            $row = array_values($row);
+            // $row = array_values($row);
             $key = array_shift($row);
             $res[$key] = $row;
         }
