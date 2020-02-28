@@ -308,6 +308,11 @@ class WikiService
             "created" => $node['created'] ?? null,
         ];
 
+        if (empty($node['source'])) {
+            $this->logger->debug('wiki: node {0} has empty source.', [$node['id']]);
+            return $res;
+        }
+
         $source = "";
 
         $lines = explode("\n", str_replace("\r", "", $node["source"]));

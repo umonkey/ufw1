@@ -77,7 +77,7 @@ class App extends \Slim\App
 
     public static function installTaskQ(App $app): void
     {
-        $class = Controllers\TaskQueueController::class;
+        Controllers\TaskQueueController::setupRoutes($app);
     }
 
     public static function installUpload(App $app): void
@@ -136,7 +136,8 @@ class App extends \Slim\App
             $logger = $c->get('logger');
             $stemmer = $c->get('stemmer');
             $wiki = $c->get('wiki');
-            return new Services\Search($db, $logger, $stemmer, $wiki);
+            $node = $c->get('node');
+            return new Services\Search($db, $logger, $stemmer, $wiki, $node);
         };
 
         $container['http'] = function ($c) {
@@ -172,7 +173,7 @@ class App extends \Slim\App
         };
 
         $container['S3'] = function ($c) {
-            $config = $c->get('settings')['S3'];
+            $config = $c->get('settings')['S3'] ?? [];
             $logger = $c->get('logger');
             $node = $c->get('node');
             $taskq = $c->get('taskq');
@@ -198,8 +199,8 @@ class App extends \Slim\App
 
         $container['telega'] = function ($c) {
             $logger = $c->get('logger');
-            $settings = $c->get('settings')['telega'];
-            return new Services\Telega($logger, $settings);
+            $settings = $c->get('settings')['telega'] ?? [];
+            return new Services\Telega($settings, $logger);
         };
 
         $container['template'] = function ($c) {
