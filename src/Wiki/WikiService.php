@@ -12,6 +12,7 @@ namespace Ufw1\Wiki;
 
 use Psr\Log\LoggerInterface;
 use Ufw1\Util;
+use Ufw1\Errors\Forbidden;
 use Ufw1\Services\NodeRepository;
 
 class WikiService
@@ -41,7 +42,7 @@ class WikiService
     public function updatePage(string $name, string $source, array $user, string $section = null): array
     {
         if (!$this->canEditPages($user)) {
-            throw new Errors\Forbidden();
+            throw new Forbidden();
         }
 
         if (!($node = $this->getPageByName($name))) {
