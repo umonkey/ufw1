@@ -1,0 +1,277 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Create a new action with all related files.
+ **/
+
+declare(strict_types=1);
+
+
+$actionTemplate = <<<'EOF'
+<?php
+
+/**
+ * Some action.
+ **/
+
+declare(strict_types=1);
+
+namespace Ufw1\{{ns}}\Actions;
+
+use Slim\Http\Request;
+use Slim\Http\Response;
+use Ufw1\AbstractAction;
+use Ufw1\Services\AuthService;
+use Ufw1\Services\Database;
+use Ufw1\{{ns}}\Responders\{{responderClass}};
+use Ufw1\{{ns}}\{{domain}};
+
+class {{actionClass}} extends AbstractAction
+{
+    /**
+     * @var {{domain}}
+     **/
+    protected $domain;
+
+    /**
+     * @var {{responderClass}}
+     **/
+    protected $responder;
+
+    /**
+     * @var Database
+     **/
+    protected $db;
+
+    /**
+     * @var AuthService
+     **/
+    protected $auth;
+
+    public function __construct({{domain}} $domain, {{responderClass}} $responder, AuthService $auth, Database $db)
+    {
+        $this->domain = $domain;
+        $this->responder = $responder;
+        $this->auth = $auth;
+        $this->db = $db;
+    }
+
+    public function __invoke(Request $request, Response $response, array $args): Response
+    {
+        $this->db->beginTransaction();
+
+        // (1) Collect input data.
+        $data = $request->getParams();
+        $user = $this->auth->getUser($request);
+
+        // (2) Process data.
+        $responseData = $this->domain->{{actionCode}}($data, $user);
+
+        // (3) Show response.
+        $this->addCommonData($request, $responseData);
+        $response = $this->responder->getResponse($response, $responseData);
+
+        if ($response->getStatusCode() == 200) {
+            $this->db->commit();
+        }
+
+        return $response;
+    }
+}
+EOF;
+
+
+$responderTemplate = <<<'EOF'
+<?php
+
+/**
+ * Display results of {{actionClass}}.
+ **/
+
+declare(strict_types=1);
+
+namespace Ufw1\{{ns}}\Responders;
+
+use Slim\Http\Response;
+use Ufw1\AbstractResponder;
+use Ufw1\Services\Template;
+
+class {{responderClass}} extends AbstractResponder
+{
+    /**
+     * @var Template;
+     **/
+    protected $template;
+
+    public function __construct(Template $template)
+    {
+        $this->template = $template;
+    }
+
+    public function getResponse(Response $response, array $responseData): Response
+    {
+        if ($common = $this->getCommonResponse($response, $responseData)) {
+            return $common;
+        }
+
+        $templateNames = $this->getTemplateNames($responseData);
+        $html = $this->template->render($templateNames, $responseData['response']);
+
+        $response->getBody()->write($html);
+        return $response->withHeader('content-type', 'text/html');
+    }
+
+    protected function getTemplateNames(array $responseData): array
+    {
+        return [
+            "pages/{{moduleCode}}-{{actionCode}}.twig",
+        ];
+    }
+}
+EOF;
+
+
+$testTemplate = <<<'EOF'
+<?php
+
+/**
+ * Test what's related to the {{actionCode}} action.
+ **/
+
+namespace Ufw1\{{ns}}\Tests;
+
+use Slim\Http\Response;
+use Ufw1\AbstractTest;
+use Ufw1\{{ns}}\Actions\{{actionClass}};
+use Ufw1\{{ns}}\Responders\{{responderClass}};
+use Ufw1\{{ns}}\{{domain}};
+
+class {{actionClass}}Tests extends AbstractTest
+{
+    /**
+     * Make sure that nonymous access works well.
+     **/
+    public function testAnonymousAccess(): void
+    {
+        $user = $this->getNobody();
+        $res = $this->getDomain()->{{actionCode}}($user);
+        $this->assertError(403, $res);
+    }
+
+    /**
+     * Make sure that user access works well.
+     **/
+    public function testUserAccess(): void
+    {
+        $user = $this->getEditor();
+        $res = $this->getDomain()->{{actionCode}}($user);
+        $this->assertResponse($res);
+    }
+
+    public function testAdminAccess(): void
+    {
+        $user = $this->getAdmin();
+        $res = $this->getDomain()->{{actionCode}}($user);
+        $this->assertResponse($res);
+    }
+
+    public function testResponder(): void
+    {
+        $responder = $this->getResponder();
+        $this->checkResponderBasics($responder);
+        // $this->checkJsonResponderBasics($responder);
+    }
+
+    protected function getDomain(): {{domain}}
+    {
+        $domain = $this->getClassInstance({{domain}}::class);
+        return $domain;
+    }
+
+    protected function getResponder(): {{responderClass}}
+    {
+        $responder = $this->getClassInstance({{responderClass}}::class);
+        return $responder;
+    }
+}
+EOF;
+
+
+if (count($argv) != 3) {
+    printf("Usage: ufw-add-action NameSpace ActionName\n");
+    exit(1);
+}
+
+$args = get_args($argv[1], $argv[2]);
+
+write_file($args['actionFile'], $actionTemplate, $args);
+write_file($args['responderFile'], $responderTemplate, $args);
+write_file($args['testFile'], $testTemplate, $args);
+
+$command = '/usr/bin/vim';
+$args = [$args['actionFile'], $args['responderFile'], $args['testFile']];
+
+pcntl_exec($command, $args);
+
+
+function get_args(string $ns, string $actionClass): array
+{
+    if ('Action' !== substr($actionClass, -6)) {
+        printf("Bad action name: must end with Action, e.g.: SomeAction\n");
+        exit(1);
+    }
+
+    $res = [
+        'ns' => $ns,
+        'actionClass' => $actionClass,
+        'actionCode' => null,
+        'responderClass' => null,
+        'domain' => null,
+        'moduleCode' => null,
+    ];
+
+    $tmp = substr($res['actionClass'], 0, -6);
+    $res['actionCode'] = mb_strtolower(mb_substr($tmp, 0, 1)) . mb_substr($tmp, 1);
+
+    $res['responderClass'] = mb_substr($res['actionClass'], 0, -6) . 'Responder';
+
+    $tmp = explode('\\', $res['ns']);
+    $res['domain'] = array_pop($tmp) . 'Domain';
+
+    $res['actionFile'] = sprintf("src/%s/Actions/%s.php",
+        str_replace('\\', '/', $res['ns']), $res['actionClass']);
+
+    $res['responderFile'] = sprintf("src/%s/Responders/%s.php",
+        str_replace('\\', '/', $res['ns']), $res['responderClass']);
+
+    $res['testFile'] = sprintf("src/%s/Tests/%sTests.php",
+        str_replace('\\', '/', $res['ns']), $res['actionClass']);
+
+    $parts = explode('\\', $ns);
+    $res['moduleCode'] = mb_strtolower(array_pop($parts));
+
+    return $res;
+}
+
+
+function write_file(string $path, string $template, array $args): void
+{
+    if (file_exists($path)) {
+        printf("%s -- exists already\n", $path);
+        return;
+    }
+
+    foreach ($args as $k => $v) {
+        $src = '{{' . $k . '}}';
+        $template = str_replace($src, $v, $template);
+    }
+
+    $dir = dirname($path);
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+
+    file_put_contents($path, $template);
+    printf("%s -- created\n", $path);
+}
