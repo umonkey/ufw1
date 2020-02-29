@@ -10,7 +10,7 @@ use Slim\Http\Response;
 use Ufw1\AbstractTest;
 use Ufw1\Accounts\Actions\ProfileAction;
 use Ufw1\Accounts\Responders\ProfileResponder;
-use Ufw1\Accounts\AccountsDomain;
+use Ufw1\Accounts\Accounts;
 
 class ProfileActionTests extends AbstractTest
 {
@@ -48,9 +48,9 @@ class ProfileActionTests extends AbstractTest
         // $this->checkJsonResponderBasics($responder);
     }
 
-    protected function getDomain(): AccountsDomain
+    protected function getDomain(): Accounts
     {
-        $domain = $this->getClassInstance(AccountsDomain::class);
+        $domain = $this->getClassInstance(Accounts::class);
         return $domain;
     }
 

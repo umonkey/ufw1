@@ -6,7 +6,7 @@ use Ufw1\AbstractDomain;
 use Ufw1\Services\NodeRepository;
 use Ufw1\Services\Database;
 
-class AccountsDomain extends AbstractDomain
+class Accounts extends AbstractDomain
 {
     /**
      * @var Database

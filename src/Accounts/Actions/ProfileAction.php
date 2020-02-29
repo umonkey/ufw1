@@ -14,12 +14,12 @@ use Ufw1\AbstractAction;
 use Ufw1\Services\AuthService;
 use Ufw1\Services\Database;
 use Ufw1\Accounts\Responders\ProfileResponder;
-use Ufw1\Accounts\AccountsDomain;
+use Ufw1\Accounts\Accounts;
 
 class ProfileAction extends AbstractAction
 {
     /**
-     * @var AccountsDomain
+     * @var Accounts
      **/
     protected $domain;
 
@@ -33,7 +33,7 @@ class ProfileAction extends AbstractAction
      **/
     protected $auth;
 
-    public function __construct(AccountsDomain $domain, ProfileResponder $responder, AuthService $auth)
+    public function __construct(Accounts $domain, ProfileResponder $responder, AuthService $auth)
     {
         $this->domain = $domain;
         $this->responder = $responder;

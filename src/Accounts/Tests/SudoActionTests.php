@@ -10,7 +10,7 @@ use Slim\Http\Response;
 use Ufw1\AbstractTest;
 use Ufw1\Accounts\Actions\SudoAction;
 use Ufw1\Accounts\Responders\SudoResponder;
-use Ufw1\Accounts\AccountsDomain;
+use Ufw1\Accounts\Accounts;
 
 class SudoActionTests extends AbstractTest
 {
@@ -75,9 +75,9 @@ class SudoActionTests extends AbstractTest
         // $this->checkJsonResponderBasics($responder);
     }
 
-    protected function getDomain(): AccountsDomain
+    protected function getDomain(): Accounts
     {
-        $domain = $this->getClassInstance(AccountsDomain::class);
+        $domain = $this->getClassInstance(Accounts::class);
         return $domain;
     }
 

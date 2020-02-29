@@ -14,12 +14,12 @@ use Ufw1\AbstractAction;
 use Ufw1\Services\AuthService;
 use Ufw1\Services\Database;
 use Ufw1\Accounts\Responders\SudoResponder;
-use Ufw1\Accounts\AccountsDomain;
+use Ufw1\Accounts\Accounts;
 
 class SudoAction extends AbstractAction
 {
     /**
-     * @var AccountsDomain
+     * @var Accounts
      **/
     protected $domain;
 
@@ -38,7 +38,7 @@ class SudoAction extends AbstractAction
      **/
     protected $auth;
 
-    public function __construct(AccountsDomain $domain, SudoResponder $responder, AuthService $auth, Database $db)
+    public function __construct(Accounts $domain, SudoResponder $responder, AuthService $auth, Database $db)
     {
         $this->domain = $domain;
         $this->responder = $responder;
