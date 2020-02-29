@@ -33,6 +33,7 @@ class TaskQueue
     {
         $this->database = $database;
         $this->logger = $logger;
+        $this->settings = $settings;
     }
 
     public function add(string $action, array $data = [], int $priority = 0): int
@@ -57,8 +58,8 @@ class TaskQueue
             $this->ping = true;
 
             $settings = $this->settings;
-            if (!empty($settings['taskq']['ping_url'])) {
-                $url = $settings['taskq']['ping_url'];
+            if (!empty($settings['ping_url'])) {
+                $url = $settings['ping_url'];
                 @file_get_contents($url);
 
                 $logger->info('taskq: ping sent to {url}', [
