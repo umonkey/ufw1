@@ -237,7 +237,7 @@ function get_args(string $ns, string $actionClass): array
     $res['responderClass'] = mb_substr($res['actionClass'], 0, -6) . 'Responder';
 
     $tmp = explode('\\', $res['ns']);
-    $res['domain'] = array_pop($tmp) . 'Domain';
+    $res['domain'] = array_pop($tmp);
 
     $res['actionFile'] = sprintf("src/%s/Actions/%s.php",
         str_replace('\\', '/', $res['ns']), $res['actionClass']);
