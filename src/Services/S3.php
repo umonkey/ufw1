@@ -370,7 +370,7 @@ class S3
         ksort($headers);
         $CanonicalHeaders = "";
         foreach ($headers as $k => $v) {
-            $CanonicalHeaders .= strtolower($k) . ":" . trim($v) . "\n";
+            $CanonicalHeaders .= strtolower($k) . ":" . trim(strval($v)) . "\n";
         }
 
         $SignedHeaders = array();
@@ -540,7 +540,10 @@ class S3
             return $node;
         }
 
-        $lstorage = $this->settings["files"]["path"] ?? $_SERVER['DOCUMENT_ROOT'] . '/../data/files';
+        $lstorage = $this->settings['local_storage'] ?? null;
+        if (empty($lstorage)) {
+            throw new \RuntimeException('S3: local storage not set');
+        }
 
         $unlink = [];
 
@@ -611,8 +614,12 @@ class S3
     {
         if (!empty($payload['files'])) {
             foreach ($payload['files'] as $src) {
-                unlink($src);
-                $this->logger->info('s3: deleted local file {0}', [$src]);
+                if (file_exists($src)) {
+                    unlink($src);
+                    $this->logger->info('s3: deleted local file {0}', [$src]);
+                } else {
+                    $this->logger->info('s3: local file {0} already deleted.', [$src]);
+                }
             }
         }
     }
@@ -631,7 +638,7 @@ class S3
             $st = $this->settings['auto_upload'];
         }
 
-        $node = $this->node->get($id);
+        $node = $this->node->get((int)$id);
         if (!empty($node)) {
             $this->uploadNodeFiles($node);
         }

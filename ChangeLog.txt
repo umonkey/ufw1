@@ -2,6 +2,8 @@
 - Wiki: fixed template errors.
 - Wiki: fixed error reporting.
 - bin: added ufw-add-action.
+- TaskQ: fixed settings issues.
+- S3: fixed upload issues.
 
 2020-02-27:
 - Search: fixed wiki interaction.
