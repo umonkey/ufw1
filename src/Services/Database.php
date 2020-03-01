@@ -100,6 +100,11 @@ class Database
         $this->connect()->beginTransaction();
     }
 
+    public function isTransactionActive(): bool
+    {
+        return $this->connect()->inTransaction();
+    }
+
     public function commit(): void
     {
         $this->connect()->commit();

@@ -18,8 +18,11 @@ class ErrorController extends CommonHandler
     public function __invoke(Request $request, Response $response, array $args): Response
     {
         $e = $args['exception'];
-
         $data = $this->getTemplateData($request, $e);
+
+        if ($this->db->isTransactionActive()) {
+            $this->db->rollback();
+        }
 
         if ($e instanceof \Ufw1\Errors\Unauthorized) {
             $templates = ['errors/unauthorized.twig', 'errors/401.twig', 'errors/default.twig'];
@@ -38,9 +41,8 @@ class ErrorController extends CommonHandler
         } else {
             $templates = ['errors/other.twig', 'errors/default.twig'];
             $data['status'] = 500;
+            $this->logError($e, $request);
         }
-
-        $this->notify($data);
 
         if ($this->isXHR($request)) {
             return $response->withJSON([
@@ -51,6 +53,12 @@ class ErrorController extends CommonHandler
         }
 
         try {
+            $nodeId = $this->settings['error_nodes'][$data['status']] ?? null;
+            if ($nodeId !== null) {
+                if ($node = $this->node->get((int)$nodeId)) {
+                    $data['node'] = $node;
+                }
+            }
             $response = $this->render($request, $templates, $data);
             return $response->withStatus($data['status']);
         } catch (Throwable $e) {
@@ -133,18 +141,52 @@ class ErrorController extends CommonHandler
     }
 
     /**
-     * Notify website admin about errors.
+     * Save error information somewhere.
      *
-     * @param array $data Error information.
+     * Cannot save it in the database, because the transaction is about to be rolled back.
      **/
-    private function notify(array $data): void
+    protected function logError(Throwable $e, Request $request): void
     {
-        if ($data['status'] >= 500) {
-            $this->logger->error('exception: {class}: {message}, stack: {stack}', $data['e']);
+        $headers = [
+            'params' => $request->getParams(),
+            'cookies' => $request->getCookieParams(),
+            'server' => $request->getServerParams(),
+        ];
 
-            $this->taskq->add('telega', [
-                'message' => "Error: {$data['e']['class']}: {$data['e']['message']}\n{$data['e']['stack']}",
+        $row = [
+            'date' => strftime('%Y-%m-%d %H:%M:%S'),
+            'class' => get_class($e),
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'stack' => $this->getExceptionStack($e, $request),
+            'headers' => serialize($headers),
+            'read' => 0,
+        ];
+
+        try {
+            $id = $this->db->insert('errors', $row);
+            $url = $request->getUri()->getBaseUrl() . '/admin/errors/' . $id;
+        } catch (\PDOException $e) {
+            $this->logger->error('ERROR logging exception to database: {row}', [
+                'row' => $row,
             ]);
+
+            $id = $url = null;
         }
+
+
+        $this->logger->error('Exception {class}: {message} -- at {file} line {line}, logged, id={id}, see it at {url}', [
+            'class' => get_class($e),
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'id' => $id,
+            'url' => $url,
+        ]);
+
+        $this->taskq->add('telega', [
+            'message' => sprintf("New %s at %s\n%s", get_class($e), $request->getUri()->getHost(), $url),
+        ]);
     }
 }
