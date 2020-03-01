@@ -6,7 +6,7 @@ class AddRewriteTable extends AbstractMigration
 {
     public function change()
     {
-        $this->table('rewrite', ['id' => false, 'primary_key' => 'src'])
+        $this->table('rewrite')
              ->addColumn('src', 'string')
              ->addColumn('dst', 'string')
              ->save();
