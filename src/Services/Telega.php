@@ -45,17 +45,17 @@ class Telega
 
         $url = sprintf(
             'https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s',
-            $st['telega']['bot_id'],
-            $st['telega']['chat_id'],
+            $st['bot_id'],
+            $st['chat_id'],
             urlencode($text)
         );
 
         $ch = curl_init();
         curl_setopt($ch, \CURLOPT_URL, $url);
 
-        if (isset($st['telega']['proxy'])) {
+        if (isset($st['proxy'])) {
             curl_setopt($ch, \CURLOPT_PROXYTYPE, \CURLPROXY_SOCKS5);
-            curl_setopt($ch, \CURLOPT_PROXY, $st['telega']['proxy']);
+            curl_setopt($ch, \CURLOPT_PROXY, $st['proxy']);
         }
 
         $res = curl_exec($ch);
