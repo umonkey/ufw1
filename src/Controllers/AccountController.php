@@ -212,7 +212,7 @@ class AccountController extends CommonHandler
 
         $node = $this->node->save($node);
 
-        $this->auth->push((int)$node['id']);
+        $this->auth->push($request, (int)$node['id']);
 
         $this->notifyAdmin($request, $node);
 
@@ -265,7 +265,6 @@ class AccountController extends CommonHandler
         $app->get('/login/vk', $class . ':onLoginVK');
         $app->any('/logout', $class . ':onLogout');
         $app->get('/logout/bye', $class . ':onLogoutComplete');
-        $app->any('/profile', 'Ufw1\Accounts\Actions\ProfileAction');
         $app->any('/register', $class . ':onRegister');
     }
 }
