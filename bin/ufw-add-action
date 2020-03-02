@@ -197,9 +197,24 @@ class {{actionClass}}Tests extends AbstractTest
 }
 EOF;
 
+$usage = <<<'EOF'
+Ufw1 action scaffold tool.  You name the action, the tool creates files: action, responder and tests.
+
+Example usage: bin/ufw-add-action Blog CommentAction
+
+This command would create the following classes and files:
+
+1. App\Blog\Actions\CommentAction       -- src/Blog/Actions/CommentAction.php
+2. App\Blog\Responders\CommentResponder -- src/Blog/Responders/CommentResponder.php
+3. App\Blog\Tests\CommentActionTests    -- src/Blog/Tests/CommentActionTests.php
+
+The action would also call App\Blog\Blog::comment(), which you need to add on your own.
+
+EOF;
+
 
 if (count($argv) != 3) {
-    printf("Usage: ufw-add-action NameSpace ActionName\n");
+    printf("%s\n", $usage);
     exit(1);
 }
 
