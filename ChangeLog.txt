@@ -1,5 +1,6 @@
 2020-03-01:
 - Log exceptions to the database.
+- Http request faking for tests.
 
 2020-02-29:
 - Wiki: fixed template errors.
