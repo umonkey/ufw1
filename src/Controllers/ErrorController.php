@@ -186,7 +186,7 @@ class ErrorController extends CommonHandler
         ]);
 
         $this->taskq->add('telega', [
-            'message' => sprintf("New %s at %s\n%s", get_class($e), $request->getUri()->getHost(), $url),
+            'message' => sprintf("New %s at %s\n%s\n%s", get_class($e), $request->getUri()->getHost(), $e->getMessage(), $url),
         ]);
     }
 }
