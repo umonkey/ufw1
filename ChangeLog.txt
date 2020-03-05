@@ -2,6 +2,7 @@
 
 - Tests: added AbstractTest::success().
 - S3: lazy settings validation, upon request.
+- Accounts: improved login.
 
 2020-03-01:
 - Log exceptions to the database.
