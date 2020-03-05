@@ -354,11 +354,10 @@ class AdminController extends CommonHandler
         $this->auth->requireAdmin($request);
 
         $s3 = $this->container->get("S3");
-        $files = $s3->getFileList();
         $config = $this->container->get("settings")["S3"];
 
         return $this->render($request, "admin/s3.twig", [
-            "files" => $files,
+            // "files" => $files,
             "config" => $config,
         ]);
     }

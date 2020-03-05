@@ -4,6 +4,7 @@
 - S3: lazy settings validation, upon request.
 - Accounts: improved login.
 - Sessions: uncouple from request.
+- Errors: a page to display saved errors, /admin/errors/N.
 
 2020-03-01:
 - Log exceptions to the database.
