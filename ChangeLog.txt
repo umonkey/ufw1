@@ -1,3 +1,7 @@
+2020-03-05:
+
+- Tests: added AbstractTest::success().
+
 2020-03-01:
 - Log exceptions to the database.
 - Http request faking for tests.

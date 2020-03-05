@@ -24,6 +24,13 @@ abstract class AbstractDomain
         return $this->fail(404, 'Not found.');
     }
 
+    protected function success(array $data): array
+    {
+        return [
+            'response' => $data,
+        ];
+    }
+
     protected function isAdmin(?array $user): bool
     {
         if (!$this->isUser($user)) {
