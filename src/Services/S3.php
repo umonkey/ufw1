@@ -10,6 +10,7 @@ namespace Ufw1\Services;
 
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 class S3
 {
@@ -36,28 +37,14 @@ class S3
 
     public function __construct(array $settings, LoggerInterface $logger, NodeRepository $node, TaskQueue $taskq)
     {
-        if (empty($settings)) {
-            throw new \RuntimeException("S3 not configured, at all");
-        }
-
-        $keys = ['bucket', 'bucket_region', 'acl', 'secret_key', 'access_key', 'endpoint'];
-        foreach ($keys as $key) {
-            if (empty($settings[$key])) {
-                throw new \RuntimeException("S3 not configured: {$key} not set");
-            }
-        }
-
         $settings = array_replace([
             'service' => 's3',
             'debug' => true,
         ], $settings);
 
         $this->settings = $settings;
-
         $this->logger = $logger;
-
         $this->node = $node;
-
         $this->taskq = $taskq;
     }
 
@@ -130,6 +117,8 @@ class S3
 
     public function putObjectBody($dst, $data, $props = [])
     {
+        $this->validateSettings();
+
         if ($dst[0] != "/") {
             throw new \RuntimeException("remote path must be absolute");
         }
@@ -656,6 +645,16 @@ class S3
             $this->logger->info('S3: refusing to auto-upload node {id}: disabled.', [
                 'id' => $node['id'],
             ]);
+        }
+    }
+
+    protected function validateSettings(): void
+    {
+        $keys = ['bucket', 'bucket_region', 'acl', 'secret_key', 'access_key', 'endpoint'];
+        foreach ($keys as $key) {
+            if (empty($this->settings[$key])) {
+                throw new RuntimeException("S3 not configured: {$key} not set");
+            }
         }
     }
 }
