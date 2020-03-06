@@ -2,33 +2,33 @@
 
 namespace Ufw1;
 
+use Ufw1\ResponsePayload;
+
 abstract class AbstractDomain
 {
-    protected function fail(int $code, string $message): array
+    protected function fail(int $code, string $message, array $props = []): ResponsePayload
     {
-        return [
-            'error' => [
-                'code' => $code,
-                'message' => $message,
-            ],
-        ];
+        return ResponsePayload::error($code, $message, $props);
     }
 
-    protected function forbidden(): array
+    protected function forbidden(): ResponsePayload
     {
         return $this->fail(403, 'Forbidden.');
     }
 
-    protected function notfound(): array
+    protected function notfound(): ResponsePayload
     {
         return $this->fail(404, 'Not found.');
     }
 
-    protected function success(array $data): array
+    protected function redirect(string $target, int $status = 302): ResponsePayload
     {
-        return [
-            'response' => $data,
-        ];
+        return ResponsePayload::redirect($target, $status);
+    }
+
+    protected function success(array $data): ResponsePayload
+    {
+        return ResponsePayload::data($data);
     }
 
     protected function isAdmin(?array $user): bool

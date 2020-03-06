@@ -9,10 +9,11 @@ declare(strict_types=1);
 namespace Ufw1;
 
 use Slim\Http\Response;
+use Ufw1\ResponsePayload;
 
 abstract class AbstractResponder
 {
-    public function getCommonResponse(Response $response, array $responseData): ?Response
+    public function getCommonResponse(Response $response, ResponsePayload $responseData): ?Response
     {
         if (isset($responseData['redirect'])) {
             return $response->withRedirect($responseData['redirect']);
@@ -36,7 +37,7 @@ abstract class AbstractResponder
         return null;
     }
 
-    public function getCommonJsonResponse(Response $response, array $responseData): ?Response
+    public function getCommonJsonResponse(Response $response, ResponsePayload $responseData): ?Response
     {
         if (isset($responseData['redirect'])) {
             return $response->withJSON([

@@ -10,6 +10,7 @@ namespace Ufw1\Wiki\Responders;
 
 use Slim\Http\Response;
 use Ufw1\AbstractResponder;
+use Ufw1\ResponsePayload;
 use Ufw1\Services\Template;
 
 class ShowPageResponder extends AbstractResponder
@@ -24,7 +25,7 @@ class ShowPageResponder extends AbstractResponder
         $this->template = $template;
     }
 
-    public function getResponse(Response $response, array $responseData): Response
+    public function getResponse(Response $response, ResponsePayload $responseData): Response
     {
         if (404 === ($responseData['error']['code'] ?? null)) {
             return $this->getNotFound($response, $responseData['error']);
@@ -41,7 +42,7 @@ class ShowPageResponder extends AbstractResponder
         return $response->withHeader('content-type', 'text/html');
     }
 
-    protected function getTemplateNames(array $responseData): array
+    protected function getTemplateNames(ResponsePayload $responseData): array
     {
         $node = $responseData['response']['node'];
 

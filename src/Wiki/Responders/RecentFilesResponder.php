@@ -10,6 +10,7 @@ namespace Ufw1\Wiki\Responders;
 
 use Slim\Http\Response;
 use Ufw1\AbstractResponder;
+use Ufw1\ResponsePayload;
 use Ufw1\Services\Template;
 
 class RecentFilesResponder extends AbstractResponder
@@ -24,7 +25,7 @@ class RecentFilesResponder extends AbstractResponder
         $this->template = $template;
     }
 
-    public function getResponse(Response $response, array $responseData): Response
+    public function getResponse(Response $response, ResponsePayload $responseData): Response
     {
         if ($error = $this->getCommonJsonResponse($response, $responseData)) {
             return $error;

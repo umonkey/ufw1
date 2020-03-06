@@ -8,6 +8,7 @@ namespace Ufw1\Accounts\Tests;
 
 use Slim\Http\Response;
 use Ufw1\AbstractTest;
+use Ufw1\ResponsePayload;
 use Ufw1\Accounts\Actions\LoginAction;
 use Ufw1\Accounts\Responders\LoginResponder;
 use Ufw1\Accounts\Accounts;
@@ -71,12 +72,10 @@ class LoginActionTests extends AbstractTest
         $responder = $this->getResponder();
         $this->checkJsonResponderBasics($responder);
 
-        $response = $responder->getResponse(new Response(), [
-            'response' => [
-                'sessionId' => 'foobar_123',
-                'redirect' => '/profile',
-            ],
-        ]);
+        $response = $responder->getResponse(new Response(), ResponsePayload::data([
+            'sessionId' => 'foobar_123',
+            'redirect' => '/profile',
+        ]));
 
         $this->assertEquals(200, $response->getStatusCode());
 

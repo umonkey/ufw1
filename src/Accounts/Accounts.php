@@ -3,6 +3,7 @@
 namespace Ufw1\Accounts;
 
 use Ufw1\AbstractDomain;
+use Ufw1\ResponsePayload;
 use Ufw1\Services\NodeRepository;
 use Ufw1\Services\Database;
 use Ufw1\Session\Session;
@@ -40,7 +41,7 @@ class Accounts extends AbstractDomain
      *
      * @return array Response data.
      **/
-    public function logIn(?string $sessionId, string $email, string $password): array
+    public function logIn(?string $sessionId, string $email, string $password): ResponsePayload
     {
         $nodes = $this->node->where('type = \'user\' AND deleted = 0 AND id IN (SELECT id FROM nodes_user_idx WHERE email = ?)', [trim($email)]);
 
@@ -72,20 +73,18 @@ class Accounts extends AbstractDomain
         ]);
     }
 
-    public function profile(?array $user): array
+    public function profile(?array $user): ResponsePayload
     {
         if (null === $user) {
             return $this->forbidden();
         }
 
-        return [
-            'response' => [
-                'user' => $user,
-            ],
-        ];
+        return $this->success([
+            'user' => $user,
+        ]);
     }
 
-    public function sudo(int $userId, string $sessionId, ?array $user): array
+    public function sudo(int $userId, string $sessionId, ?array $user): ResponsePayload
     {
         if (!$this->isAdmin($user)) {
             return $this->forbidden();
@@ -111,8 +110,6 @@ class Accounts extends AbstractDomain
             'id' => $sessionId,
         ]);
 
-        return [
-            'redirect' => '/account',
-        ];
+        return $this->redirect('/account');
     }
 }

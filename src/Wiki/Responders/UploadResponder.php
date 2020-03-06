@@ -10,11 +10,12 @@ namespace Ufw1\Wiki\Responders;
 
 use Slim\Http\Response;
 use Ufw1\AbstractResponder;
+use Ufw1\ResponsePayload;
 use Ufw1\Services\Template;
 
 class UploadResponder extends AbstractResponder
 {
-    public function getResponse(Response $response, array $responseData): Response
+    public function getResponse(Response $response, ResponsePayload $responseData): Response
     {
         if ($common = $this->getCommonJsonResponse($response, $responseData)) {
             return $common;

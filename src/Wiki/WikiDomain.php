@@ -15,13 +15,15 @@ declare(strict_types=1);
 namespace Ufw1\Wiki;
 
 use Slim\Http\UploadedFile;
+use Ufw1\AbstractDomain;
+use Ufw1\ResponsePayload;
+use Ufw1\Services\Database;
+use Ufw1\Services\FileRepository;
 use Ufw1\Services\Logger;
 use Ufw1\Services\NodeRepository;
 use Ufw1\Services\TaskQueue;
-use Ufw1\Services\Database;
-use Ufw1\Services\FileRepository;
 
-class WikiDomain
+class WikiDomain extends AbstractDomain
 {
     /**
      * @var array Wiki settings.
@@ -77,14 +79,12 @@ class WikiDomain
      *
      * @return array Response data: redirect, error or response.
      **/
-    public function getShowPageByName(?string $pageName, ?array $user = null): array
+    public function getShowPageByName(?string $pageName, ?array $user = null): ResponsePayload
     {
         if (null === $pageName) {
             $homePage = $this->settings['home_page'] ?? 'Welcome';
 
-            return [
-                'redirect' => $this->getPageLink($homePage),
-            ];
+            return $this->redirect($this->getPageLink($homePage));
         }
 
         $node = $this->wiki->getPageByName($pageName);
@@ -108,9 +108,7 @@ class WikiDomain
             $response['edit_link'] = '/wiki/edit?name=' . urlencode($node['name']);
         }
 
-        return [
-            'response' => $response,
-        ];
+        return $this->success($response);
     }
 
     /**
@@ -121,7 +119,7 @@ class WikiDomain
      *
      * @return array Response data.
      **/
-    public function getPageEditorData(string $pageName, ?string $sectionName, ?array $user): array
+    public function getPageEditorData(string $pageName, ?string $sectionName, ?array $user): ResponsePayload
     {
         if (empty($pageName)) {
             return $this->getNotFound($pageName, $user);
@@ -134,14 +132,12 @@ class WikiDomain
 
         $source = $this->wiki->getPageSource($pageName, $sectionName);
 
-        return [
-            'response' => [
-                'page_name' => $pageName,
-                'page_section' => $sectionName,
-                'page_source' => $source,
-                'wiki_buttons' => $this->settings['buttons'],
-            ],
-        ];
+        return $this->success([
+            'page_name' => $pageName,
+            'page_section' => $sectionName,
+            'page_source' => $source,
+            'wiki_buttons' => $this->settings['buttons'],
+        ]);
     }
 
     /**
@@ -156,7 +152,7 @@ class WikiDomain
      *
      * @return array Response data.
      **/
-    public function updatePage(string $pageName, ?string $sectionName, string $source, ?array $user): array
+    public function updatePage(string $pageName, ?string $sectionName, string $source, ?array $user): ResponsePayload
     {
         // Validate input.
         if (empty($pageName)) {
@@ -172,15 +168,13 @@ class WikiDomain
         $this->wiki->updatePage($pageName, $source, $user, $sectionName);
         $this->logPageEdit($pageName, $sectionName, $user);
 
-        return [
-            'redirect' => $this->getPageLink($pageName, $sectionName),
-        ];
+        return $this->redirect($this->getPageLink($pageName, $sectionName));
     }
 
     /**
      * List all wiki pages.
      **/
-    public function index(?string $sort, ?array $user): array
+    public function index(?string $sort, ?array $user): ResponsePayload
     {
         if ($error = $this->getReadError($user, null)) {
             return $error;
@@ -226,12 +220,10 @@ class WikiDomain
                 });
         }
 
-        return [
-            'response' => [
-                'pages' => $pages,
-                'user' => $user,
-            ],
-        ];
+        return $this->success([
+            'pages' => $pages,
+            'user' => $user,
+        ]);
     }
 
     /**
@@ -241,7 +233,7 @@ class WikiDomain
      *
      * TODO: add search.
      **/
-    public function recentFiles(?array $user): array
+    public function recentFiles(?array $user): ResponsePayload
     {
         if ($error = $this->getReadError($user, null)) {
             return $error;
@@ -267,18 +259,16 @@ class WikiDomain
             return $res;
         }, $files);
 
-        return [
-            'response' => [
-                'files' => $files,
-                'user' => $user,
-            ],
-        ];
+        return $this->success([
+            'files' => $files,
+            'user' => $user,
+        ]);
     }
 
     /**
      * Schedule reindex of all wiki pages.
      **/
-    public function reindex(?array $user): array
+    public function reindex(?array $user): ResponsePayload
     {
         if ($error = $this->getEditError($user, null)) {
             return $error;
@@ -291,15 +281,13 @@ class WikiDomain
             ]);
         }
 
-        return [
-            'redirect' => '/admin/taskq',
-        ];
+        return $this->redirect('/admin/taskq');
     }
 
     /**
      * Handle file upload.
      **/
-    public function upload(?string $link, ?array $files, ?array $user): array
+    public function upload(?string $link, ?array $files, ?array $user): ResponsePayload
     {
         if ($error = $this->getEditError($user, null)) {
             return $error;
@@ -321,12 +309,10 @@ class WikiDomain
             }
         }
 
-        return [
-            'response' => [
-                'message' => $errors ? 'Error saving some files.' : null,
-                'callback' => 'ufw_upload_callback',
-            ],
-        ];
+        return $this->success([
+            'message' => $errors ? 'Error saving some files.' : null,
+            'callback' => 'ufw_upload_callback',
+        ]);
     }
 
     /**
@@ -400,7 +386,7 @@ class WikiDomain
      *
      * @return ?array Error response.
      **/
-    protected function getEditError(?array $user, ?array $page = null): ?array
+    protected function getEditError(?array $user, ?array $page = null): ?ResponsePayload
     {
         if (!$this->userCanEditPage($user, null)) {
             if ($user === null) {
@@ -413,40 +399,31 @@ class WikiDomain
         return null;
     }
 
-    protected function getFailure(int $statusCode, string $message): array
+    protected function getFailure(int $statusCode, string $message): ResponsePayload
     {
-        return [
-            'error' => [
-                'code' => $statusCode,
-                'message' => $message,
-            ],
-        ];
+        return ResponsePayload::error($statusCode, $message);
     }
 
-    protected function getForbidden(): array
+    protected function getForbidden(): ResponsePayload
     {
         return $this->getFailure(403, 'Page access forbidden.');
     }
 
-    protected function getNotFound(?string $pageName, ?array $user): array
+    protected function getNotFound(?string $pageName, ?array $user): ResponsePayload
     {
         $canEdit = $this->userCanEditPage($user, null);
 
-        $res = [
-            'error' => [
-                'code' => 404,
-                'message' => 'Page not found',
-                'user' => $user,
-                'pageName' => $pageName,
-                'edit_link' => $canEdit ? '/wiki/edit?name=' . urlencode($pageName) : null,
-            ],
+        $props = [
+            'user' => $user,
+            'pageName' => $pageName,
+            'edit_link' => $canEdit ? '/wiki/edit?name=' . urlencode($pageName) : null,
         ];
 
         if ($pageName !== null) {
-            $res['error']['pageName'] = $pageName;
+            $props['pageName'] = $pageName;
         }
 
-        return $res;
+        return $this->fail(404, 'Page not found', $props);
     }
 
     protected function getPageKey(string $pageName): string
@@ -465,7 +442,7 @@ class WikiDomain
         return $link;
     }
 
-    protected function getReadError(?array $user, ?array $node): ?array
+    protected function getReadError(?array $user, ?array $node): ?ResponsePayload
     {
         if (!$this->userCanReadPage($user, $node)) {
             if ($user === null) {
@@ -511,7 +488,7 @@ class WikiDomain
         ], $settings);
     }
 
-    protected function getUnauthorized(): array
+    protected function getUnauthorized(): ResponsePayload
     {
         return $this->getFailure(401, 'You need to log in to access this page.');
     }

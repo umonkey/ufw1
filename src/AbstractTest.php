@@ -11,8 +11,9 @@ use Slim\Http\Environment;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\AbstractResponder;
+use Ufw1\ResponsePayload;
 
-class AbstractTest extends TestCase
+abstract class AbstractTest extends TestCase
 {
     protected $app;
 
@@ -31,30 +32,30 @@ class AbstractTest extends TestCase
         $this->container->db->rollback();
     }
 
-    protected function assertError(int $code, array $response): void
+    protected function assertError(int $code, ResponsePayload $response): void
     {
-        $this->assertFalse(empty($response['error']), 'MUST be an error');
+        $this->assertTrue($response->isError(), 'MUST be an error');
         $this->assertEquals($code, $response['error']['code'] ?? null, "MUST be an {$code} error");
-        $this->assertTrue(empty($response['redirect']), "MUST NOT redirect");
-        $this->assertTrue(empty($response['response']), "MUST NOT have response data");
+        $this->assertFalse($response->isRedirect(), "MUST NOT redirect");
+        $this->assertFalse($response->isOK(), "MUST NOT have response data");
     }
 
-    protected function assertRedirect(array $response, ?string $target = null): void
+    protected function assertRedirect(ResponsePayload $response, ?string $target = null): void
     {
-        $this->assertTrue(empty($response['error']), 'MUST NOT fail, MUST be a valid response');
-        $this->assertTrue(isset($response['redirect']), 'MUST redirect');
-        $this->assertTrue(empty($response['response']), 'MUST NOT return data');
+        $this->assertFalse($response->isError(), 'MUST NOT fail, MUST be a valid response');
+        $this->assertTrue($response->isRedirect(), 'MUST redirect');
+        $this->assertFalse($response->isOK(), 'MUST NOT return data');
 
         if (null !== $target) {
             $this->assertEquals($target, $response['redirect'], 'wrong redirect target');
         }
     }
 
-    protected function assertResponse(array $response): void
+    protected function assertResponse(ResponsePayload $response): void
     {
-        $this->assertTrue(empty($response['error']), 'MUST NOT fail, MUST be a valid response');
-        $this->assertTrue(empty($response['redirect']), 'MUST NOT redirect');
-        $this->assertTrue(isset($response['response']), 'MUST be a valid response');
+        $this->assertFalse($response->isError(), 'MUST NOT fail, MUST be a valid response');
+        $this->assertFalse($response->isRedirect(), 'MUST NOT redirect');
+        $this->assertTrue($response->isOK(), 'MUST be a valid response');
     }
 
     /**
@@ -100,9 +101,7 @@ class AbstractTest extends TestCase
     {
         // (1) Redirect.
 
-        $res = $responder->getResponse(new Response(), [
-            'redirect' => '/',
-        ]);
+        $res = $responder->getResponse(new Response(), ResponsePayload::redirect('/'));
 
         $this->assertTrue($res instanceof Response, 'MUST be an HTTP response');
         $this->assertEquals(200, $res->getStatusCode(), 'MUST redirect with a 302');
@@ -114,12 +113,7 @@ class AbstractTest extends TestCase
 
         // (2) Error 404.
 
-        $res = $responder->getResponse(new Response(), [
-            'error' => [
-                'code' => 404,
-                'message' => 'Not found.',
-            ],
-        ]);
+        $res = $responder->getResponse(new Response(), ResponsePayload::error(404, 'Not found.'));
 
         $this->assertTrue($res instanceof Response, 'MUST be an HTTP response');
         $this->assertEquals(200, $res->getStatusCode(), 'MUST redirect with a 302');
@@ -135,21 +129,14 @@ class AbstractTest extends TestCase
     {
         // (1) Redirect.
 
-        $res = $responder->getResponse(new Response(), [
-            'redirect' => '/',
-        ]);
+        $res = $responder->getResponse(new Response(), ResponsePayload::redirect('/'));
 
         $this->assertTrue($res instanceof Response, 'MUST be an HTTP response');
         $this->assertEquals(302, $res->getStatusCode(), 'MUST redirect with a 302');
 
         // (2) Error 404.
 
-        $res = $responder->getResponse(new Response(), [
-            'error' => [
-                'code' => 404,
-                'message' =>  'Not found.',
-            ],
-        ]);
+        $res = $responder->getResponse(new Response(), ResponsePayload::error(404, 'Not found.'));
 
         $this->assertTrue($res instanceof Response, 'MUST be an HTTP response');
         $this->assertEquals(404, $res->getStatusCode(), 'MUST fail with 404');

@@ -11,6 +11,7 @@
 namespace Ufw1\Tests;
 
 use Slim\Http\Response;
+use Ufw1\ResponsePayload;
 use Ufw1\Wiki\WikiDomain;
 use Ufw1\AbstractTest;
 
@@ -82,54 +83,36 @@ class WikiTests extends AbstractTest
         $responder = $this->getClassInstance('Ufw1\Wiki\Responders\ShowPageResponder');
 
         // (1) Unauthorized.
-        $response = $responder->getResponse(new Response(), [
-            'error' => [
-                'code' => 401,
-                'message' => 'Need to authorize.',
-            ],
-        ]);
+        $response = $responder->getResponse(new Response(), ResponsePayload::error(401, 'Need to authorize.'));
         $this->assertEquals(401, $response->getStatusCode(), 'MUST fail with 401.');
 
         // (2) Forbidden.
-        $response = $responder->getResponse(new Response(), [
-            'error' => [
-                'code' => 403,
-                'message' => 'Forbidden.',
-            ],
-        ]);
+        $response = $responder->getResponse(new Response(), ResponsePayload::error(403, 'Forbidden.'));
         $this->assertEquals(403, $response->getStatusCode(), 'MUST fail with 403.');
 
         // (3) Not found.
-        $response = $responder->getResponse(new Response(), [
-            'error' => [
-                'code' => 404,
-                'message' => 'Page not found.',
-                'pageName' => 'foobar',
-                'edit_link' => '/wiki/edit?name=foobar',
-            ],
-        ]);
+        $response = $responder->getResponse(new Response(), ResponsePayload::error(404, 'Not found.', [
+            'pageName' => 'foobar',
+            'edit_link' => '/wiki/edit?name=foobar',
+        ]));
         $this->assertEquals(404, $response->getStatusCode(), 'MUST fail with 403.');
 
         // (4) Redirect.
-        $response = $responder->getResponse(new Response(), [
-            'redirect' => '/wiki?name=Welcome',
-        ]);
+        $response = $responder->getResponse(new Response(), ResponsePayload::redirect('/wiki?name=Welcome'));
         $this->assertEquals(302, $response->getStatusCode(), 'MUST redirect.');
 
         // (5) OK.
-        $response = $responder->getResponse(new Response(), [
-            'response' => [
-                'node' => [
-                    'id' => 1,
-                    'created' => '2020-01-01 12:34:56',
-                    'source' => '',
-                ],
-                'page' => [
-                    'name' => 'foobar',
-                    'html' => '',
-                ],
+        $response = $responder->getResponse(new Response(), ResponsePayload::data([
+            'node' => [
+                'id' => 1,
+                'created' => '2020-01-01 12:34:56',
+                'source' => '',
             ],
-        ]);
+            'page' => [
+                'name' => 'foobar',
+                'html' => '',
+            ],
+        ]));
         $this->assertEquals(200, $response->getStatusCode(), 'MUST redirect.');
     }
 

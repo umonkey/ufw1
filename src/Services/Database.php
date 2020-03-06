@@ -15,6 +15,7 @@ namespace Ufw1\Services;
 
 use PDO;
 use PDOStatement;
+use RuntimeException;
 
 class Database
 {
@@ -34,6 +35,11 @@ class Database
     protected $conn;
 
     /**
+     * @var int
+     **/
+    protected $transactionLevel;
+
+    /**
      * Prepares the database connection.
      *
      * Does not actually connect.  This method is usually called during the application setup
@@ -45,8 +51,8 @@ class Database
     public function __construct(array $dsn)
     {
         $this->conn = null;
-
         $this->dsn = $dsn;
+        $this->transactionLevel = 0;
     }
 
     public function transact($callback)
@@ -97,21 +103,36 @@ class Database
 
     public function beginTransaction(): void
     {
-        $this->connect()->beginTransaction();
+        if ($this->transactionLevel === 0) {
+            $this->connect()->beginTransaction();
+        }
+
+        $this->transactionLevel++;
     }
 
     public function isTransactionActive(): bool
     {
-        return $this->connect()->inTransaction();
+        return $this->transactionLevel > 0;
     }
 
     public function commit(): void
     {
-        $this->connect()->commit();
+        if ($this->transactionLevel === 0) {
+            throw new RuntimeException('transaction not active');
+        } elseif ($this->transactionLevel === 1) {
+            $this->connect()->commit();
+        }
+
+        $this->transactionLevel--;
     }
 
     public function rollback(): void
     {
+        if ($this->transactionLevel === 0) {
+            throw new RuntimeException('transaction not active');
+        }
+
+        $this->transactionLevel = 0;
         $this->connect()->rollback();
     }
 

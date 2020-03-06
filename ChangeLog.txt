@@ -1,3 +1,7 @@
+2020-03-07:
+
+- Use ResponsePayload instead of arrays.
+
 2020-03-05:
 
 - Tests: added AbstractTest::success().

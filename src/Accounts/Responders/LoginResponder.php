@@ -11,6 +11,7 @@ namespace Ufw1\Accounts\Responders;
 use Slim\Http\Response;
 use Slim\Http\Cookies;
 use Ufw1\AbstractResponder;
+use Ufw1\ResponsePayload;
 use Ufw1\Services\Template;
 
 class LoginResponder extends AbstractResponder
@@ -19,7 +20,7 @@ class LoginResponder extends AbstractResponder
     {
     }
 
-    public function getResponse(Response $response, array $responseData): Response
+    public function getResponse(Response $response, ResponsePayload $responseData): Response
     {
         if (!empty($responseData['response']['sessionId']) and !empty($responseData['response']['redirect'])) {
             $data = json_encode([
