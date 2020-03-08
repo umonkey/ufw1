@@ -3,6 +3,7 @@
 - Forms: margin-bottom.
 - Tables: vertical-align.
 - bin/ufw-add-action: use ResponsePayload.
+- Errors admin UI.
 
 2020-03-07:
 

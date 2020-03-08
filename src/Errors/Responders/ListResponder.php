@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Display results of ShowErrorAction.
+ * Display results of ListAction.
  **/
 
 declare(strict_types=1);
@@ -13,7 +13,7 @@ use Ufw1\AbstractResponder;
 use Ufw1\ResponsePayload;
 use Ufw1\Services\Template;
 
-class ShowErrorResponder extends AbstractResponder
+class ListResponder extends AbstractResponder
 {
     /**
      * @var Template;
@@ -41,7 +41,7 @@ class ShowErrorResponder extends AbstractResponder
     protected function getTemplateNames(ResponsePayload $responseData): array
     {
         return [
-            "admin/errors-show.twig",
+            "admin/errors-list.twig",
         ];
     }
 }

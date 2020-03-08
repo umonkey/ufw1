@@ -30,6 +30,8 @@ class App extends \Slim\App
     public static function installAdmin(App $app): void
     {
         Controllers\AdminController::setupRoutes($app);
+        $app->get('/admin/errors', 'Ufw1\Errors\Actions\ListAction');
+        $app->post('/admin/errors/{id:[0-9]+}', 'Ufw1\Errors\Actions\UpdateAction');
         $app->get('/admin/errors/{id:[0-9]+}', 'Ufw1\Errors\Actions\ShowErrorAction');
     }
 
