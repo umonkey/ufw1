@@ -1,6 +1,7 @@
 2020-03-08:
 
-- CSS: forms have a bottom margin now.
+- Forms: margin-bottom.
+- Tables: vertical-align.
 
 2020-03-07:
 
