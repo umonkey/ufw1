@@ -196,14 +196,7 @@ class NodeRepository
             }
         }
 
-        switch ($row['type']) {
-            case 'user':
-                return new Entities\User($row);
-            case 'file':
-                return new Entities\File($row);
-            default:
-                return new Entities\Node($row);
-        }
+        return Node::fromArray($row);
     }
 
     protected function packNode(Node $row): array
