@@ -2,6 +2,7 @@
 
 - Forms: margin-bottom.
 - Tables: vertical-align.
+- bin/ufw-add-action: use ResponsePayload.
 
 2020-03-07:
 

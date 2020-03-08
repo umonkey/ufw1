@@ -66,13 +66,13 @@ class {{actionClass}} extends AbstractAction
         $user = $this->auth->getUser($request);
 
         // (2) Process data.
-        $responseData = $this->domain->{{actionCode}}($data, $user);
+        $responseData = $this->domain->{{actionCode}}Action($data, $user);
 
         // (3) Show response.
         $this->addCommonData($request, $responseData);
         $response = $this->responder->getResponse($response, $responseData);
 
-        if ($response->getStatusCode() == 200) {
+        if (!$responseData->isError()) {
             $this->db->commit();
         }
 
@@ -95,6 +95,7 @@ namespace Ufw1\{{ns}}\Responders;
 
 use Slim\Http\Response;
 use Ufw1\AbstractResponder;
+use Ufw1\ResponsePayload;
 use Ufw1\Services\Template;
 
 class {{responderClass}} extends AbstractResponder
@@ -109,7 +110,7 @@ class {{responderClass}} extends AbstractResponder
         $this->template = $template;
     }
 
-    public function getResponse(Response $response, array $responseData): Response
+    public function getResponse(Response $response, ResponsePayload $responseData): Response
     {
         if ($common = $this->getCommonResponse($response, $responseData)) {
             return $common;
@@ -122,7 +123,7 @@ class {{responderClass}} extends AbstractResponder
         return $response->withHeader('content-type', 'text/html');
     }
 
-    protected function getTemplateNames(array $responseData): array
+    protected function getTemplateNames(ResponsePayload $responseData): array
     {
         return [
             "pages/{{moduleCode}}-{{actionCode}}.twig",
