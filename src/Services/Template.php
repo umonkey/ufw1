@@ -221,6 +221,10 @@ class Template
 
         // Link to the specified subfile.
         $this->twig->addFunction(new \Twig\TwigFunction("file_link", function ($node, $version = 'original', $missing = '') {
+            if (!is_object($node)) {
+                return '';
+            }
+
             if ($node["type"] != "file") {
                 return $missing;
             }

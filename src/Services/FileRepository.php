@@ -19,6 +19,7 @@ namespace Ufw1\Services;
 use Psr\Log\LoggerInterface;
 use Ufw1\Node\NodeRepository;
 use Ufw1\Node\Entities\Node;
+use Ufw1\Node\Entities\File;
 
 class FileRepository
 {
@@ -56,7 +57,7 @@ class FileRepository
      *
      * @return array File node or null if node not found.
      **/
-    public function get(int $id): ?array
+    public function get(int $id): ?File
     {
         $node = $this->node->get($id);
         if (empty($node) or $node["type"] != "file") {
@@ -78,7 +79,7 @@ class FileRepository
      * @param string $hash Source file hash.
      * @return array File or null, if not found.
      **/
-    public function getByHash(string $hash): ?array
+    public function getByHash(string $hash): ?File
     {
         $node = $this->node->getByKey($hash);
         if (empty($node) or $node["type"] != "file") {
@@ -93,7 +94,7 @@ class FileRepository
      *
      * Finds the file in the local storage.
      **/
-    public function getBody(Node $node): ?string
+    public function getBody(File $node): ?string
     {
         if ($node["type"] != "file") {
             return null;
@@ -120,7 +121,7 @@ class FileRepository
      *
      * @return array Saved node contents.
      **/
-    public function add(string $name, string $type, string $body, array $props = []): array
+    public function add(string $name, string $type, string $body, array $props = []): File
     {
         $hash = md5($body);
 
@@ -133,7 +134,7 @@ class FileRepository
 
             $node = $old;
         } else {
-            $node = array_merge($props, [
+            $node = new Node(array_merge($props, [
                 "type" => "file",
                 "key" => $hash,
                 "name" => $name,
@@ -145,7 +146,7 @@ class FileRepository
                 "hash" => $hash,
                 "published" => 1,
                 "files" => [],
-            ]);
+            ]));
         }
 
         if ($this->shouldReplaceOriginal($node)) {
@@ -176,7 +177,7 @@ class FileRepository
         return $node;
     }
 
-    private function shouldReplaceOriginal(Node $node): bool
+    private function shouldReplaceOriginal(File $node): bool
     {
         if (empty($node['id'])) {
             return true;
@@ -198,7 +199,7 @@ class FileRepository
         return $kind;
     }
 
-    protected function fix(Node $node): Node
+    protected function fix(File $node): File
     {
         if (empty($node["kind"])) {
             if (0 === strpos($node["mime_type"], "image/")) {
