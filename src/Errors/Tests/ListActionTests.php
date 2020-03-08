@@ -20,7 +20,7 @@ class ListActionTests extends AbstractTest
     public function testAnonymousAccess(): void
     {
         $user = $this->getNobody();
-        $res = $this->getDomain()->list($user);
+        $res = $this->getDomain()->listAction($user);
         $this->assertError(403, $res);
     }
 
@@ -30,14 +30,14 @@ class ListActionTests extends AbstractTest
     public function testUserAccess(): void
     {
         $user = $this->getEditor();
-        $res = $this->getDomain()->list($user);
-        $this->assertResponse($res);
+        $res = $this->getDomain()->listAction($user);
+        $this->assertError(403, $res);
     }
 
     public function testAdminAccess(): void
     {
         $user = $this->getAdmin();
-        $res = $this->getDomain()->list($user);
+        $res = $this->getDomain()->listAction($user);
         $this->assertResponse($res);
     }
 

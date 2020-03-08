@@ -19,8 +19,11 @@ class UpdateActionTests extends AbstractTest
      **/
     public function testAnonymousAccess(): void
     {
+        $err = $this->getError();
+
         $user = $this->getNobody();
-        $res = $this->getDomain()->update($user);
+        $res = $this->getDomain()->updateAction($err, true, $user);
+
         $this->assertError(403, $res);
     }
 
@@ -29,23 +32,32 @@ class UpdateActionTests extends AbstractTest
      **/
     public function testUserAccess(): void
     {
+        $err = $this->getError();
+
         $user = $this->getEditor();
-        $res = $this->getDomain()->update($user);
-        $this->assertResponse($res);
+        $res = $this->getDomain()->updateAction($err, true, $user);
+
+        $this->assertError(403, $res);
     }
 
     public function testAdminAccess(): void
     {
+        $err = $this->getError();
         $user = $this->getAdmin();
-        $res = $this->getDomain()->update($user);
-        $this->assertResponse($res);
+
+        $res = $this->getDomain()->updateAction($err, true, $user);
+        $this->assertRedirect($res);
+        $this->assertEquals(true, $this->isErrorRead($err));
+
+        $res = $this->getDomain()->updateAction($err, false, $user);
+        $this->assertRedirect($res);
+        $this->assertEquals(false, $this->isErrorRead($err));
     }
 
     public function testResponder(): void
     {
         $responder = $this->getResponder();
-        $this->checkResponderBasics($responder);
-        // $this->checkJsonResponderBasics($responder);
+        $this->checkJsonResponderBasics($responder);
     }
 
     protected function getDomain(): Errors
@@ -58,5 +70,31 @@ class UpdateActionTests extends AbstractTest
     {
         $responder = $this->getClassInstance(UpdateResponder::class);
         return $responder;
+    }
+
+    /**
+     * Creates a random error, returns its id.
+     **/
+    protected function getError(): int
+    {
+        $db = $this->container->db;
+
+        $db->query('DELETE FROM errors');
+
+        return $db->insert('errors', [
+            'class' => 'RuntimeException',
+            'message' => 'foobar',
+            'file' => 'foobar.php',
+            'line' => 13,
+            'stack' => 'not available',
+            'headers' => serialize(['server' => []]),
+            'read' => 0,
+        ]);
+    }
+
+    protected function isErrorRead(int $id): bool
+    {
+        $cell = $this->container->db->fetchcell('SELECT read FROM errors WHERE id = ?', [$id]);
+        return (int)$cell !== 0;
     }
 }

@@ -17,9 +17,10 @@ declare(strict_types=1);
 namespace Ufw1\Services;
 
 use Psr\Log\LoggerInterface;
-use Ufw1\Node\NodeRepository;
-use Ufw1\Node\Entities\Node;
+use RuntimeException;
 use Ufw1\Node\Entities\File;
+use Ufw1\Node\Entities\Node;
+use Ufw1\Node\NodeRepository;
 
 class FileRepository
 {
@@ -38,7 +39,7 @@ class FileRepository
      **/
     protected $settings;
 
-    public function __construct(LoggerInterface $logger, NodeRepository $node, array $settings)
+    public function __construct(LoggerInterface $logger, NodeRepository $node, $settings)
     {
         $this->logger = $logger;
 
@@ -134,7 +135,7 @@ class FileRepository
 
             $node = $old;
         } else {
-            $node = new Node(array_merge($props, [
+            $node = new File(array_merge($props, [
                 "type" => "file",
                 "key" => $hash,
                 "name" => $name,
@@ -282,7 +283,11 @@ class FileRepository
 
         $res = @file_put_contents($fpath, $body);
         if ($res === false) {
-            throw new \RuntimeException('error writing file');
+            $this->logger->error('Error writing to file {fpath}', [
+                'fpath' => $fpath,
+            ]);
+
+            throw new RuntimeException('File storage is write-protected, cannot save your file.');
         }
 
         return $fname;

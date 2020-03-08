@@ -13,6 +13,7 @@ use Slim\Http\Response;
 use Ufw1\AbstractResponder;
 use Ufw1\ResponsePayload;
 use Ufw1\Node\Entities\Node;
+use Ufw1\Node\Entities\User;
 
 abstract class AbstractTest extends TestCase
 {
@@ -69,22 +70,22 @@ abstract class AbstractTest extends TestCase
         return $instance;
     }
 
-    protected function getNobody(): ?Node
+    protected function getNobody(): User
     {
-        $node = [
+        $node = Node::fromArray([
             'type' => 'user',
             'published' => 1,
             'deleted' => 0,
             'role' => 'nobody',
             'name' => 'Головач Елена',
-        ];
+        ]);
 
-        return $this->container->node->save(new Node($node));
+        return $this->container->node->save($node);
     }
 
-    protected function getEditor(array $props = []): Node
+    protected function getEditor(array $props = []): User
     {
-        $node = array_merge([
+        $props = array_merge([
             'type' => 'user',
             'published' => 1,
             'deleted' => 0,
@@ -92,18 +93,22 @@ abstract class AbstractTest extends TestCase
             'name' => 'Головач Елена',
         ], $props);
 
-        return $this->container->node->save(new Node($node));
+        $node = User::fromArray($props);
+
+        return $this->container->node->save($node);
     }
 
-    protected function getAdmin(): Node
+    protected function getAdmin(): User
     {
-        return $this->container->node->save(new Node([
+        $node = Node::fromArray([
             'type' => 'user',
             'published' => 1,
             'deleted' => 0,
             'role' => 'admin',
             'name' => 'Сусанин Иван',
-        ]));
+        ]);
+
+        return $this->container->node->save($node);
     }
 
     protected function checkJsonResponderBasics(AbstractResponder $responder): void
@@ -153,6 +158,6 @@ abstract class AbstractTest extends TestCase
 
     protected function saveNode(array $props): Node
     {
-        return $this->container->node->save(new Node($props));
+        return $this->container->node->save(Node::fromArray($props));
     }
 }

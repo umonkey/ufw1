@@ -12,6 +12,7 @@ namespace Ufw1\Services;
 
 use Psr\Log\LoggerInterface;
 use Ufw1\Node\Entities\Node;
+use Ufw1\Node\Entities\File;
 
 class Thumbnailer
 {
@@ -315,7 +316,7 @@ class Thumbnailer
         imagedestroy($img);
     }
 
-    protected function getSourcePath(array $file, string $key): string
+    protected function getSourcePath(File $file, string $key): string
     {
         $logger = $this->logger;
 
