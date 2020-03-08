@@ -32,6 +32,11 @@ abstract class AbstractDomain
         return ResponsePayload::data($data);
     }
 
+    protected function unauthorized(): ResponsePayload
+    {
+        return $this->fail(401, 'Unauthorized.');
+    }
+
     protected function isAdmin(?Node $user): bool
     {
         if (!$this->isUser($user)) {
