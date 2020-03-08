@@ -86,3 +86,7 @@ p.help-block a {
     vertical-align: middle;
     margin: 0 5px 0 0;
 }
+
+form.form {
+    margin-bottom: 50px;
+}
