@@ -8,11 +8,23 @@
 
 {% block page_header %}
     <div class='page-header'>
-        <h1>{{ error.class }}: {{ error.message }}</h1>
+        <h1>Ошибка в {{ error.headers.server.REQUEST_URI }}</h1>
     </div>
 {% endblock %}
 
 {% block page_contents %}
+    <form class='async form' method='post'>
+        <div class='form-group'>
+            <label class='checkbox'><input type='checkbox' name='read' value='yes'{% if error.read %} checked{% endif %} autocomplete='off'/> ошибка исправлена</label>
+        </div>
+
+        <div class='form-actions'>
+            <button class='btn btn-primary' type='submit'>Сохранить</button>
+        </div>
+
+        <div class='msgbox'></div>
+    </form>
+
     <table class='table grid error'>
         <tbody>
             <tr>

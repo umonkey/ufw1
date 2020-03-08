@@ -1,0 +1,31 @@
+{##
+ # List pending errors.
+ #}
+{% extends 'layouts/admin.twig' %}
+
+{% block page_title %}Errors{% endblock %}
+
+{% block page_header %}
+    <div class='page-header'>
+        <h1>Errors</h1>
+    </div>
+{% endblock %}
+
+{% block page_contents %}
+    {% if not errors %}
+        <p>There were no errors recently, great.</p>
+    {% else %}
+        <table class='table lines'>
+            <tbody>
+                {% for e in errors %}
+                    <tr>
+                        <td>{{ e.id }}</td>
+                        <td class='number'>{{ e.date|date('%d.%m, %H:%M') }}</td>
+                        <td>{{ e.class }}</td>
+                        <td><a href='/admin/errors/{{ e.id }}'>{{ e.message }}</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}
