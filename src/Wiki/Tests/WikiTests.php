@@ -14,6 +14,7 @@ use Slim\Http\Response;
 use Ufw1\ResponsePayload;
 use Ufw1\Wiki\WikiDomain;
 use Ufw1\AbstractTest;
+use Ufw1\Node\Entities\Node;
 
 class WikiTests extends AbstractTest
 {
@@ -62,9 +63,7 @@ class WikiTests extends AbstractTest
         $node = $this->savePage('test-page', file_get_contents(__DIR__ . '/sample-page-01.md'));
         $this->assertFalse(empty($node['id']), 'Wiki page not assigned an id.');
 
-        $responseData = $this->getDomain()->getShowPageByName($pageName, [
-            'role' => 'admin',
-        ]);
+        $responseData = $this->getDomain()->getShowPageByName($pageName, $this->getAdmin());
 
         $this->assertTrue(empty($responseData['error']), 'Wiki page MUST be readable.');
         $this->assertFalse(empty($responseData['response']), 'Wiki page not properly rendered.');
@@ -121,9 +120,7 @@ class WikiTests extends AbstractTest
      **/
     public function testPerPageUnpublish(): void
     {
-        $user = [
-            'role' => 'admin',
-        ];
+        $user = $this->getAdmin();
 
         $this->savePage('test-page', "published: 1\n"
             . "---\n"
@@ -257,7 +254,7 @@ class WikiTests extends AbstractTest
         $this->assertEquals(401, $rd['error']['code'] ?? null, 'MUST fail with 401.');
 
         // (4) Test forbidden.
-        $rd = $domain->index(null, ['role' => 'foobar']);
+        $rd = $domain->index(null, $this->getNobody());
         $this->assertEquals(403, $rd['error']['code'] ?? null, 'MUST fail with 403.');
 
         // (5) OK.
@@ -277,13 +274,13 @@ class WikiTests extends AbstractTest
         $this->container->db->query("DELETE FROM nodes WHERE type IN ('wiki', 'file')");
 
         // (2) Create some files.
-        $this->container->node->save([
+        $this->saveNode([
             'type' => 'file',
             'published' => 1,
             'deleted' => 0,
             'name' => 'foo.jpg',
         ]);
-        $this->container->node->save([
+        $this->saveNode([
             'type' => 'file',
             'published' => 1,
             'deleted' => 0,
@@ -295,7 +292,7 @@ class WikiTests extends AbstractTest
         $this->assertError(401, $rd);
 
         // (4) Test forbidden.
-        $rd = $domain->recentFiles($user = ['role' => 'foobar']);
+        $rd = $domain->recentFiles($user = $this->getNobody());
         $this->assertError(403, $rd);
 
         // (5) OK.
@@ -318,13 +315,13 @@ class WikiTests extends AbstractTest
         $db->query("DELETE FROM taskq");
 
         // (2) Create some pages.
-        $this->container->node->save([
+        $this->saveNode([
             'type' => 'wiki',
             'published' => 1,
             'deleted' => 0,
             'name' => 'Foo',
         ]);
-        $this->container->node->save([
+        $this->saveNode([
             'type' => 'wiki',
             'published' => 1,
             'deleted' => 0,
@@ -373,30 +370,28 @@ class WikiTests extends AbstractTest
     /**
      * Create or update a page.
      **/
-    protected function savePage(string $name, string $source): array
+    protected function savePage(string $name, string $source): Node
     {
-        $node = $this->container->wiki->updatePage($name, $source, [
-            'role' => 'admin',
-        ]);
+        $node = $this->container->wiki->updatePage($name, $source, $this->getWriterUser());
 
         $this->assertFalse(empty($node['id']), 'Could not save a wiki page.');
 
         return $node;
     }
 
-    protected function getReaderUser(): array
+    protected function getReaderUser(): Node
     {
-        return [
+        return new Node([
             'type' => 'user',
             'role' => 'reader',
-        ];
+        ]);
     }
 
-    protected function getWriterUser(): array
+    protected function getWriterUser(): Node
     {
-        return [
+        return new Node([
             'type' => 'user',
             'role' => 'writer',
-        ];
+        ]);
     }
 }

@@ -17,6 +17,8 @@ declare(strict_types=1);
 namespace Ufw1\Services;
 
 use Psr\Log\LoggerInterface;
+use Ufw1\Node\NodeRepository;
+use Ufw1\Node\Entities\Node;
 
 class FileRepository
 {
@@ -91,7 +93,7 @@ class FileRepository
      *
      * Finds the file in the local storage.
      **/
-    public function getBody(array $node): ?string
+    public function getBody(Node $node): ?string
     {
         if ($node["type"] != "file") {
             return null;
@@ -174,7 +176,7 @@ class FileRepository
         return $node;
     }
 
-    private function shouldReplaceOriginal(array $node): bool
+    private function shouldReplaceOriginal(Node $node): bool
     {
         if (empty($node['id'])) {
             return true;
@@ -196,7 +198,7 @@ class FileRepository
         return $kind;
     }
 
-    protected function fix(array $node): array
+    protected function fix(Node $node): Node
     {
         if (empty($node["kind"])) {
             if (0 === strpos($node["mime_type"], "image/")) {

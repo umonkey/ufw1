@@ -2,6 +2,7 @@
 
 namespace Ufw1;
 
+use Ufw1\Node\Entities\Node;
 use Ufw1\ResponsePayload;
 
 abstract class AbstractDomain
@@ -31,7 +32,7 @@ abstract class AbstractDomain
         return ResponsePayload::data($data);
     }
 
-    protected function isAdmin(?array $user): bool
+    protected function isAdmin(?Node $user): bool
     {
         if (!$this->isUser($user)) {
             return false;
@@ -44,7 +45,7 @@ abstract class AbstractDomain
         return true;
     }
 
-    protected function isUser(?array $user): bool
+    protected function isUser(?Node $user): bool
     {
         if (null === $user) {
             return false;

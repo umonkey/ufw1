@@ -4,7 +4,8 @@ namespace Ufw1\Accounts;
 
 use Ufw1\AbstractDomain;
 use Ufw1\ResponsePayload;
-use Ufw1\Services\NodeRepository;
+use Ufw1\Node\NodeRepository;
+use Ufw1\Node\Entities\Node;
 use Ufw1\Services\Database;
 use Ufw1\Session\Session;
 
@@ -73,7 +74,7 @@ class Accounts extends AbstractDomain
         ]);
     }
 
-    public function profile(?array $user): ResponsePayload
+    public function profile(?Node $user): ResponsePayload
     {
         if (null === $user) {
             return $this->forbidden();
@@ -84,7 +85,7 @@ class Accounts extends AbstractDomain
         ]);
     }
 
-    public function sudo(int $userId, string $sessionId, ?array $user): ResponsePayload
+    public function sudo(int $userId, string $sessionId, ?Node $user): ResponsePayload
     {
         if (!$this->isAdmin($user)) {
             return $this->forbidden();

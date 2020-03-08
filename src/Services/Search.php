@@ -16,7 +16,8 @@ namespace Ufw1\Services;
 
 use Psr\Log\LoggerInterface;
 use Ufw1\Wiki\WikiService;
-use Ufw1\Services\NodeRepository;
+use Ufw1\Node\NodeRepository;
+use Ufw1\Node\Entities\Node;
 
 class Search
 {
@@ -158,7 +159,7 @@ class Search
      *
      * @param array $args Node spec, in 'id'.
      **/
-    public function reindexNode(array $node): void
+    public function reindexNode(Node $node): void
     {
         $id = $node['id'] ?? null;
 
@@ -178,7 +179,7 @@ class Search
         }
     }
 
-    protected function reindexWikiNode(array $node): void
+    protected function reindexWikiNode(Node $node): void
     {
         $page = $this->wiki->renderPage($node);
 

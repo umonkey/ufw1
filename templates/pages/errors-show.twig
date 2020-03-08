@@ -8,10 +8,47 @@
 
 {% block page_header %}
     <div class='page-header'>
-        <h1>Ошибка № {{ error.id }}</h1>
+        <h1>{{ error.class }}: {{ error.message }}</h1>
     </div>
 {% endblock %}
 
 {% block page_contents %}
-    <p>This page does not exist yet.</p>
+    <table class='table grid error'>
+        <tbody>
+            <tr>
+                <th>Дата</th>
+                <td>{{ error.date }}</td>
+            </tr>
+            {% if error.headers.server.REQUEST_METHOD %}
+                <tr class='uri'>
+                    <th>URI</th>
+                    <td>{{ error.headers.server.REQUEST_METHOD }} {{ error.headers.server.REQUEST_URI }}</td>
+                </tr>
+            {% endif %}
+            <tr class='class'>
+                <th>Класс</th>
+                <td>{{ error.class }}</td>
+            </tr>
+            <tr class='message'>
+                <th>Сообщение</th>
+                <td>{{ error.message }}</td>
+            </tr>
+            <tr>
+                <th>Файл</th>
+                <td>{{ error.file }}</td>
+            </tr>
+            <tr>
+                <th>Строка</th>
+                <td>{{ error.line }}</td>
+            </tr>
+            <tr class='stack'>
+                <th>Стэк</th>
+                <td class='pre'>{{ error.stack }}</td>
+            </tr>
+            <tr class='stack'>
+                <th>Параметры</th>
+                <td class='pre'>{{ error.headers|var_dump }}</td>
+            </tr>
+        </tbody>
+    </table>
 {% endblock %}

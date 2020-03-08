@@ -10,6 +10,8 @@ namespace Ufw1\Services;
 
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Ufw1\Node\NodeRepository;
+use Ufw1\Node\Entities\Node;
 use RuntimeException;
 
 class S3
@@ -515,7 +517,7 @@ class S3
     /**
      * Upload node files to remote storage.
      **/
-    public function uploadNodeFiles(array $node)
+    public function uploadNodeFiles(Node $node)
     {
         if (!array_key_exists("type", $node)) {
             return $node;
@@ -633,7 +635,7 @@ class S3
         }
     }
 
-    public function autoUploadNode(array $node, $force = false)
+    public function autoUploadNode(Node $node, $force = false)
     {
         $auto = $this->settings['auto_upload'] ?? false;
 

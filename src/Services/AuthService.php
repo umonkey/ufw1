@@ -13,6 +13,8 @@ namespace Ufw1\Services;
 use Psr\Log\LoggerInterface;
 use Slim\Http\Request;
 use Ufw1\Errors\AuthError;
+use Ufw1\Node\NodeRepository;
+use Ufw1\Node\Entities\Node;
 
 class AuthService
 {
@@ -38,7 +40,7 @@ class AuthService
         $this->node = $node;
     }
 
-    public function getUser(Request $request): ?array
+    public function getUser(Request $request): ?Node
     {
         $session = $this->session->get($request);
 
@@ -55,7 +57,7 @@ class AuthService
         return $node;
     }
 
-    public function getUserByEmail(string $email): ?array
+    public function getUserByEmail(string $email): ?Node
     {
         $nodes = $this->node->where('`type` = \'user\' AND `id` IN (SELECT `id` FROM `nodes_user_idx` WHERE `email` = ?) ORDER BY `id` LIMIT 1', [$email]);
         return $nodes ? $nodes[0] : null;
@@ -81,7 +83,7 @@ class AuthService
      *
      * @return array User profile.
      **/
-    public function logIn(Request $request, string $email, string $password): array
+    public function logIn(Request $request, string $email, string $password): Node
     {
         $nodes = $this->node->where("`type` = 'user' AND `deleted` = 0 AND `id` IN (SELECT `id` FROM `nodes_user_idx` WHERE `email` = ?) ORDER BY `id`", [$email]);
 
@@ -165,7 +167,7 @@ class AuthService
      *
      * @return array User information.
      **/
-    public function requireAdmin(Request $request): array
+    public function requireAdmin(Request $request): Node
     {
         return $this->requireRole($request, ['admin']);
     }
@@ -176,7 +178,7 @@ class AuthService
      * @param Request $request User information.
      * @param array   $roles   Roles, one of which must exist.
      **/
-    public function requireRole(Request $request, array $roles): array
+    public function requireRole(Request $request, array $roles): Node
     {
         $user = $this->requireUser($request);
 
@@ -198,7 +200,7 @@ class AuthService
      *
      * @return array User information.
      **/
-    public function requireUser(Request $request): array
+    public function requireUser(Request $request): Node
     {
         $user = $this->getUser($request);
 

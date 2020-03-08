@@ -8,10 +8,11 @@ namespace Ufw1\Accounts\Tests;
 
 use Slim\Http\Response;
 use Ufw1\AbstractTest;
-use Ufw1\ResponsePayload;
+use Ufw1\Accounts\Accounts;
 use Ufw1\Accounts\Actions\LoginAction;
 use Ufw1\Accounts\Responders\LoginResponder;
-use Ufw1\Accounts\Accounts;
+use Ufw1\Node\Entities\Node;
+use Ufw1\ResponsePayload;
 
 class LoginActionTests extends AbstractTest
 {
@@ -29,12 +30,12 @@ class LoginActionTests extends AbstractTest
         $login = 'alice@example.com';
         $password = 'foobar';
 
-        $this->container->node->save([
+        $this->container->node->save(new Node([
             'type' => 'user',
             'published' => 1,
             'email' => $login,
             'password' => password_hash($password, PASSWORD_DEFAULT),
-        ]);
+        ]));
 
         $res = $this->getDomain()->login(null, $login, $password . '-wrong');
         $this->assertError(403, $res);
@@ -47,12 +48,12 @@ class LoginActionTests extends AbstractTest
         $login = 'alice@example.com';
         $password = 'foobar';
 
-        $node = $this->container->node->save([
+        $node = $this->container->node->save(new Node([
             'type' => 'user',
             'published' => 1,
             'email' => $login,
             'password' => password_hash($password, PASSWORD_DEFAULT),
-        ]);
+        ]));
 
         $res = $this->getDomain()->login(null, $login, $password);
         $this->assertResponse($res);

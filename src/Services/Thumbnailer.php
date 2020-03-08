@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace Ufw1\Services;
 
 use Psr\Log\LoggerInterface;
+use Ufw1\Node\Entities\Node;
 
 class Thumbnailer
 {
@@ -39,7 +40,7 @@ class Thumbnailer
      * @param array $node Source file node.
      * @return array Modified node.
      **/
-    public function updateNode(array $node, bool $force = false): array
+    public function updateNode(Node $node, bool $force = false): Node
     {
         $logger = $this->logger;
 

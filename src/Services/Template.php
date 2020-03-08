@@ -313,5 +313,11 @@ class Template
             $res = mb_strtoupper(mb_substr($text, 0, 1)) . mb_substr($text, 1);
             return $res;
         }));
+
+        $this->twig->addFilter(new \Twig\TwigFilter("var_dump", function ($var) {
+            ob_start();
+            var_dump($var);
+            return ob_get_clean();
+        }));
     }
 }

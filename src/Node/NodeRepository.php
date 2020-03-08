@@ -1,15 +1,18 @@
 <?php
 
 /**
- * Uniform document storage.
+ * Node repository.
+ *
+ * Nodes are extendable documents.
  **/
 
 declare(strict_types=1);
 
-namespace Ufw1\Services;
+namespace Ufw1\Node;
 
-use Ufw1\Services\Database;
 use Psr\Log\LoggerInterface;
+use Ufw1\Node\Entities\Node;
+use Ufw1\Services\Database;
 
 class NodeRepository
 {
@@ -60,7 +63,7 @@ class NodeRepository
         return $res;
     }
 
-    public function get(int $id): ?array
+    public function get(int $id): ?Node
     {
         $row = $this->db->fetchone("SELECT * FROM `nodes` WHERE `id` = ?", [$id]);
         if ($row) {
@@ -70,7 +73,7 @@ class NodeRepository
         }
     }
 
-    public function getByKey(string $key): ?array
+    public function getByKey(string $key): ?Node
     {
         $tmp = $this->db->fetchOne("SELECT * FROM `nodes` WHERE `key` = ? ORDER BY `id` LIMIT 1", [$key]);
         if ($tmp) {
@@ -80,7 +83,7 @@ class NodeRepository
         }
     }
 
-    public function save(array $node): array
+    public function save(Node $node): Node
     {
         $this->saveCurrent($node);
 
@@ -144,7 +147,7 @@ class NodeRepository
      * @param array $node Node to be saved.
      * @return void
      **/
-    protected function saveCurrent(array $node): void
+    protected function saveCurrent(Node $node): void
     {
         if (empty($node['id']) or empty($node['type'])) {
             return;
@@ -183,7 +186,7 @@ class NodeRepository
         ]);
     }
 
-    public function unpack(array $row): array
+    public function unpack(array $row): Node
     {
         if (array_key_exists("more", $row)) {
             $more = unserialize($row["more"]);
@@ -193,22 +196,29 @@ class NodeRepository
             }
         }
 
-        return $row;
+        switch ($row['type']) {
+            case 'user':
+                return new Entities\User($row);
+            case 'file':
+                return new Entities\File($row);
+            default:
+                return new Entities\Node($row);
+        }
     }
 
-    protected function packNode(array $row): array
+    protected function packNode(Node $row): array
     {
-        return $this->pack($row, [
-            "id",
-            "parent",
-            "lb",
-            "rb",
-            "type",
-            "created",
-            "updated",
-            "key",
-            "deleted",
-            "published",
+        return $this->pack((array)$row, [
+            'id',
+            'parent',
+            'lb',
+            'rb',
+            'type',
+            'created',
+            'updated',
+            'key',
+            'deleted',
+            'published',
         ]);
     }
 
@@ -237,7 +247,7 @@ class NodeRepository
      *
      * @param array $node Node to reindex.
      **/
-    protected function indexUpdate(array $node): void
+    protected function indexUpdate(Node $node): void
     {
         $settings = $this->settings;
 

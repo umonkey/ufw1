@@ -9,8 +9,9 @@ declare(strict_types=1);
 namespace Ufw1\Errors;
 
 use Ufw1\AbstractDomain;
+use Ufw1\Node\Entities\Node;
+use Ufw1\Node\NodeRepository;
 use Ufw1\ResponsePayload;
-use Ufw1\Services\NodeRepository;
 use Ufw1\Services\Database;
 
 class Errors extends AbstractDomain
@@ -28,7 +29,7 @@ class Errors extends AbstractDomain
     /**
      * Display an error message.
      **/
-    public function showError(int $errorId, ?array $user): ResponsePayload
+    public function showError(int $errorId, ?Node $user): ResponsePayload
     {
         if (!$this->isAdmin($user)) {
             return $this->forbidden();

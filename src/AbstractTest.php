@@ -12,6 +12,7 @@ use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\AbstractResponder;
 use Ufw1\ResponsePayload;
+use Ufw1\Node\Entities\Node;
 
 abstract class AbstractTest extends TestCase
 {
@@ -68,12 +69,20 @@ abstract class AbstractTest extends TestCase
         return $instance;
     }
 
-    protected function getNobody(): ?array
+    protected function getNobody(): ?Node
     {
-        return null;
+        $node = [
+            'type' => 'user',
+            'published' => 1,
+            'deleted' => 0,
+            'role' => 'nobody',
+            'name' => 'Головач Елена',
+        ];
+
+        return $this->container->node->save(new Node($node));
     }
 
-    protected function getEditor(array $props = []): array
+    protected function getEditor(array $props = []): Node
     {
         $node = array_merge([
             'type' => 'user',
@@ -83,18 +92,18 @@ abstract class AbstractTest extends TestCase
             'name' => 'Головач Елена',
         ], $props);
 
-        return $this->container->node->save($node);
+        return $this->container->node->save(new Node($node));
     }
 
-    protected function getAdmin(): array
+    protected function getAdmin(): Node
     {
-        return $this->container->node->save([
+        return $this->container->node->save(new Node([
             'type' => 'user',
             'published' => 1,
             'deleted' => 0,
             'role' => 'admin',
             'name' => 'Сусанин Иван',
-        ]);
+        ]));
     }
 
     protected function checkJsonResponderBasics(AbstractResponder $responder): void
@@ -140,5 +149,10 @@ abstract class AbstractTest extends TestCase
 
         $this->assertTrue($res instanceof Response, 'MUST be an HTTP response');
         $this->assertEquals(404, $res->getStatusCode(), 'MUST fail with 404');
+    }
+
+    protected function saveNode(array $props): Node
+    {
+        return $this->container->node->save(new Node($props));
     }
 }

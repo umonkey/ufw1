@@ -13,7 +13,8 @@ namespace Ufw1\Wiki;
 use Psr\Log\LoggerInterface;
 use Ufw1\Util;
 use Ufw1\Errors\Forbidden;
-use Ufw1\Services\NodeRepository;
+use Ufw1\Node\NodeRepository;
+use Ufw1\Node\Entities\Node;
 
 class WikiService
 {
@@ -39,16 +40,16 @@ class WikiService
         $this->logger = $logger;
     }
 
-    public function updatePage(string $name, string $source, array $user, string $section = null): array
+    public function updatePage(string $name, string $source, Node $user, string $section = null): Node
     {
         if (!$this->canEditPages($user)) {
             throw new Forbidden();
         }
 
         if (!($node = $this->getPageByName($name))) {
-            $node = [
+            $node = new Node([
                 'type' => 'wiki',
-            ];
+            ]);
         }
 
         if ($section) {
@@ -65,7 +66,9 @@ class WikiService
         $node['source'] = $source;
 
         if ($props = $this->extractNodeProperties($source)) {
-            $node = array_merge($node, $props);
+            foreach ($props as $k => $v) {
+                $node[$k] = $v;
+            }
         }
 
         $node['deleted'] = trim($source) === '';
@@ -91,10 +94,10 @@ class WikiService
      * If it's empty, then the wiki is anonymous.
      * If it's an array, then it's a list of roles which can read pages.
      *
-     * @param array $user User node.
+     * @param Node $user User node.
      * @return bool True, if the user can read pages.
      **/
-    public function canReadPages(array $user = null): bool
+    public function canReadPages(Node $user = null): bool
     {
         $roles = $this->settings['reader_roles'] ?? null;
         if (empty($roles)) {
@@ -110,7 +113,7 @@ class WikiService
         return false;
     }
 
-    public function canEditPages(array $user = null): bool
+    public function canEditPages(Node $user = null): bool
     {
         $roles = $this->settings['editor_roles'] ?? null;
         if (empty($roles)) {
@@ -132,17 +135,17 @@ class WikiService
      * @param string $name Page name.
      * @return array Page node or null.
      **/
-    public function getPageByName(string $name): ?array
+    public function getPageByName(string $name): ?Node
     {
         $name = explode('#', $name)[0];
 
         $key = $this->getPageKey($name);
-        $node = $this->node->where('`type` = \'wiki\' AND `key` = ? ORDER BY `id` LIMIT 1', [$key]);
+        $nodes = $this->node->where('`type` = \'wiki\' AND `key` = ? ORDER BY `id` LIMIT 1', [$key]);
 
-        if (empty($node)) {
+        if (empty($nodes)) {
             return null;
         } else {
-            $node = $node[0];
+            $node = $nodes[0];
         }
 
         if ($node['type'] != 'wiki') {
@@ -193,7 +196,7 @@ class WikiService
         return trim($source) . "\n";
     }
 
-    public function getSearchMeta(array $node): ?array
+    public function getSearchMeta(Node $node): ?array
     {
         if ((int)$node['deleted'] === 1) {
             return null;
@@ -292,7 +295,7 @@ class WikiService
      *
      * @return array Page properties and HTML code.
      **/
-    public function renderPage(array $node): array
+    public function renderPage(Node $node): array
     {
         if ($node['type'] != 'wiki') {
             throw new \RuntimeException('not a wiki page');
@@ -819,10 +822,10 @@ class WikiService
      * Send email notifications about edits overrule.
      *
      * @param array $node Edited page.
-     * @param array $user Current editor.
+     * @param Node $user Current editor.
      * @return array $node Modified node (saves editor info).
      **/
-    protected function notifyEdits(array $node, array $user): array
+    protected function notifyEdits(Node $node, Node $user): Node
     {
         if (!empty($node['last_editor']) and $node['last_editor'] != $user['id']) {
             $this->taskq->add('notify-wiki-edit', [

@@ -11,6 +11,7 @@ namespace Ufw1\Controllers;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
+use Ufw1\Node\Entities\Node;
 
 class AdminController extends CommonHandler
 {
@@ -603,11 +604,11 @@ class AdminController extends CommonHandler
      *
      * Can be overriden in the subclass.
      **/
-    protected function getDashboardData(Request $request, array $user)
+    protected function getDashboardData(Request $request, Node $user)
     {
         $blocks = [];
 
-        $blocks['recentWiki'] = $this->node->where('type = ? AND deleted = 0 ORDER BY created DESC LIMIT 10', ['wiki'], function (array $node) {
+        $blocks['recentWiki'] = $this->node->where('type = ? AND deleted = 0 ORDER BY created DESC LIMIT 10', ['wiki'], function (Node $node) {
             return [
                 'id' => (int)$node['id'],
                 'name' => $node['name'],
@@ -616,7 +617,7 @@ class AdminController extends CommonHandler
             ];
         });
 
-        $blocks['recentFiles'] = $this->node->where('type = ? AND deleted = 0 ORDER BY created DESC LIMIT 20', ['file'], function (array $node) {
+        $blocks['recentFiles'] = $this->node->where('type = ? AND deleted = 0 ORDER BY created DESC LIMIT 20', ['file'], function (Node $node) {
             $em = [
                 'id' => (int)$node['id'],
                 'name' => $node['name'],
@@ -631,7 +632,7 @@ class AdminController extends CommonHandler
             return $em;
         });
 
-        $blocks['trash'] = $this->node->where('deleted = 1 ORDER BY updated DESC LIMIT 10', [], function (array $node) {
+        $blocks['trash'] = $this->node->where('deleted = 1 ORDER BY updated DESC LIMIT 10', [], function (Node $node) {
             return [
                 'id' => (int)$node['id'],
                 'type' => $node['type'],

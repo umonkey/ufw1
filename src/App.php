@@ -163,7 +163,7 @@ class App extends \Slim\App
             if (empty($settings)) {
                 throw new \RuntimeException('node service not configured');
             }
-            return new Services\NodeRepository($settings, $db, $logger);
+            return new \Ufw1\Node\NodeRepository($settings, $db, $logger);
         };
 
         $container['phpErrorHandler'] = function ($c) {

@@ -19,8 +19,7 @@ class ProfileActionTests extends AbstractTest
      **/
     public function testAnonymousAccess(): void
     {
-        $user = $this->getNobody();
-        $res = $this->getDomain()->profile($user);
+        $res = $this->getDomain()->profile(null);
         $this->assertError(403, $res);
     }
 

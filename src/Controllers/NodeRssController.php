@@ -13,7 +13,8 @@ use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
 use Ufw1\Services\Template;
-use Ufw1\Services\NodeRepository;
+use Ufw1\Node\NodeRepository;
+use Ufw1\Node\Entities\Node;
 use Ufw1\Wiki\WikiService;
 
 class NodeRssController extends CommonHandler
@@ -90,7 +91,7 @@ class NodeRssController extends CommonHandler
     {
         $base = $request->getUri()->getBaseUrl();
 
-        $res = array_map(function (array $node) use ($base) {
+        $res = array_map(function (Node $node) use ($base) {
             $title = $node['title'] ?? $node['name'] ?? 'No title';
             $description = $node['description'] ?? $node['subtitle'] ?? null;
             $link = $base . "/node/{$node['id']}";

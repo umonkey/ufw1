@@ -14,6 +14,7 @@ use Exception;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
+use Ufw1\Node\Entities\Node;
 
 class AccountController extends CommonHandler
 {
@@ -238,7 +239,7 @@ class AccountController extends CommonHandler
         }
     }
 
-    protected function notifyAdmin(Request $request, array $node)
+    protected function notifyAdmin(Request $request, Node $node)
     {
         $base = $request->getUri()->getBaseUrl();
         $url = "{$base}/admin/nodes/{$node['id']}/edit";

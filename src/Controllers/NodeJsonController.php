@@ -12,6 +12,7 @@ use Psr\Log\LoggerInterface;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Ufw1\CommonHandler;
+use Ufw1\Node\Entities\Node;
 
 class NodeJsonController extends CommonHandler
 {

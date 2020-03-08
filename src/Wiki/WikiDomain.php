@@ -20,7 +20,8 @@ use Ufw1\ResponsePayload;
 use Ufw1\Services\Database;
 use Ufw1\Services\FileRepository;
 use Ufw1\Services\Logger;
-use Ufw1\Services\NodeRepository;
+use Ufw1\Node\NodeRepository;
+use Ufw1\Node\Entities\Node;
 use Ufw1\Services\TaskQueue;
 
 class WikiDomain extends AbstractDomain
@@ -79,7 +80,7 @@ class WikiDomain extends AbstractDomain
      *
      * @return array Response data: redirect, error or response.
      **/
-    public function getShowPageByName(?string $pageName, ?array $user = null): ResponsePayload
+    public function getShowPageByName(?string $pageName, ?Node $user = null): ResponsePayload
     {
         if (null === $pageName) {
             $homePage = $this->settings['home_page'] ?? 'Welcome';
@@ -119,7 +120,7 @@ class WikiDomain extends AbstractDomain
      *
      * @return array Response data.
      **/
-    public function getPageEditorData(string $pageName, ?string $sectionName, ?array $user): ResponsePayload
+    public function getPageEditorData(string $pageName, ?string $sectionName, ?Node $user): ResponsePayload
     {
         if (empty($pageName)) {
             return $this->getNotFound($pageName, $user);
@@ -152,7 +153,7 @@ class WikiDomain extends AbstractDomain
      *
      * @return array Response data.
      **/
-    public function updatePage(string $pageName, ?string $sectionName, string $source, ?array $user): ResponsePayload
+    public function updatePage(string $pageName, ?string $sectionName, string $source, ?Node $user): ResponsePayload
     {
         // Validate input.
         if (empty($pageName)) {
@@ -174,7 +175,7 @@ class WikiDomain extends AbstractDomain
     /**
      * List all wiki pages.
      **/
-    public function index(?string $sort, ?array $user): ResponsePayload
+    public function index(?string $sort, ?Node $user): ResponsePayload
     {
         if ($error = $this->getReadError($user, null)) {
             return $error;
@@ -233,7 +234,7 @@ class WikiDomain extends AbstractDomain
      *
      * TODO: add search.
      **/
-    public function recentFiles(?array $user): ResponsePayload
+    public function recentFiles(?Node $user): ResponsePayload
     {
         if ($error = $this->getReadError($user, null)) {
             return $error;
@@ -268,7 +269,7 @@ class WikiDomain extends AbstractDomain
     /**
      * Schedule reindex of all wiki pages.
      **/
-    public function reindex(?array $user): ResponsePayload
+    public function reindex(?Node $user): ResponsePayload
     {
         if ($error = $this->getEditError($user, null)) {
             return $error;
@@ -287,7 +288,7 @@ class WikiDomain extends AbstractDomain
     /**
      * Handle file upload.
      **/
-    public function upload(?string $link, ?array $files, ?array $user): ResponsePayload
+    public function upload(?string $link, ?array $files, ?Node $user): ResponsePayload
     {
         if ($error = $this->getEditError($user, null)) {
             return $error;
@@ -318,12 +319,12 @@ class WikiDomain extends AbstractDomain
     /**
      * Check if the user is allowed to edit the page.
      *
-     * @param array $user User information.
+     * @param Node $user User information.
      * @param array $node Wiki page.
      *
      * @return bool True if reading is allowed.
      **/
-    protected function userCanEditPage(?array $user, ?array $node): bool
+    protected function userCanEditPage(?Node $user, ?Node $node): bool
     {
         $userRole = $user['role'] ?? 'nobody';
         $allowedRoles = $this->settings['editor_roles'] ?? ['admin'];
@@ -345,12 +346,12 @@ class WikiDomain extends AbstractDomain
     /**
      * Check if the user is allowed to read the page.
      *
-     * @param array $user User information.
+     * @param Node $user User information.
      * @param array $node Wiki page.
      *
      * @return bool True if reading is allowed.
      **/
-    protected function userCanReadPage(?array $user, ?array $node): bool
+    protected function userCanReadPage(?Node $user, ?Node $node): bool
     {
         if (null !== $node && (int)$node['published'] === 0) {
             $this->logger->debug('user {uid} cannot read page "{name}": unpublished.', [
@@ -381,12 +382,12 @@ class WikiDomain extends AbstractDomain
     /**
      * Return a failure response if the user has no access.
      *
-     * @param ?array $user User performing the edit.
+     * @param ?Node $user User performing the edit.
      * @param ?array $page Page being edited.
      *
      * @return ?array Error response.
      **/
-    protected function getEditError(?array $user, ?array $page = null): ?ResponsePayload
+    protected function getEditError(?Node $user, ?array $page = null): ?ResponsePayload
     {
         if (!$this->userCanEditPage($user, null)) {
             if ($user === null) {
@@ -409,7 +410,7 @@ class WikiDomain extends AbstractDomain
         return $this->getFailure(403, 'Page access forbidden.');
     }
 
-    protected function getNotFound(?string $pageName, ?array $user): ResponsePayload
+    protected function getNotFound(?string $pageName, ?Node $user): ResponsePayload
     {
         $canEdit = $this->userCanEditPage($user, null);
 
@@ -442,7 +443,7 @@ class WikiDomain extends AbstractDomain
         return $link;
     }
 
-    protected function getReadError(?array $user, ?array $node): ?ResponsePayload
+    protected function getReadError(?Node $user, ?Node $node): ?ResponsePayload
     {
         if (!$this->userCanReadPage($user, $node)) {
             if ($user === null) {
@@ -493,7 +494,7 @@ class WikiDomain extends AbstractDomain
         return $this->getFailure(401, 'You need to log in to access this page.');
     }
 
-    protected function logPageEdit(string $pageName, ?string $sectionName, array $user): void
+    protected function logPageEdit(string $pageName, ?string $sectionName, Node $user): void
     {
         if (null !== $sectionName) {
             $this->logger->info('wiki: user {uid} ({uname}) edited page "{page}" section "{section}"', [
@@ -527,7 +528,7 @@ class WikiDomain extends AbstractDomain
     /**
      * Fetch remote file and save it.
      **/
-    protected function fetchFileByLink(string $link, ?array $user): bool
+    protected function fetchFileByLink(string $link, ?Node $user): bool
     {
         $file = \Ufw1\Util::fetch($link);
 
@@ -552,7 +553,7 @@ class WikiDomain extends AbstractDomain
         }
     }
 
-    protected function saveUploadedFile(UploadedFile $file, ?array $user): bool
+    protected function saveUploadedFile(UploadedFile $file, ?Node $user): bool
     {
         if ($file->getError()) {
             return false;
