@@ -17,28 +17,36 @@ class RestoreActionTests extends AbstractTest
     /**
      * Make sure that nonymous access works well.
      **/
-    public function testAnonymousAccess(): void
+    public function testDomain(): void
     {
-        $user = $this->getNobody();
-        $res = $this->getDomain()->restore($user);
-        $this->assertError(403, $res);
+        $user = $this->getEditor([
+            'otp_hash' => 'foobar',
+        ]);
+
+        $uid = (int)$user['id'];
+        $code = $user['otp_hash'];
+
+        $res = $this->getDomain()->restoreAction($uid, $code, null);
+        $this->assertTrue(isset($res['response']['redirect']), '/profile');
+        $this->assertTrue(isset($res['response']['sessionId']), 'sessionId must be set');
     }
 
     /**
-     * Make sure that user access works well.
+     * Make sure that nonymous access works well.
      **/
-    public function testUserAccess(): void
+    public function testAction(): void
     {
-        $user = $this->getEditor();
-        $res = $this->getDomain()->restore($user);
-        $this->assertResponse($res);
-    }
+        $user = $this->getEditor([
+            'otp_hash' => 'foobar',
+        ]);
 
-    public function testAdminAccess(): void
-    {
-        $user = $this->getAdmin();
-        $res = $this->getDomain()->restore($user);
-        $this->assertResponse($res);
+        $uid = (int)$user['id'];
+        $code = $user['otp_hash'];
+
+        $res = $this->GET("/account/restore/{$uid}/{$code}");
+        $this->assertEquals(302, $res->getStatusCode(), 'wrong redirect status');
+        $this->assertEquals('/profile', $res->getHeaders()['Location'][0], 'wrong redirect target');
+        $this->assertEquals(0, strpos('session_id=', $res->getHeaders()['Set-Cookie'][0]), 'wrong cookie');
     }
 
     public function testResponder(): void

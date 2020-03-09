@@ -82,7 +82,7 @@ class LoginActionTests extends AbstractTest
 
         $headers = $response->getHeaders();
         $this->assertFalse(empty($headers['Set-Cookie']), 'MUST set a cookie');
-        $this->assertEquals('session_id=foobar_123', $headers['Set-Cookie'][0], 'wrong cookie');
+        $this->assertEquals(0, strpos('session_id=foobar_123; path=/; ', $headers['Set-Cookie'][0]), 'wrong cookie');
     }
 
     protected function getDomain(): Accounts
