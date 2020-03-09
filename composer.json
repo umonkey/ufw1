@@ -16,7 +16,8 @@
         "monolog/monolog": "^1.17",
         "twig/twig": "^2.4",
         "league/commonmark": "1.0.0",
-        "league/commonmark-ext-table": "^2.1"
+        "league/commonmark-ext-table": "^2.1",
+        "phpmailer/phpmailer": "^6.1"
     },
     "autoload": {
         "psr-4": {
