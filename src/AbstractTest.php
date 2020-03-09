@@ -78,6 +78,7 @@ abstract class AbstractTest extends TestCase
             'deleted' => 0,
             'role' => 'nobody',
             'name' => 'Головач Елена',
+            'email' => 'nobody@example.com',
         ]);
 
         return $this->container->node->save($node);
@@ -91,6 +92,7 @@ abstract class AbstractTest extends TestCase
             'deleted' => 0,
             'role' => 'editor',
             'name' => 'Головач Елена',
+            'email' => 'editor@example.com',
         ], $props);
 
         $node = User::fromArray($props);
@@ -106,6 +108,7 @@ abstract class AbstractTest extends TestCase
             'deleted' => 0,
             'role' => 'admin',
             'name' => 'Сусанин Иван',
+            'email' => 'admin@example.com',
         ]);
 
         return $this->container->node->save($node);

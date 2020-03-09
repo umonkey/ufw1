@@ -55,6 +55,14 @@ abstract class AbstractResponder
         return null;
     }
 
+    protected function getError(Response $response, array $data): Response
+    {
+        return $this->renderResponse($response, [
+            "errors/{$data['code']}.twig",
+            'errors/default.twig',
+        ], $data, $data['code']);
+    }
+
     protected function getForbidden(Response $response, array $data): Response
     {
         return $this->renderResponse($response, [

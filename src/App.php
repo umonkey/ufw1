@@ -111,6 +111,11 @@ class App extends \Slim\App
             return new Services\AuthService($session, $logger, $node);
         };
 
+        $container['accounts'] = function ($c) {
+            $accounts = $c['callableResolver']->getClassInstance('Ufw1\Accounts\Accounts');
+            return $accounts;
+        };
+
         $container['callableResolver'] = function ($c) {
             return new CallableResolver($c);
         };
@@ -150,6 +155,10 @@ class App extends \Slim\App
 
         $container['logger'] = function ($c) {
             return new Services\Logger($c->get('settings')['logger']);
+        };
+
+        $container['mail'] = function ($c) {
+            return $c['callableResolver']->getClassInstance('Ufw1\Mail\Mail');
         };
 
         $container['notFoundHandler'] = function ($c) {

@@ -259,6 +259,8 @@ class AccountController extends CommonHandler
         $class = get_called_class();
 
         $app->get('/account', 'Ufw1\Accounts\Actions\ProfileAction');
+        $app->get('/account/restore', 'Ufw1\Accounts\Actions\ShowRestoreFormAction');
+        $app->post('/account/restore', 'Ufw1\Accounts\Actions\RestorePasswordAction');
         $app->get('/account/bye', $class . ':onBye');
         $app->get('/login', $class . ':onGetLoginForm');
         $app->post('/login', $class . ':onLogin');
