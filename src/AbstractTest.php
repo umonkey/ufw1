@@ -60,6 +60,23 @@ abstract class AbstractTest extends TestCase
         $this->assertTrue($response->isOK(), 'MUST be a valid response');
     }
 
+    protected function GET(string $path, array $options = []): Response
+    {
+        $env = Environment::mock(array_replace([
+            'REQUEST_METHOD' => 'GET',
+            'REQUEST_URI' => $path,
+            'DOCUMENT_ROOT' => getcwd(),
+        ], $options));
+
+        $req = Request::createFromEnvironment($env);
+
+        $this->container['request'] = $req;
+
+        $response = $this->app->run(true);
+
+        return $response;
+    }
+
     /**
      * Create class instance via DI.
      **/
