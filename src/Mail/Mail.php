@@ -10,6 +10,7 @@ namespace Ufw1\Mail;
 
 use Ufw1\AbstractDomain;
 use Ufw1\Services\Template;
+use PHPMailer\PHPMailer\PHPMailer;
 
 class Mail extends AbstractDomain
 {
@@ -55,41 +56,30 @@ class Mail extends AbstractDomain
             return '';
         }, $html);
 
-        $headers = "MIME-Version: 1.0\r\n";
-        $headers .= "Content-Type: text/html; charset=utf-8\r\n";
-        $headers .= "Content-Transfer-Encoding: base64\r\n";
+        $mailer = new PHPMailer(true);
 
         if ($settings['sender'] and $settings['sender_name']) {
-            $headers .= sprintf("From: \"%s\" <%s>\r\n", $this->quote($settings['sender_name']), $settings['sender']);
+            $mailer->setFrom($settings['sender'], $settings['sender_name']);
         } elseif ($settings['sender']) {
-            $headers .= sprintf("From: %s\r\n", $settings['sender']);
-        }
-
-        if ($settings['bcc']) {
-            $headers .= sprintf("Bcc: %s\r\n", $settings['bcc']);
-        }
-
-        if ($settings['reply_to']) {
-            $headers .= sprintf("Reply-To: %s\r\n", $settings['reply_to']);
+            $mailer->setFrom($settings['sender']);
         }
 
         if ($settings['to']) {
-            $headers .= sprintf("X-Recipient: %s\r\n", $to);
-            $to = $settings['to'];
-        }
-
-        $body = trim(chunk_split(base64_encode($html))) . "\r\n";
-        $subject = $this->quote($subject);
-
-        if ($settings['sender']) {
-            mail($to, $subject, $body, $headers, '-f ' . $settings['sender']);
+            $mailer->addAddress($settings['to']);
+            $mailer->addCustomHeader('X-Recipient', $to);
         } else {
-            mail($to, $subject, $body, $headers);
+            $mailer->addAddress($to);
         }
-    }
 
-    protected function quote(string $text): string
-    {
-        return sprintf("=?UTF-8?B?%s?=", base64_encode($text));
+        if ($settings['bcc']) {
+            $mailer->addBcc($settings['bcc']);
+        }
+
+        $mailer->isHTML(true);
+        $mailer->Body = $html;
+        $mailer->AltBody = $text;
+        $mailer->Subject = $subject;
+
+        $mailer->send();
     }
 }

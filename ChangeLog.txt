@@ -1,6 +1,7 @@
 2020-03-09:
 
 - Restore account password.
+- Mail sender with phpmailer.
 
 2020-03-08:
 
