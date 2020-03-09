@@ -81,13 +81,7 @@ class Accounts extends AbstractDomain
             return $this->fail(403, 'Wrong password.');
         }
 
-        $this->session->load($sessionId);
-
-        $data = $this->session->getData();
-        $data['user_id'] = (int)$node['id'];
-        $this->session->setData($data);
-
-        $sessionId = $this->session->save();
+        $sessionId = $this->setUserId((int)$node['id'], $sessionId);
 
         return $this->success([
             'sessionId' => $sessionId,
@@ -103,6 +97,30 @@ class Accounts extends AbstractDomain
 
         return $this->success([
             'user' => $user,
+        ]);
+    }
+
+    public function restoreAction(int $uid, string $code, ?string $sessionId): ResponsePayload
+    {
+        $user = $this->node->get($uid);
+
+        if (null === $user) {
+            return $this->notfound();
+        }
+
+        if (empty($user['otp_hash'])) {
+            return $this->notfound();
+        }
+
+        if ($code !== $user['otp_hash']) {
+            return $this->notfound();
+        }
+
+        $sessionId = $this->setUserId($uid, $sessionId);
+
+        return $this->success([
+            'sessionId' => $sessionId,
+            'redirect' => '/profile',
         ]);
     }
 
@@ -208,5 +226,18 @@ class Accounts extends AbstractDomain
         ]);
 
         $this->logger->info('account: sent restore link: {0}', [$link]);
+    }
+
+    protected function setUserId(int $uid, ?string $sessionId): string
+    {
+        $this->session->load($sessionId);
+
+        $data = $this->session->getData();
+        $data['user_id'] = $uid;
+        $this->session->setData($data);
+
+        $sessionId = $this->session->save();
+
+        return $sessionId;
     }
 }

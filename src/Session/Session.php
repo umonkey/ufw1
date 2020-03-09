@@ -85,7 +85,11 @@ class Session
             $this->data = [];
         } else {
             $row = $this->db->fetchOne('SELECT * FROM sessions WHERE id = ?', [$sessionId]);
-            debug($row);
+            if (null === $row) {
+                $this->data = [];
+            } elseif (is_array($data = unserialize($row['data']))) {
+                $this->data = $data;
+            }
         }
     }
 
@@ -121,6 +125,8 @@ class Session
             $this->db->update('sessions', [
                 'updated' => $now,
                 'data' => serialize($this->data),
+            ], [
+                'id' => $this->id,
             ]);
         } else {
             $this->db->insert('sessions', [

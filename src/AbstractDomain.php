@@ -22,6 +22,11 @@ abstract class AbstractDomain
         return $this->fail(404, 'Not found.');
     }
 
+    protected function unavailable(): ResponsePayload
+    {
+        return $this->fail(503, 'Service unavailable.');
+    }
+
     protected function redirect(string $target, int $status = 302): ResponsePayload
     {
         return ResponsePayload::redirect($target, $status);

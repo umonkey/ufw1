@@ -29,7 +29,11 @@ class LoginResponder extends AbstractResponder
             $response->getBody()->write($data);
 
             $jar = new Cookies();
-            $jar->set('session_id', $responseData['response']['sessionId']);
+            $jar->set('session_id', [
+                'value' => $responseData['response']['sessionId'],
+                'path' => '/',
+                'expires' => time() + 86400 * 365,
+            ]);
 
             $response = $response->withHeader('Set-Cookie', $jar->toHeaders());
             return $response;
