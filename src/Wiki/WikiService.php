@@ -13,7 +13,7 @@ namespace Ufw1\Wiki;
 use Psr\Log\LoggerInterface;
 use Ufw1\Util;
 use Ufw1\Errors\Forbidden;
-use Ufw1\Node\NodeRepository;
+use Ufw1\Services\NodeRepository;
 use Ufw1\Node\Entities\Node;
 
 class WikiService

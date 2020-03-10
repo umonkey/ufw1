@@ -224,6 +224,6 @@ class TaskQueueController extends CommonHandler
         $node = $tn->updateNode($node);
         $node = $this->node->save($node);
 
-        $this->container->get('S3')->autoUploadNode($node);
+        // $this->container->get('S3')->autoUploadNode($node);
     }
 }

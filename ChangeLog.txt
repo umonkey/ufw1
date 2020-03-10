@@ -1,3 +1,7 @@
+2020-03-10:
+
+- Decouple TaskQueue from S3.
+
 2020-03-09:
 
 - Restore account password.
