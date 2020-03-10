@@ -13,7 +13,7 @@ namespace Ufw1\Wiki;
 use Psr\Log\LoggerInterface;
 use Ufw1\Util;
 use Ufw1\Errors\Forbidden;
-use Ufw1\Services\NodeRepository;
+use Ufw1\Node\NodeRepository;
 use Ufw1\Node\Entities\Node;
 
 class WikiService
@@ -33,9 +33,9 @@ class WikiService
      **/
     protected $settings;
 
-    public function __construct(array $settings, NodeRepository $node, LoggerInterface $logger)
+    public function __construct($settings, NodeRepository $node, LoggerInterface $logger)
     {
-        $this->settings = $settings;
+        $this->settings = $settings['wiki'] ?? [];
         $this->node = $node;
         $this->logger = $logger;
     }
