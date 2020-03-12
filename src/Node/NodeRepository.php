@@ -31,6 +31,11 @@ class NodeRepository
      **/
     protected $settings;
 
+    protected static $defaults = [
+        'published' => 0,
+        'deleted' => 0,
+    ];
+
     public function __construct(array $settings, Database $db, LoggerInterface $logger)
     {
         $this->settings = $settings;
@@ -126,6 +131,7 @@ class NodeRepository
                 return $node;
             }
         } else {
+            $row = array_replace(self::$defaults, $row);
             $node["id"] = $this->db->insert("nodes", $row);
         }
 

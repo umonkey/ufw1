@@ -71,6 +71,7 @@ class WikiService
             }
         }
 
+        $node['published'] = 1;
         $node['deleted'] = trim($source) === '';
         $node['key'] = $this->getPageKey($node['name']);
 
