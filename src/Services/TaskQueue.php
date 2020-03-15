@@ -29,9 +29,9 @@ class TaskQueue
 
     protected $ping = false;
 
-    public function __construct(Database $database, LoggerInterface $logger, array $settings)
+    public function __construct(Database $db, LoggerInterface $logger, array $settings)
     {
-        $this->database = $database;
+        $this->database = $db;
         $this->logger = $logger;
         $this->settings = $settings;
     }
