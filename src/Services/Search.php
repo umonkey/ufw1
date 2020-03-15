@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace Ufw1\Services;
 
 use Psr\Log\LoggerInterface;
-use Ufw1\Wiki\WikiService;
 use Ufw1\Node\NodeRepository;
 use Ufw1\Node\Entities\Node;
 
@@ -36,22 +35,15 @@ class Search
      **/
     protected $stemmer;
 
-    /**
-     * @var Wiki
-     **/
-    protected $wiki;
-
     protected $node;
 
     private static $stopWords = ["а", "и", "о", "об", "в", "на", "под", "из"];
 
-    public function __construct(Database $database, LoggerInterface $logger, Stemmer $stemmer, WikiService $wiki, NodeRepository $node)
+    public function __construct(Database $db, LoggerInterface $logger, Stemmer $stemmer)
     {
-        $this->database = $database;
+        $this->database = $db;
         $this->logger = $logger;
         $this->stemmer = $stemmer;
-        $this->wiki = $wiki;
-        $this->node = $node;
     }
 
     public function search(string $query, int $limit = 100): array
@@ -152,64 +144,6 @@ class Search
                 "title" => $title,
             ]);
         }
-    }
-
-    /**
-     * Reindex a single node.
-     *
-     * @param array $args Node spec, in 'id'.
-     **/
-    public function reindexNode(Node $node): void
-    {
-        $id = $node['id'] ?? null;
-
-        if (null === $id) {
-            $this->logger->debug('search: node id not specified.');
-            return;
-        }
-
-        $node = $this->node->get((int)$id);
-
-        // TODO: only configured types.
-
-        if ($node['type'] == 'wiki') {
-            $this->reindexWikiNode($node);
-        } else {
-            $this->logger->debug("search: don't know how to reindex node of type {0}, node: {1}", [$node['type'], $node]);
-        }
-    }
-
-    protected function reindexWikiNode(Node $node): void
-    {
-        $page = $this->wiki->renderPage($node);
-
-        if (!empty($page['redirect']) or empty($page['source'])) {
-            $title = $text = '';
-            $meta = [];
-        } else {
-            $html = $page['html'];
-
-            // strip_tags mishandles scripts, and we use them heavily for microdata,
-            // so just strip them off in advance.
-            $html = preg_replace('@<script.*?</script>@', '', $html);
-
-            $html = str_replace("><", "> <", $html);
-            $text = trim(strip_tags($html));
-
-            $name = $page['name'];
-            $title = $page['title'];
-            $snippet = $page['snippet'];  // TODO
-
-            $meta = [
-                'title' => $title,
-                'link' => '/wiki?name=' . urlencode($name),
-                'snippet' => $snippet,
-                'updated' => $node['updated'],
-                'image' => null,
-            ];
-        }
-
-        $this->reindexDocument("node:" . $node["id"], $title, $text, $meta);
     }
 
     /**

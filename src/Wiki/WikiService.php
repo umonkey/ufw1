@@ -11,10 +11,13 @@ declare(strict_types=1);
 namespace Ufw1\Wiki;
 
 use Psr\Log\LoggerInterface;
-use Ufw1\Util;
+use RuntimeException;
 use Ufw1\Errors\Forbidden;
-use Ufw1\Node\NodeRepository;
 use Ufw1\Node\Entities\Node;
+use Ufw1\Node\NodeRepository;
+use Ufw1\Services\Search;
+use Ufw1\Services\TaskQueue;
+use Ufw1\Util;
 
 class WikiService
 {
@@ -33,11 +36,20 @@ class WikiService
      **/
     protected $settings;
 
-    public function __construct($settings, NodeRepository $node, LoggerInterface $logger)
+    /**
+     * Full text search.
+     **/
+    protected $fts;
+
+    protected $taskq;
+
+    public function __construct($settings, NodeRepository $node, LoggerInterface $logger, Search $fts, TaskQueue $taskq)
     {
         $this->settings = $settings['wiki'] ?? [];
         $this->node = $node;
         $this->logger = $logger;
+        $this->fts = $fts;
+        $this->taskq = $taskq;
     }
 
     public function updatePage(string $name, string $source, Node $user, string $section = null): Node
@@ -79,11 +91,9 @@ class WikiService
 
         $node = $this->node->save($node);
 
-        if (isset($this->fts)) {
-            $this->fts->reindexNode([
-                'id' => $node['id'],
-            ]);
-        }
+        $this->taskq->add('wiki.reindexPageTask', [
+            'id' => $node['id'],
+        ]);
 
         return $node;
     }
@@ -223,6 +233,71 @@ class WikiService
             'link' => $this->getWikiLink($node['name']),
             'text' => $this->htmlToText($page['html']),
         ];
+    }
+
+    /**
+     * Reindex a page.
+     *
+     * Used with the taskq, as following:
+     * $this->taskq->add('wiki.reindexPageTask', ['id' => $node['id']]);
+     *
+     * @param array $args Node identifier.
+     **/
+    public function reindexPageTask(array $args): void
+    {
+        if (empty($args['id'])) {
+            $this->logger->warning('{method} -- node id not specified, args: {args}.', [
+                'method' => __METHOD__,
+                'args' => $args,
+            ]);
+            return;
+        }
+
+        $node = $this->node->get((int)$args['id']);
+
+        if (null === $node) {
+            $this->logger->warning('node {id} not found -- cannot reindex.', [
+                'id' => $args['id'],
+            ]);
+            return;
+        }
+
+        if ('wiki' !== $node['type']) {
+            $this->logger->warning('node {id} is not a wiki page -- cannot reindex.', [
+                'id' => $args['id'],
+            ]);
+            return;
+        }
+
+        $page = $this->renderPage($node);
+
+        if (!empty($page['redirect']) or empty($page['source'])) {
+            $title = $text = '';
+            $meta = [];
+        } else {
+            $html = $page['html'];
+
+            // strip_tags mishandles scripts, and we use them heavily for microdata,
+            // so just strip them off in advance.
+            $html = preg_replace('@<script.*?</script>@', '', $html);
+
+            $html = str_replace("><", "> <", $html);
+            $text = trim(strip_tags($html));
+
+            $name = $page['name'];
+            $title = $page['title'];
+            $snippet = $page['snippet'];  // TODO
+
+            $meta = [
+                'title' => $title,
+                'link' => '/wiki?name=' . urlencode($name),
+                'snippet' => $snippet,
+                'updated' => $node['updated'],
+                'image' => null,
+            ];
+        }
+
+        $this->fts->reindexDocument('node:' . $node['id'], $title, $text, $meta);
     }
 
     /**

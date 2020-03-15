@@ -48,10 +48,10 @@ class Database
      *
      * @param array $dsn Connection parameters.
      **/
-    public function __construct(array $dsn)
+    public function __construct($settings)
     {
         $this->conn = null;
-        $this->dsn = $dsn;
+        $this->dsn = $settings['dsn'] ?? [];
         $this->transactionLevel = 0;
     }
 

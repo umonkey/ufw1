@@ -105,15 +105,11 @@ class App extends \Slim\App
     protected function setupContainer(Container $container)
     {
         $container['auth'] = function ($c) {
-            $session = $c->get('session');
-            $logger = $c->get('logger');
-            $node = $c->get('node');
-            return new Services\AuthService($session, $logger, $node);
+            return $this->resolve('Ufw1\Services\AuthService');
         };
 
         $container['accounts'] = function ($c) {
-            $accounts = $c['callableResolver']->getClassInstance('Ufw1\Accounts\Accounts');
-            return $accounts;
+            return $this->resolve('Ufw1\Accounts\Accounts');
         };
 
         $container['callableResolver'] = function ($c) {
@@ -121,8 +117,7 @@ class App extends \Slim\App
         };
 
         $container['db'] = function ($c) {
-            $dsn = $c->get('settings')['dsn'];
-            return new Services\Database($dsn);
+            return $this->resolve('Ufw1\Services\Database');
         };
 
         $container['errorHandler'] = function ($c) {
@@ -140,17 +135,11 @@ class App extends \Slim\App
         };
 
         $container['fts'] = function ($c) {
-            $db = $c->get('db');
-            $logger = $c->get('logger');
-            $stemmer = $c->get('stemmer');
-            $wiki = $c->get('wiki');
-            $node = $c->get('node');
-            return new Services\Search($db, $logger, $stemmer, $wiki, $node);
+            return $this->resolve('Ufw1\Services\Search');
         };
 
         $container['http'] = function ($c) {
-            $logger = $c->get('logger');
-            return new Services\HttpService($logger);
+            return $this->resolve('Ufw1\Services\HttpService');
         };
 
         $container['logger'] = function ($c) {
@@ -242,5 +231,11 @@ class App extends \Slim\App
         $container['wiki'] = function ($c) {
             return $c['callableResolver']->getClassInstance('Ufw1\Wiki\WikiService');
         };
+    }
+
+    protected function resolve(string $className): object
+    {
+        $resolver = $this->getContainer()['callableResolver'];
+        return $resolver->getClassInstance($className);
     }
 }

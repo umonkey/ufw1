@@ -277,7 +277,7 @@ class WikiDomain extends AbstractDomain
 
         $sel = $this->db->query("SELECT `id` FROM `nodes` WHERE `type` = 'wiki' ORDER BY `updated` DESC");
         while ($id = $sel->fetchColumn(0)) {
-            $this->taskq->add('fts.reindexNode', [
+            $this->taskq->add('wiki.reindexPageTask', [
                 'id' => $id,
             ]);
         }
