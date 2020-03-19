@@ -1,0 +1,32 @@
+{% extends 'layouts/base.twig' %}
+
+{% block page_title %}Вход{% endblock %}
+
+{% block header %}{% endblock %}
+{% block sidebar %}{% endblock %}
+
+{% block body_class %}login{% endblock %}
+
+{% block page_header %}
+{% endblock %}
+
+{% block page_contents %}
+    <form method="post" class="async" action="/login">
+        <input type="hidden" name="next" value="{{ path }}"/>
+        <div class="form-group">
+            <label>Email</label>
+            <input class="form-control" type="text" name="email" required/>
+        </div>
+        <div class="form-group">
+            <label>Пароль</label>
+            <input class="form-control" type="password" name="password" required/>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Войти</button>
+            <a class="btn btn-default" href="/register">Зарегистрироваться</a>{#
+            #}<a class="btn btn-default" href="/account/restore">Восстановить пароль</a>
+        </div>
+
+        <p class="msgbox" style="display: none"></p>
+    </form>
+{% endblock %}

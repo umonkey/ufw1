@@ -1,6 +1,8 @@
 2020-03-19:
 
-- Display links in GET errors.
+- Added links in GET errors.
+- Added login page template.
+- Fixed register issues.
 
 2020-03-16:
 

@@ -400,7 +400,7 @@ class AdminController extends CommonHandler
             $node = array_merge($node, $form);
         }
 
-        $node = $this->node->save($node);
+        $node = $this->node->save(Node::fromArray($node));
 
         if ($node['type'] == 'file') {
             $this->taskq->add('update-node-thumbnail', ['id' => $node['id']]);
