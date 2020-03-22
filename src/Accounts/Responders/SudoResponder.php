@@ -15,20 +15,10 @@ use Ufw1\Services\Template;
 
 class SudoResponder extends AbstractResponder
 {
-    /**
-     * @var Template;
-     **/
-    protected $template;
-
-    public function __construct(Template $template)
-    {
-        $this->template = $template;
-    }
-
     public function getResponse(Response $response, ResponsePayload $responseData): Response
     {
-        if ($common = $this->getCommonResponse($response, $responseData)) {
-            return $common;
+        if (null !== ($res = parent::getResponse($response, $responseData))) {
+            return $res;
         }
 
         $templateNames = $this->getTemplateNames($responseData);
