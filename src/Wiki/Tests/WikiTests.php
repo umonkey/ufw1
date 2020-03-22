@@ -121,6 +121,7 @@ class WikiTests extends AbstractTest
     public function testPerPageUnpublish(): void
     {
         $user = $this->getAdmin();
+        $anon = $this->getNobody();
 
         $this->savePage('test-page', "published: 1\n"
             . "---\n"
@@ -134,7 +135,7 @@ class WikiTests extends AbstractTest
             . "---\n"
             . "Test page.\n");
 
-        $res = $this->getDomain()->getShowPageByName('test-page', $user);
+        $res = $this->getDomain()->getShowPageByName('test-page', $anon);
         $this->assertEquals(403, $res['error']['code'] ?? null, 'Page MUST NOT be readable.');
         $this->assertTrue(empty($res['response']), 'Page MUST NOT be readable.');
     }

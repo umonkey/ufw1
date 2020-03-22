@@ -1,8 +1,9 @@
 2020/03/22:
 
+- Added redirect via JSON for XHR.
 - Fixed redirect after sudo.
 - Fixed missing CSS for tel/email fields.
-- Added redirect via JSON for XHR.
+- Fixed testing wiki page publishing via YAML.
 
 2020-03-19:
 
