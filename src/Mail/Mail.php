@@ -52,7 +52,7 @@ class Mail extends AbstractDomain
 
         // Extract subject from <title>.
         $html = preg_replace_callback('@<title>(.+?)</title>@', function (array $m) use (&$to) {
-            $to = $m[1];
+            $subject = $m[1];
             return '';
         }, $html);
 

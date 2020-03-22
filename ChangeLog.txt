@@ -5,6 +5,7 @@
 - Fixed missing CSS for tel/email fields.
 - Fixed testing wiki page publishing via YAML.
 - Fixed email field type in the registration form.
+- Fixed sending mails with custom titles.
 
 2020-03-19:
 
