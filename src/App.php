@@ -192,10 +192,7 @@ class App extends \Slim\App
         };
 
         $container['taskq'] = function ($c) {
-            $db = $c->get('db');
-            $logger = $c->get('logger');
-            $settings = $c->get('settings')['taskq'] ?? [];
-            return new Services\TaskQueue($db, $logger, $settings);
+            return $c['callableResolver']->getClassInstance('Ufw1\Services\TaskQueue');
         };
 
         $container['telega'] = function ($c) {
