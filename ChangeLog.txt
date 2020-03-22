@@ -1,6 +1,7 @@
 2020/03/22:
 
 - CSS: fixed tel/email fields.
+- Responder: redirect via JSON for XHR.
 
 2020-03-19:
 
