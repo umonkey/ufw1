@@ -4,6 +4,7 @@
 - Fixed redirect after sudo.
 - Fixed missing CSS for tel/email fields.
 - Fixed testing wiki page publishing via YAML.
+- Fixed email field type in the registration form.
 
 2020-03-19:
 
