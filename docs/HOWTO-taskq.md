@@ -4,6 +4,8 @@ Task Queue is a way to offload heavy or long tasks to the background worker and 
 
 The queue is just a table in the database, so no extra dependencies are required.  The runner is just a PHP script that reads the table over and over.  Task queue operations are subject to regular transactino flow, i.e. not added on rollback.
 
+The runner will retry each task until it's finished.
+
 The whole system is light-weight and simple, suitable for most simple web sites with up to few new tasks per second.
 
 
