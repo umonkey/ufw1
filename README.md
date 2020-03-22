@@ -5,9 +5,15 @@ This projects contains components which I frequently reuse on my websites.  It's
 
 ## Concepts
 
+Uses the ADR pattern (action-domain-responder).  Actions are light-weight controllers, with only one action and no logic: the job is to parse input data and pass it to the domain.  Domain is a service which handles the input data, does the job (probably invoking other services) and returns the response payload.  Reponder renders payload to the actual HTTP response, depending on its contents and other circumstances (XHR, etc).  This all makes the application open for unit testing.
+
 Uses [dependency injection][11], named after [Symfony services][12].  Services are isolate parts of code which are loaded on demand.  Controllers receive arguments extracted from the container by name.  Built in services include database, logger, node and file factory, S3, search engine, stemmer, task queue, Telegram notifications, Twig template renderer, a thumbnailer and a wiki engine.
 
 Uses "nodes", individual pieces of content, such as a page, poll, article, forum topic, or a blog entry.  This is inspired by [Drupal][13], works well and simplifies document management greatly.
+
+Uses [task queue](docs/HOWTO-taskq.md) for background task execution.  There is a separate daemon which monitors the taskq queue table and runs the task handlers.  This lets the application respond quickly, offloading long tasks to the queue worker and serializing tasks.  Best for uploading files to the cloud, sending mail and other notifications.
+
+Uses the repository/entity pattern to access data.  Entities are currently just wrappers around [ArrayObject](https://www.php.net/manual/en/class.arrayobject.php) which enhance it a little.  Entities know nothing about the storage and don't interact with it -- that's what repositories do (see the [Nodes module](src/Node)).  No ORM, no query builders -- SQL is portable and simple enough.
 
 
 ## Services
