@@ -2,6 +2,7 @@
 
 - Added redirect via JSON for XHR.
 - Added locking to the taskq runner.
+- Added some phone number formatters for Twig.
 - Fixed redirect after sudo.
 - Fixed missing CSS for tel/email fields.
 - Fixed testing wiki page publishing via YAML.
