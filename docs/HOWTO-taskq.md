@@ -26,9 +26,9 @@ protected function doSomething(): void
 ```
 
 
-## Handling tasks
+## Adding task handlers
 
-The build-in implementation treats tasks as service and method name.  For example, a task named "files.uploadToCloudTask" is handled this way:
+The built-in implementation treats tasks as service and method name.  For example, a task named "files.uploadToCloudTask" is handled this way:
 
 1. A service named "files" is looked up in the container.
 2. Its method named "uploadToCloudTask" is called, with the payload being passed as the first array argument.
@@ -48,6 +48,8 @@ The tasks are run with a POST request to an url like `/taskq/{id}/run`, which is
 1. Set the "taskq.exec\_pattern" setting to a proper value, like "/taskq/%u/run.local".
 2. Handle the new route the way the built in handler does, see the sources.
 
+It is a good idea to use the "Task" suffix for task methods.
+
 
 ## Running the worker
 
@@ -60,3 +62,17 @@ In production, you normally run it with a crontab like this:
 ```
 
 The worker uses file based locking, so this won't create infinite running copies of it -- just one.
+
+
+## How tasks are handled
+
+Tasks are executed as POST requests, one for each task.  This helps make sure that tasks are executed in the same context that the rest of the application, e.g., no permission conflicts arise.
+
+There is always only one task running at a time, so it doesn't eat much PHP workers and other resources.
+
+You might want to unlimit the execution time for the task handler urls, like `/taskq/{id}/run`.
+
+
+## Alternatives
+
+Usually people use RabbitMQ or Redis for this kind of job.
