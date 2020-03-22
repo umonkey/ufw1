@@ -11,7 +11,7 @@ The whole system is light-weight and simple, suitable for most simple web sites 
 
 ## Adding tasks
 
-Tasks have names and some payload data.  They are added using the `task` named service, e.g.:
+Tasks have names, priorities and some payload data.  They are added using the `task` named service, e.g.:
 
 ```
 public function __construct($taskq)
@@ -21,11 +21,15 @@ public function __construct($taskq)
 
 protected function doSomething(): void
 {
+    $priority = 0;  // default
+
     $this->taskq->add('files.uploadToCloudTask', [
         'id' => 123,
-    ]);
+    ], $priority);
 }
 ```
+
+Priority is 0 by default, but can be any integer.  E.g., 10 for high priority tasks and -20 for lower priority.  The worker orders tasks by this value before executing.  Usually you use higher priority for tasks which have visual impact (update thumbnais or post notifications) and lower for service tasks (upload files to the cloud).
 
 
 ## Adding task handlers
@@ -73,6 +77,8 @@ Tasks are executed as POST requests, one for each task.  This helps make sure th
 There is always only one task running at a time, so it doesn't eat much PHP workers and other resources.
 
 You might want to unlimit the execution time for the task handler urls, like `/taskq/{id}/run`.
+
+You might also use a separate PHP-FPM worker for the task queue, e.g. on a differenc machine, if it does heavy job like transcoding video.
 
 
 ## Alternatives
