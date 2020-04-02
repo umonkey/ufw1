@@ -15,4 +15,4 @@ https://scrutinizer-ci.com/docs/tools/php/php-scrutinizer/
 - [ ] Wiki: control page readers via yaml.
 - [ ] Wiki: refactor WikiService.
 - [ ] Wiki: add specific admin UI.
-- [ ] Кроме session_id ставить visit_id.  Всегда, не только при начале сессии.
+- [ ] Кроме session_id ставить visit_id.  Всегда, не только при явном начале сессии.
