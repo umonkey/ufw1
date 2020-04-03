@@ -20,8 +20,12 @@ jQuery(function ($) {
 
         if (res.message) {
             var m = $(".msgbox");
-            m.text(res.message);
-            m.show();
+            if (m.length > 0) {
+                m.text(res.message);
+                m.show();
+            } else {
+                alert(res.message);
+            }
         }
 
         if (res.callback) {
