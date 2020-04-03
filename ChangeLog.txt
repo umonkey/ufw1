@@ -1,6 +1,7 @@
 2020-04-03:
 
 - Added alert in case #msgbox is missing (async.js).
+- Added exception on reading non-wiki page with a wiki key.
 
 
 2020-03-16:

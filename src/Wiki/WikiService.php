@@ -160,9 +160,10 @@ class WikiService
         }
 
         if ($node['type'] != 'wiki') {
-            return null;
+            throw new \RuntimeException('node is not a wiki page');
         }
 
+        /*
         if ((int)$node['deleted'] === 1) {
             return null;
         }
@@ -170,6 +171,7 @@ class WikiService
         if (empty($node['source'])) {
             return null;
         }
+        */
 
         return $node;
     }
