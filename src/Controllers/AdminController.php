@@ -400,7 +400,7 @@ class AdminController extends CommonHandler
             $node = array_merge($node, $form);
         }
 
-        $node = $this->node->save($node);
+        $node = $this->node->save(Node::fromArray($node));
 
         if ($node['type'] == 'file') {
             $this->taskq->add('update-node-thumbnail', ['id' => $node['id']]);
@@ -588,7 +588,7 @@ class AdminController extends CommonHandler
         $app->get('/admin/nodes/{id:[0-9]+}/edit', $class . ':onEditNode');
         $app->get('/admin/nodes/{id:[0-9]+}/edit-raw', $class . ':onEditRawNode');
         $app->get('/admin/nodes/{id:[0-9]+}/dump', $class . ':onDumpNode');
-        $app->post('/admin/nodes/{id:[0-9]+}/sudo', 'Ufw1\Users\Actions\SudoAction');
+        $app->post('/admin/nodes/{id:[0-9]+}/sudo', 'Ufw1\Accounts\Actions\SudoAction');
         $app->post('/admin/nodes/{id:[0-9]+}/upload-s3', $class . ':onUploadS3');
         $app->get('/admin/routes', $class . ':onListRoutes');
         $app->get('/admin/s3', $class . ':onS3');

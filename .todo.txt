@@ -16,3 +16,4 @@ https://scrutinizer-ci.com/docs/tools/php/php-scrutinizer/
 - [ ] Wiki: refactor WikiService.
 - [ ] Wiki: add specific admin UI.
 - [ ] Wiki: use an index by name, not the node key.
+- [ ] Кроме session_id ставить visit_id.  Всегда, не только при явном начале сессии.

@@ -34,7 +34,11 @@
             {% if error.headers.server.REQUEST_METHOD %}
                 <tr class='uri'>
                     <th>URI</th>
-                    <td>{{ error.headers.server.REQUEST_METHOD }} {{ error.headers.server.REQUEST_URI }}</td>
+                    {% if error.headers.server.REQUEST_METHOD == 'GET' %}
+                        <td>{{ error.headers.server.REQUEST_METHOD }} <a href='{{ error.headers.server.REQUEST_URI }}'>{{ error.headers.server.REQUEST_URI }}</a></td>
+                    {% else %}
+                        <td>{{ error.headers.server.REQUEST_METHOD }} {{ error.headers.server.REQUEST_URI }}</td>
+                    {% endif %}
                 </tr>
             {% endif %}
             <tr class='class'>

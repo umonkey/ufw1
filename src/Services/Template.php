@@ -173,6 +173,9 @@ class Template
         // Custom date format:
         // {{ node.created|date('%Y-%m-%d %H:%M:%S') }}
         $this->twig->addFilter(new \Twig\TwigFilter("date", function ($ts, $fmt) {
+            if (empty($ts)) {
+                return '';
+            }
             $ts = $this->parseTimestamp($ts);
             return strftime($fmt, $ts);
         }));
@@ -276,15 +279,44 @@ class Template
         $this->twig->addFilter(new \Twig\TwigFilter("phone", function ($value) {
             $value = preg_replace('@[^0-9]+@', '', $value);
 
-            if ($value[0] == '7') {
-                $phone = '+7 (' . substr($value, 1, 3);
-                $phone .= ') ' . substr($value, 4, 3);
-                $phone .= '-' . substr($value, 7, 2);
-                $phone .= '-' . substr($value, 9, 2);
-                $value = $phone;
+            if ($value[0] === '8') {
+                $value = '7' . substr($value, 1);
             }
 
-            return $value;
+            if ($value[0] === '7') {
+                $rules = [1, 3, 3, 2, 2];
+            } elseif ('375' === substr($value, 0, 3)) {
+                // Belarus.
+                $rules = [3, 2, 3, 2, 2];
+            } elseif ('995' === substr($value, 0, 3)) {
+                // Georgia.
+                $rules = [3, 3, 3, 3];
+            } else {
+                return $value;
+            }
+
+            $output = '';
+
+            foreach ($rules as $idx => $len) {
+                if (0 === $len) {
+                    continue;
+                }
+
+                $part = substr($value, 0, $len);
+                $value = substr($value, $len);
+
+                if ($idx === 0) {
+                    $output = '+' . $part;
+                } elseif ($idx === 1) {
+                    $output .= ' (' . $part . ')';
+                } elseif ($idx === 2) {
+                    $output .= ' ' . $part;
+                } else {
+                    $output .= '-' . $part;
+                }
+            }
+
+            return $output;
         }));
 
         $this->twig->addFilter(new \Twig\TwigFilter("price", function ($value) {

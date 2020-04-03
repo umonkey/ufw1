@@ -88,7 +88,11 @@ class Errors extends AbstractDomain
         $this->db->update('errors', [
             'read' => $read ? 1 : 0,
         ], [
-            'id' => $errorId,
+            // 'id' => $errorId,
+            'class' => $error['class'],
+            'message' => $error['message'],
+            'file' => $error['file'],
+            'line' => $error['line'],
         ]);
 
         return $this->redirect("/admin/errors?fixed={$errorId}");

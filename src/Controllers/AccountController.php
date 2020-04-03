@@ -40,7 +40,7 @@ class AccountController extends CommonHandler
             return $response->withRedirect('/account');
         }
 
-        return $this->render($request, "pages/login.twig", [
+        return $this->render($request, "pages/accounts-login.twig", [
             "title" => "Идентификация",
         ]);
     }
@@ -166,7 +166,7 @@ class AccountController extends CommonHandler
         }
 
         if ($user) {
-            $back = $_GET["back"] ?: "/";
+            $back = $_GET["back"] ?? "/";
             return $response->withRedirect($back);
         }
 
@@ -211,7 +211,7 @@ class AccountController extends CommonHandler
             $node["role"] = "admin";
         }
 
-        $node = $this->node->save($node);
+        $node = $this->node->save(Node::fromArray($node));
 
         $this->auth->push($request, (int)$node['id']);
 

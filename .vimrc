@@ -19,3 +19,6 @@ augroup templates
 augroup END
 
 au FileType php set foldmethod=syntax
+
+" F5 inserts date into changelog.
+au BufRead ChangeLog.txt inoremap <F5> <C-R>=strftime("%Y/%m/%d")<CR>

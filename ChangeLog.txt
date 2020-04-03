@@ -4,6 +4,25 @@
 - Added exception on reading non-wiki page with a wiki key.
 
 
+2020/03/22:
+
+- Added redirect via JSON for XHR.
+- Added locking to the taskq runner.
+- Added some phone number formatters for Twig.
+- Fixed redirect after sudo.
+- Fixed missing CSS for tel/email fields.
+- Fixed testing wiki page publishing via YAML.
+- Fixed email field type in the registration form.
+- Fixed sending mails with custom titles.
+- Fixed taskq service creation -- use DI.
+- Fixed taskq runner.
+
+2020-03-19:
+
+- Added links in GET errors.
+- Added login page template.
+- Fixed register issues.
+
 2020-03-16:
 
 - Fixed duplicate database connection in taskq.
