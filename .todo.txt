@@ -15,3 +15,4 @@ https://scrutinizer-ci.com/docs/tools/php/php-scrutinizer/
 - [ ] Wiki: control page readers via yaml.
 - [ ] Wiki: refactor WikiService.
 - [ ] Wiki: add specific admin UI.
+- [ ] Wiki: use an index by name, not the node key.
